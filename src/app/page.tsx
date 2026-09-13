@@ -23,7 +23,7 @@ export default async function Home() {
         </a>
       </header>
 
-      <section className="mx-auto max-w-md px-4 py-10 text-center">
+      <section className="mx-auto max-w-md px-4 md:max-w-2xl py-10 text-center">
         <h1 className="text-2xl font-semibold">Kas keluarga, RT, atau paguyuban — rapi tanpa jadi beban sekretaris</h1>
         <p className="mt-3 text-sm text-foreground/70">
           Selama ini catatan kas cuma ada di grup WhatsApp atau buku tulis satu orang — begitu ganti pengurus, riwayatnya ikut hilang.
@@ -34,7 +34,7 @@ export default async function Home() {
         </a>
       </section>
 
-      <section className="mx-auto max-w-md px-4 py-8">
+      <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8">
         <h2 className="mb-3 text-center text-lg font-semibold">Mulai dalam 3 langkah</h2>
         <ol className="space-y-2 text-sm">
           <li>1. Ketua daftar tenant (keluarga/RT/paguyuban) dengan akun Google.</li>
@@ -43,7 +43,7 @@ export default async function Home() {
         </ol>
       </section>
 
-      <section className="mx-auto max-w-md px-4 py-8">
+      <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8">
         <h2 className="mb-3 text-center text-lg font-semibold">Fitur per peran</h2>
         <ul className="space-y-3 text-sm">
           {FITUR_PERAN.map((f) => (
@@ -55,7 +55,7 @@ export default async function Home() {
         </ul>
       </section>
 
-      <section className="mx-auto max-w-md px-4 py-8 text-sm text-foreground/70">
+      <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8 text-sm text-foreground/70">
         <h2 className="mb-2 text-center text-lg font-semibold text-foreground">Data tenant Anda aman</h2>
         <p>
           Data setiap keluarga, RT, atau paguyuban terisolasi penuh dari tenant lain — tidak ada yang bisa saling
@@ -65,7 +65,7 @@ export default async function Home() {
       </section>
 
       {TRAKTEER_PAGE_URL && (
-        <section className="mx-auto max-w-md px-4 py-8 text-center text-sm">
+        <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8 text-center text-sm">
           <p className="mb-2 text-foreground/70">Suka dengan Guyub? Dukung pengembangannya secara sukarela.</p>
           <a href={TRAKTEER_PAGE_URL} target="_blank" rel="noreferrer" className="rounded-md border border-primary/30 px-4 py-2 font-medium text-primary">
             Traktir Kami

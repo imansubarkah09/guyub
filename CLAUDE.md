@@ -73,6 +73,36 @@ sungguhan, jangan cuma modal build/lint hijau:
   mana yang masih butuh Iman coba sendiri di browser.
 - **Event handler di Server Component lolos tsc + eslint + build, baru meledak saat di-render** (ketemu 13 Sep 2026: `onFocus` inline di `<input>` pada halaman tanpa `"use client"` di `/t/[id]/anggota`), errornya baru muncul di runtime browser ("Event handlers cannot be passed to Client Component props"), bukan di build. Sebelum bilang halaman baru/diedit sudah beres, grep dulu file itu untuk `onClick|onChange|onFocus|onSubmit|onBlur` dkk. dan pastikan file itu punya `"use client"` di baris pertama kalau memang butuh, kalau tidak, pindahkan interaktivitas itu ke komponen client terpisah.
 
+## Dua jebakan Cloudflare Workers yang sudah pernah menjatuhkan produksi (13 Sep 2026)
+
+**1101, Prisma client tidak boleh singleton modul.** Modul hidup lebih lama dari
+satu request di sebuah isolate, sedangkan koneksi WebSocket Neon yang dibuka
+request sebelumnya haram dipakai request berikutnya. Gejalanya di log Worker:
+"Cannot perform I/O on behalf of a different request", "Connection terminated",
+lalu "code had hung and would never generate a response". Request pertama di
+isolate baru selalu lolos, jadi bugnya terasa acak dan tidak muncul di curl
+sekali jalan. `src/lib/prisma.ts` sekarang membuat client per request lewat
+`cache()` React. Jangan dikembalikan jadi singleton.
+
+**1102, jangan render gambar saat request.** Ikon PWA dulu dibuat `next/og`
+(`/pwa-icon/192`, `/pwa-icon/512`, `apple-icon.tsx`) dan memakan 777 sampai 888
+ms CPU per request. Satu kali buka halaman dari HP mengambil beberapa ikon
+sekaligus, isolate kena batas CPU, dan invocation lain yang tidak bersalah ikut
+mati. Ikon sekarang PNG statis di `/public`. Halaman biasa setelah panas cuma 4
+sampai 17 ms CPU, jadi kalau ada angka ratusan ms, curigai rendering runtime.
+
+**ChunkLoadError plus 404 di /_next/static, service worker jangan cache-first.**
+`public/sw.js` versi awal menyimpan "/" di cache bernama tetap dan melayani semua
+request cache-first. Nama file chunk berubah tiap deploy, jadi shell lama yang
+tersimpan terus meminta chunk yang sudah dihapus dan landing page mati permanen,
+tidak sembuh dengan reload biasa. Sekarang navigasi selalu network-first, cache
+cuma cadangan offline untuk "/", dan cache versi lama dibuang saat activate.
+Halaman selain "/" sengaja tidak pernah disimpan karena isinya data tenant privat.
+
+Cara membaca lognya: `observability` sudah aktif di `wrangler.jsonc`, dan
+`npx wrangler tail --format json` menampilkan `cpuTime`, `outcome`, serta
+exception per request.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

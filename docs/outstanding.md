@@ -38,7 +38,28 @@ Sisa yang perlu perhatian:
       Coba sekali lagi dari tab baru; kalau masih muncul, ambil log dengan
       `npx wrangler tail` saat login berlangsung.
 
-## 2. Trakteer
+## 2. Insiden produksi 13 Sep 2026 (sudah diperbaiki, disimpan sebagai catatan)
+
+- Error 1101 di semua device: Prisma client masih singleton modul, koneksi Neon
+  dipakai lintas request. Diperbaiki dengan client per request (`cache()` React)
+  di `src/lib/prisma.ts`. Diuji A/B di workerd lokal: kode lama gagal di request
+  kedua, kode baru enam kali berturut-turut sukses.
+- Error 1102 (CPU habis): ikon PWA dirender `next/og` saat request, 777 sampai
+  888 ms CPU per ikon, dan menjatuhkan invocation lain di isolate yang sama.
+  Ikon sekarang PNG statis di `/public`. Sesudah perbaikan, halaman panas 4
+  sampai 17 ms CPU.
+- ChunkLoadError plus 404 beruntun di `/_next/static/`: `public/sw.js` melayani
+  semua request cache-first dan menyimpan "/" di cache bernama tetap, jadi landing
+  page terkunci ke build lama yang chunknya sudah tidak ada. Sekarang network-first
+  untuk navigasi, cache lama dibuang saat activate. Diuji A/B dengan Playwright
+  plus server tiruan: SW lama tetap menampilkan build v1 sesudah deploy, SW baru
+  pindah ke v2.
+- [ ] Kalau 1102 muncul lagi di halaman biasa (bukan gambar), curigai batas CPU
+      plan Workers. Pastikan akun Cloudflare ini memang Workers Paid. Catatan 13 Sep
+      2026: `/dashboard` terukur 45 ms CPU dengan outcome `ok` di produksi, jadi
+      batas 10 ms ala Free plan jelas tidak berlaku di akun ini.
+
+## 3. Trakteer
 
 - Slug dipakai `brokado` (satu akun Trakteer dengan Brokado, unit "Traktir Kopi
   Brokado"). `NEXT_PUBLIC_TRAKTEER_SLUG=brokado` sudah diisi di `.env.production`,
@@ -54,7 +75,7 @@ Sisa yang perlu perhatian:
 - [ ] Klik tombol "Tarik dari Trakteer" sekali sebagai uji nyata. Pencatatan ke DB
       belum pernah dijalankan end to end, baru bentuk respons APInya yang dicocokkan.
 
-## 3. Xendit (Fase 5, bayar setoran tabungan otomatis)
+## 4. Xendit (Fase 5, bayar setoran tabungan otomatis)
 
 - [ ] `XENDIT_API_KEY` dan `XENDIT_CALLBACK_TOKEN` di `.env.development` dan
       `.env.production` masih placeholder. Tombol "Bayar via Xendit" baru muncul kalau
@@ -68,7 +89,7 @@ Sisa yang perlu perhatian:
       dicatat pengurus langsung (tidak ada alur bayar dari anggota), dan Arisan belum
       punya ledger setoran per giliran sama sekali. Perlu didesain dulu kalau mau.
 
-## 4. Keputusan bisnis (spec §7, open questions, belum pernah dijawab)
+## 5. Keputusan bisnis (spec §7, open questions, belum pernah dijawab)
 
 - [ ] Mekanisme billing untuk fitur berbayar (upload bukti transfer sudah aktif gratis
       untuk sekarang; payment gateway otomatis untuk tenant-paying-platform belum ada
@@ -81,14 +102,14 @@ Sisa yang perlu perhatian:
 - [ ] Retensi/limit data untuk tenant yang di-suspend atau tidak aktif: dihapus setelah
       berapa lama, atau disimpan selamanya?
 
-## 5. SEO / Analytics (Fase 2 §8, kodenya sudah ada tinggal isi env)
+## 6. SEO / Analytics (Fase 2 §8, kodenya sudah ada tinggal isi env)
 
 - [ ] `GOOGLE_SITE_VERIFICATION`: kode verifikasi HTML tag dari Google Search Console.
       Belum ada di `.env.production`, jadi meta verifikasinya tidak ikut ter-build.
 - [ ] `NEXT_PUBLIC_GA_MEASUREMENT_ID`: measurement ID dari Google Analytics (GA4).
       Sama, belum ada di `.env.production` dan belum dioper di workflow CI.
 
-## 6. Utang teknis kecil
+## 7. Utang teknis kecil
 
 - [ ] Dua migrasi lama (`20260913110540_tabungan_setoran_xendit` dan
       `20260913125656_arisan_undian_kegiatan_trakteer`) pernah diubah setelah
