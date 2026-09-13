@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { AppHeader } from "@/components/app-header";
+import { waShareUrl } from "@/lib/whatsapp";
 import { createTenantAction } from "./actions";
 
 const JENIS_LABEL = { keluarga: "Keluarga", rt: "RT", paguyuban: "Paguyuban" } as const;
@@ -13,11 +14,22 @@ export default async function DashboardPage() {
     include: { tenant: { include: { profile: true } } },
     orderBy: { createdAt: "desc" },
   });
+  const base = process.env.NEXT_PUBLIC_URL ?? "";
+  const ajakText = `Yuk kelola kas & tabungan keluarga/RT/paguyuban kita di Guyub: ${base}/cari`;
 
   return (
     <main className="min-h-screen">
       <AppHeader email={user.email} />
       <div className="mx-auto max-w-lg space-y-6 p-4">
+        <a
+          href={waShareUrl(ajakText)}
+          target="_blank"
+          rel="noreferrer"
+          className="block rounded-md border border-primary/30 p-3 text-center text-sm font-medium text-emerald-700"
+        >
+          Ajak Orang Lain Pakai Guyub via WhatsApp
+        </a>
+
         <section>
           <h1 className="mb-2 text-lg font-semibold">Tenant Anda</h1>
           {memberships.length === 0 && <p className="text-sm text-foreground/60">Belum tergabung di tenant manapun.</p>}

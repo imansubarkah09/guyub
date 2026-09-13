@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_KELOLA_ANGGOTA, CAN_CONFIRM_ANGGOTA } from "@/lib/authz";
+import { waShareUrl } from "@/lib/whatsapp";
 import { generateInviteAction, revokeInviteAction, confirmMemberAction, updateRolesAction } from "./actions";
 
 const ALL_ROLES = ["ketua", "bendahara", "sekretaris", "anggota"] as const;
@@ -9,10 +10,11 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
   const { tenantId } = await params;
   const user = await requireUser();
 
-  const [me, memberships, invitations] = await Promise.all([
+  const [me, memberships, invitations, tenant] = await Promise.all([
     prisma.membership.findUniqueOrThrow({ where: { userId_tenantId: { userId: user.id, tenantId } } }),
     prisma.membership.findMany({ where: { tenantId, status: { not: "removed" } }, include: { user: true }, orderBy: { createdAt: "asc" } }),
     prisma.invitation.findMany({ where: { tenantId, status: "active" }, orderBy: { createdAt: "desc" } }),
+    prisma.tenantProfile.findUniqueOrThrow({ where: { tenantId } }),
   ]);
 
   const canKelola = me.roles.some((r) => CAN_KELOLA_ANGGOTA.includes(r));
@@ -32,16 +34,23 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
           </form>
           <p className="mb-2 text-xs text-foreground/60">Sebar link ini sendiri lewat WhatsApp — jangan ditempel di tempat publik.</p>
           <ul className="space-y-2">
-            {invitations.map((inv) => (
-              <li key={inv.id} className="flex items-center gap-2 text-xs">
-                <input readOnly value={`${base}/invite/${inv.token}`} className="flex-1 rounded border border-primary/30 p-1" onFocus={(e) => e.currentTarget.select()} />
-                <form action={revokeInviteAction}>
-                  <input type="hidden" name="tenantId" value={tenantId} />
-                  <input type="hidden" name="invitationId" value={inv.id} />
-                  <button className="rounded border border-primary/30 px-2 py-1">Cabut</button>
-                </form>
-              </li>
-            ))}
+            {invitations.map((inv) => {
+              const url = `${base}/invite/${inv.token}`;
+              const waText = `Anda diundang bergabung ke ${tenant.nama} di Guyub, klik link ini untuk gabung: ${url}`;
+              return (
+                <li key={inv.id} className="flex flex-wrap items-center gap-2 text-xs">
+                  <input readOnly value={url} className="flex-1 rounded border border-primary/30 p-1" onFocus={(e) => e.currentTarget.select()} />
+                  <a href={waShareUrl(waText)} target="_blank" rel="noreferrer" className="rounded border border-primary/30 px-2 py-1 text-emerald-700">
+                    Bagikan ke WhatsApp
+                  </a>
+                  <form action={revokeInviteAction}>
+                    <input type="hidden" name="tenantId" value={tenantId} />
+                    <input type="hidden" name="invitationId" value={inv.id} />
+                    <button className="rounded border border-primary/30 px-2 py-1">Cabut</button>
+                  </form>
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}

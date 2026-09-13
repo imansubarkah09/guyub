@@ -39,6 +39,40 @@ docs/arisan-app-spec.md   # spec fungsional lengkap
 references/app/           # source code schoolcommunity.space (referensi, read-only)
 ```
 
+## Login Google — WAJIB lewat tunnel, bukan raw port (ketemu 13 Sep 2026)
+
+`NEXTAUTH_URL`/`BETTER_AUTH_URL` di `.env.development` dipatok ke
+`https://dev.thedreamcompany.space`, jadi better-auth menerbitkan cookie
+state/session dengan flag `Secure`. Browser diam-diam membuang cookie
+`Secure` di koneksi `http://` biasa — jadi login Google asli di
+`http://127.0.0.1:3000` langsung akan **loop balik ke /login terus-menerus**
+(Google sukses, tapi cookie sesi tidak pernah nempel). Ini bukan bug config
+OAuth (redirect URI di Google Console sudah benar untuk kedua origin, sudah
+diverifikasi manual).
+
+**Login Google asli WAJIB dites di `https://dev.thedreamcompany.space`**
+(tunnel harus aktif). `http://127.0.0.1:3000` tetap dipakai untuk dev
+server (sesuai baris di atas) dan cocok untuk cek route/UI yang tidak butuh
+sesi asli, tapi bukan untuk uji login Google end-to-end. Pola yang sama
+persis ada di `references/app/school-community` — makanya proyek itu punya
+skill dev-login terpisah (suntik cookie sesi palsu) khusus untuk tes di raw
+port, bukan login Google asli.
+
+## Verifikasi sebelum klaim "sudah bisa dicoba" (instruksi Iman, 13 Sep 2026)
+
+Sebelum bilang suatu fitur "sudah jalan, bisa dicoba", verifikasi dulu
+sungguhan — jangan cuma modal build/lint hijau:
+- Kalau ada Claude in Chrome tersambung di sesi ini: pakai itu untuk klik
+  langsung alurnya di browser sebelum melapor selesai.
+- Login Google ASLI tidak bisa diotomasi dari sisi Claude (Google memblokir
+  login otomatis/headless, dan Claude tidak pegang password/2FA Iman) —
+  batas ini harus disebutkan eksplisit, jangan pura-pura sudah diverifikasi
+  penuh kalau sebenarnya cuma dicek sampai halaman consent Google muncul.
+- Kalau Claude in Chrome belum tersambung, verifikasi manual pakai
+  `curl -i` terhadap endpoint yang relevan (redirect, cookie flags, status
+  code) dan sebutkan dengan jelas mana yang sudah diverifikasi otomatis vs
+  mana yang masih butuh Iman coba sendiri di browser.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

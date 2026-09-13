@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
-import { InviteSignInButton } from "./sign-in-button";
+import { GoogleSignInButton } from "@/components/google-sign-in-button";
 
 export default async function InvitePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -18,7 +18,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
     return (
       <Shell>
         <p className="mb-4">Anda diundang bergabung ke <strong>{invitation.tenant.profile?.nama}</strong>.</p>
-        <InviteSignInButton callbackURL={`/invite/${token}`} />
+        <GoogleSignInButton callbackURL={`/invite/${token}`} label="Masuk dengan Google untuk bergabung" />
       </Shell>
     );
   }
