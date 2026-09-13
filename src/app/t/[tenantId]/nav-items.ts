@@ -20,6 +20,8 @@ export type NavItem = {
   icon: LucideIcon;
   /** Tampil di bottom bar mobile (§4: 4-5 menu tersering), sisanya masuk "Lainnya". */
   primary?: boolean;
+  /** Label pendek khusus bottom bar mobile (ruangnya sempit). */
+  short?: string;
   /** Hanya untuk role tertentu — saat ini cuma Profil Tenant (ketua). */
   ketuaOnly?: boolean;
 };
@@ -42,7 +44,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Arisan",
     items: [
-      { href: "/arisan", label: "Status Bayar & Saldo", icon: CircleDollarSign, primary: true },
+      { href: "/arisan", label: "Status Bayar & Saldo", icon: CircleDollarSign, primary: true, short: "Arisan" },
       { href: "/arisan/jadwal", label: "Jadwal Pertemuan", icon: CalendarDays },
     ],
   },

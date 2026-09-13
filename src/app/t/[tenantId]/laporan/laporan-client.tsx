@@ -76,7 +76,10 @@ export function LaporanTabs({
     setBusy(true);
     try {
       const doc = await buatPdf(true);
-      const link = await createLaporanAction(tenantId, periode, doc.output("datauristring"));
+      // jsPDF menyisipkan `;filename=generated.pdf` di data URI, dan Cloudinary
+      // menolaknya ("Unsupported source URL") — dibuang dulu sebelum diunggah.
+      const dataUri = doc.output("datauristring").replace(/;filename=[^;]*/, "");
+      const link = await createLaporanAction(tenantId, periode, dataUri);
       setPublishedLink(`${baseUrl}/laporan/${link}`);
     } finally {
       setBusy(false);

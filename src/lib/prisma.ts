@@ -2,10 +2,9 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 
 /**
- * Cloudflare Workers has no raw TCP sockets, so Prisma's default engine
- * can't open a normal Postgres connection there — the Neon driver adapter
- * talks to Neon over HTTP/WebSocket instead. Same adapter works locally too,
- * so there's one code path for dev and Workers.
+ * Cloudflare Workers tidak punya TCP socket mentah, jadi Prisma memakai driver
+ * adapter Neon (HTTP/WebSocket), bukan engine bawaan. Adapter yang sama dipakai
+ * di lokal supaya dev dan produksi menempuh jalur kode yang sama.
  */
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
 

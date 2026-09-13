@@ -1,4 +1,5 @@
 import { HandCoins } from "lucide-react";
+import { HewanIcon } from "@/components/hewan";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_CATAT_UANG, has } from "@/lib/authz";
@@ -54,7 +55,7 @@ export default async function QurbanPage({ params }: { params: Promise<{ tenantI
           tone="success"
           sub={
             <>
-              🐐 {rekap.kambingLunas} lunas / {rekap.kambingTerbuka} terbuka · 🐄 {rekap.sapiLunas} lunas / {rekap.sapiTerbuka} terbuka
+              Kambing {rekap.kambingLunas} lunas / {rekap.kambingTerbuka} terbuka · Sapi {rekap.sapiLunas} lunas / {rekap.sapiTerbuka} terbuka
               {rekap.jiwaSapiTotal > 0 && ` · jiwa sapi ${rekap.jiwaSapiTerisi}/${rekap.jiwaSapiTotal}`}
             </>
           }
@@ -67,8 +68,8 @@ export default async function QurbanPage({ params }: { params: Promise<{ tenantI
           <form action={createQurbanGroupAction} className="space-y-2">
             <input type="hidden" name="tenantId" value={tenantId} />
             <select name="jenisHewan" required className={inputClass}>
-              <option value="sapi">🐄 Sapi (7 jiwa)</option>
-              <option value="kambing">🐐 Kambing (1 jiwa)</option>
+              <option value="sapi">Sapi (7 jiwa)</option>
+              <option value="kambing">Kambing (1 jiwa)</option>
             </select>
             <input type="number" name="targetPerJiwa" min="0" step="1" required placeholder="Target per jiwa (Rp)" className={inputClass} />
             <button type="submit" className={`${btnPrimary} w-full`}>
@@ -94,8 +95,8 @@ export default async function QurbanPage({ params }: { params: Promise<{ tenantI
               <Card key={g.id}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="font-medium">
-                      {g.jenisHewan === "sapi" ? "🐄" : "🐐"} Qurban {g.jenisHewan}
+                    <p className="flex items-center gap-1.5 font-medium">
+                      <HewanIcon jenis={g.jenisHewan} className="h-5 w-5 text-primary" /> Qurban {g.jenisHewan}
                     </p>
                     <p className="text-xs text-muted">Target {rupiah.format(Number(g.targetPerJiwa))} / jiwa</p>
                   </div>

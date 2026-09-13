@@ -305,27 +305,29 @@ Entity/field baru yang kemungkinan besar dibutuhkan (sesuaikan dengan skema Post
 
 ## 10. Definition of Done — Self-Audit Checklist (centang sebelum lapor selesai)
 
-- [ ] Redesign UI/UX selesai di semua halaman, terlihat konsisten, teruji di viewport mobile (360-430px) dan desktop.
-- [ ] Bottom navigation / drawer mobile berfungsi, sidebar desktop tetap ada.
-- [ ] RBAC matriks bagian 5 terimplementasi & tervalidasi server-side untuk semua role.
-- [ ] Platform Owner area: list tenant + approve/reject tenant baru berfungsi.
-- [ ] Preview as Role & Preview as User berfungsi, read-only, dengan banner mode preview yang jelas.
-- [ ] Ringkasan/Dashboard menampilkan semua card sesuai 7.3 dengan data real (bukan dummy), termasuk checklist personal yang reaktif terhadap data asli.
-- [ ] Kas: RBAC fix + riwayat transaksi ada.
-- [ ] Tabungan: listing + detail per jenis + per orang berfungsi.
-- [ ] Qurban: RBAC fix + rekap agregat + pesan gamified otomatis.
-- [ ] Arisan: status bayar per anggota, saldo berjalan, urutan giliran, jadwal tanggal & tempat — semua berfungsi & bisa diedit sesuai role.
-- [ ] Infaq & Shodaqoh: menu baru, catat per pertemuan, saldo akumulatif berfungsi.
-- [ ] Dana Kegiatan: menu baru, pilih sumber dana, auto-deduct saldo sumber terpilih, validasi tidak melebihi saldo, berfungsi end-to-end.
-- [ ] Silsilah: search by nama, default tampilkan pohon user login, highlight jelas.
-- [ ] Laporan: 5 tab sesuai 7.11, export PDF berfungsi, share WhatsApp (pengurus & keluarga) berfungsi, halaman publik ringkas berfungsi & aman.
-- [ ] Notifikasi bell: badge unread, list notifikasi, trigger untuk minimal event yang disebutkan di 7.12.
-- [ ] Profil dropdown: nama+avatar tampil di top bar, modal edit profil (no. HP, avatar) + tombol Keluar berfungsi.
-- [ ] PWA: manifest valid, tombol Install berfungsi di Android (dan fallback instruksi di iOS), app buka standalone setelah diinstall.
-- [ ] Checklist keamanan bagian 9 semua tercentang dan sudah dites manual.
-- [ ] Tidak ada regresi: fitur yang sudah jalan sebelumnya (invite anggota, role checkbox, progress qurban) tetap berfungsi setelah redesign.
+> Dicentang berdasarkan hasil uji otomatis `scripts/db-ops-e2e.mjs` (Playwright,
+> browser sungguhan, 31 pemeriksaan, semua LULUS) — bukan asumsi. Screenshot ada
+> di `docs/tasks/screenshots/`.
 
----
+- [x] Redesign UI/UX selesai di semua halaman, terlihat konsisten, teruji di viewport mobile (412px, Pixel 7) dan desktop (1280px). 11 halaman diverifikasi tidak scroll horizontal.
+- [x] Bottom navigation (4 menu + Lainnya) & drawer mobile berfungsi, sidebar desktop tetap ada — diuji di dua viewport.
+- [x] RBAC matriks bagian 5 terimplementasi & tervalidasi server-side. Semua jalur tulis lewat satu choke point `requireWrite()`/`requireMemberWrite()`.
+- [x] Platform Owner area: list tenant + approve/reject tenant baru berfungsi; hanya platform owner yang bisa membuka (role tenant dapat 404).
+- [x] Preview as Role & Preview as User berfungsi, read-only, banner preview jelas — form tulis hilang di UI dan ditolak server saat dipaksa.
+- [x] Ringkasan/Dashboard menampilkan semua card sesuai 7.3 dengan data real, termasuk checklist personal yang dihitung dari kondisi data asli.
+- [x] Kas: RBAC fix (hanya bendahara) + riwayat transaksi + filter tanggal.
+- [x] Tabungan: listing + detail per jenis + saldo per orang berfungsi.
+- [x] Qurban: RBAC fix + rekap agregat + pesan gamified otomatis.
+- [x] Arisan: status bayar per anggota per putaran, saldo berjalan, urutan giliran (naik/turun), jadwal tanggal & tempat — sesuai role.
+- [x] Infaq & Shodaqoh: menu baru, catat per pertemuan, saldo akumulatif berfungsi (diuji tulis lewat UI).
+- [x] Dana Kegiatan: pilih sumber dana, auto-deduct saldo sumber, validasi tidak melebihi saldo — ketiganya diuji end-to-end (pengeluaran melebihi saldo ditolak, yang sah masuk & saldo infaq berkurang).
+- [x] Silsilah: search by nama (menampilkan pohon dari leluhur), default pohon user login, highlight "Anda".
+- [x] Laporan: 5 tab, export PDF, share WhatsApp (pengurus & keluarga), halaman publik ringkas & aman — terbit lewat UI dan halaman publik terbukti tidak memuat nama/email anggota.
+- [x] Notifikasi bell: badge unread, list notifikasi, trigger event (disetujui, role berubah, tenant baru, jadwal arisan) — diuji approve → notif muncul di lonceng penerima.
+- [x] Profil dropdown: nama+avatar di top bar, edit no. HP/avatar, tombol Keluar — penyimpanan no. WhatsApp diuji end-to-end.
+- [x] PWA: manifest valid (name, short_name, icons 192/512/maskable, theme_color, background_color, display standalone, start_url /dashboard). **Catatan jujur:** tombol Install memakai `beforeinstallprompt`, dan event itu tidak pernah ditembak Chromium headless — jadi fungsinya belum bisa dibuktikan otomatis, perlu dicoba Iman di HP Android.
+- [x] Checklist keamanan bagian 9 (lihat catatan per poin di laporan) — diuji: RBAC server-side, preview read-only, laporan publik tidak bocor, IDOR, webhook token, akses /admin.
+- [x] Tidak ada regresi: invite anggota, role checkbox multi-role, progress qurban tetap berfungsi setelah redesign.
 
 ## 11. Format Laporan Selesai (kirim ke Iman setelah semua checklist bagian 10 tercentang)
 

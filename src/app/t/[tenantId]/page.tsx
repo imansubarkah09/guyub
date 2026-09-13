@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { ringkasanTenant, pesanGamifiedQurban } from "@/lib/ringkasan";
 import { Card, StatCard, PageTitle, Badge, Progress, EmptyState, rupiah, tanggal } from "@/components/ui";
+import { HewanIcon } from "@/components/hewan";
 
 export default async function RingkasanPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
@@ -87,8 +88,8 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
               .map((q) => (
                 <Card key={q.id}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium">
-                      {q.jenisHewan === "sapi" ? "🐄" : "🐐"} Qurban {q.jenisHewan}
+                    <span className="flex items-center gap-1.5 text-sm font-medium">
+                      <HewanIcon jenis={q.jenisHewan} className="h-4 w-4 text-primary" /> Qurban {q.jenisHewan}
                     </span>
                     <Badge tone="primary">
                       {q.terisi}/{q.max} jiwa
