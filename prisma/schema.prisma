@@ -249,10 +249,17 @@ model TabunganSaldo {
 /// Fase 4 (§5) — anggota mengajukan setoran transfer + foto bukti; baru menambah
 /// TabunganSaldo setelah bendahara/ketua memvalidasi (beda dari setor langsung di
 /// TabunganTipe yang dicatat pengurus sendiri untuk uang tunai, tidak perlu bukti).
+/// Fase 5 — metode `xendit`: bukti foto tidak perlu, validasi otomatis lewat
+/// webhook Xendit (bukan bendahara) saat invoice-nya lunas.
 enum SetoranStatus {
   pending
   valid
   ditolak
+}
+
+enum SetoranMetode {
+  manual
+  xendit
 }
 
 model TabunganSetoran {
@@ -262,11 +269,15 @@ model TabunganSetoran {
   user              User          @relation("SetoranDiajukanOleh", fields: [userId], references: [id])
   userId            String
   jumlah            Decimal       @db.Decimal(14, 2)
-  buktiUrl          String
+  metode            SetoranMetode @default(manual)
+  /// Wajib untuk metode `manual`, kosong untuk `xendit`.
+  buktiUrl          String?
   status            SetoranStatus @default(pending)
   catatanBendahara  String?
   divalidasiOleh    User?         @relation("SetoranDivalidasiOleh", fields: [divalidasiOlehId], references: [id])
   divalidasiOlehId  String?
+  xenditInvoiceId   String?       @unique
+  xenditInvoiceUrl  String?
   createdAt         DateTime      @default(now())
 
   @@index([tabunganTipeId, status])

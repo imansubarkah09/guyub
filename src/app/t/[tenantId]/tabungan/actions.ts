@@ -1,29 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requireMembership, CAN_KELOLA_TABUNGAN } from "@/lib/authz";
 import { uploadImage } from "@/lib/upload";
+import { creditSaldo } from "@/lib/tabungan";
+import { createXenditInvoice } from "@/lib/xendit";
 import type { TabunganMode } from "@prisma/client";
-
-async function creditSaldo(tabunganTipeId: string, mode: TabunganMode, targetUserId: string | null, jumlah: number) {
-  if (mode === "pooled") {
-    const existing = await prisma.tabunganSaldo.findFirst({ where: { tabunganTipeId, userId: null } });
-    if (existing) {
-      await prisma.tabunganSaldo.update({ where: { id: existing.id }, data: { jumlah: { increment: jumlah } } });
-    } else {
-      await prisma.tabunganSaldo.create({ data: { tabunganTipeId, userId: null, jumlah } });
-    }
-  } else {
-    if (!targetUserId) throw new Error("Anggota tujuan wajib diisi untuk tabungan individual");
-    await prisma.tabunganSaldo.upsert({
-      where: { tabunganTipeId_userId: { tabunganTipeId, userId: targetUserId } },
-      update: { jumlah: { increment: jumlah } },
-      create: { tabunganTipeId, userId: targetUserId, jumlah },
-    });
-  }
-}
 
 export async function createTabunganTipeAction(formData: FormData) {
   const user = await requireUser();
@@ -77,6 +62,36 @@ export async function submitSetoranBuktiAction(formData: FormData) {
   revalidatePath(`/t/${tenantId}/tabungan`);
 }
 
+/** Fase 5 (§8) — bayar langsung lewat Xendit, tervalidasi otomatis oleh webhook saat invoice lunas (lihat api/webhooks/xendit). */
+export async function submitSetoranXenditAction(formData: FormData) {
+  const user = await requireUser();
+  const tenantId = String(formData.get("tenantId"));
+  await requireMembership(user.id, tenantId);
+
+  const tabunganTipeId = String(formData.get("tabunganTipeId"));
+  const jumlah = Number(formData.get("jumlah"));
+  if (!jumlah || jumlah <= 0) throw new Error("Jumlah setoran wajib lebih dari 0");
+
+  const tipe = await prisma.tabunganTipe.findUniqueOrThrow({ where: { id: tabunganTipeId } });
+  if (tipe.tenantId !== tenantId) throw new Error("Tipe tabungan tidak ditemukan di tenant ini");
+
+  const setoran = await prisma.tabunganSetoran.create({ data: { tabunganTipeId, userId: user.id, jumlah, metode: "xendit" } });
+  const base = process.env.NEXT_PUBLIC_URL ?? "";
+  const invoice = await createXenditInvoice({
+    externalId: setoran.id,
+    amount: jumlah,
+    payerEmail: user.email,
+    description: `Setoran ${tipe.nama}`,
+    successRedirectUrl: `${base}/t/${tenantId}/tabungan`,
+  });
+  await prisma.tabunganSetoran.update({
+    where: { id: setoran.id },
+    data: { xenditInvoiceId: invoice.id, xenditInvoiceUrl: invoice.invoice_url },
+  });
+
+  redirect(invoice.invoice_url);
+}
+
 export async function validasiSetoranAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
@@ -89,6 +104,7 @@ export async function validasiSetoranAction(formData: FormData) {
   const setoran = await prisma.tabunganSetoran.findUniqueOrThrow({ where: { id: setoranId }, include: { tabunganTipe: true } });
   if (setoran.tabunganTipe.tenantId !== tenantId) throw new Error("Setoran tidak ditemukan di tenant ini");
   if (setoran.status !== "pending") throw new Error("Setoran ini sudah diproses");
+  if (setoran.metode === "xendit") throw new Error("Setoran Xendit tervalidasi otomatis, tidak divalidasi manual");
 
   if (decision === "valid") {
     await creditSaldo(setoran.tabunganTipeId, setoran.tabunganTipe.mode, setoran.userId, Number(setoran.jumlah));

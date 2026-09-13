@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_KELOLA_TABUNGAN } from "@/lib/authz";
-import { createTabunganTipeAction, setorAction, submitSetoranBuktiAction, validasiSetoranAction } from "./actions";
+import { createTabunganTipeAction, setorAction, submitSetoranBuktiAction, submitSetoranXenditAction, validasiSetoranAction } from "./actions";
 
 const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
+const XENDIT_READY = Boolean(process.env.XENDIT_API_KEY) && process.env.XENDIT_API_KEY !== "your_xendit_api_key_here";
 
 export default async function TabunganPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
@@ -12,8 +13,10 @@ export default async function TabunganPage({ params }: { params: Promise<{ tenan
     prisma.membership.findUniqueOrThrow({ where: { userId_tenantId: { userId: user.id, tenantId } } }),
     prisma.tabunganTipe.findMany({ where: { tenantId }, include: { saldo: { include: { user: true } } }, orderBy: { nama: "asc" } }),
     prisma.membership.findMany({ where: { tenantId, status: "active" }, include: { user: true } }),
+    // Xendit setoran self-validate via webhook — showing them here would let a
+    // bendahara double-credit one that's just mid-payment.
     prisma.tabunganSetoran.findMany({
-      where: { status: "pending", tabunganTipe: { tenantId } },
+      where: { status: "pending", metode: "manual", tabunganTipe: { tenantId } },
       include: { user: true, tabunganTipe: true },
       orderBy: { createdAt: "asc" },
     }),
@@ -32,9 +35,11 @@ export default async function TabunganPage({ params }: { params: Promise<{ tenan
                 <p>
                   {s.user.name} · {s.tabunganTipe.nama} · {rupiah.format(Number(s.jumlah))}
                 </p>
-                <a href={s.buktiUrl} target="_blank" rel="noreferrer" className="text-xs text-primary underline">
-                  Lihat bukti transfer
-                </a>
+                {s.buktiUrl && (
+                  <a href={s.buktiUrl} target="_blank" rel="noreferrer" className="text-xs text-primary underline">
+                    Lihat bukti transfer
+                  </a>
+                )}
                 <form action={validasiSetoranAction} className="mt-1 flex gap-2">
                   <input type="hidden" name="tenantId" value={tenantId} />
                   <input type="hidden" name="setoranId" value={s.id} />
@@ -107,10 +112,19 @@ export default async function TabunganPage({ params }: { params: Promise<{ tenan
               </form>
             )}
 
+            {XENDIT_READY && (
+              <form action={submitSetoranXenditAction} className="mt-2 flex flex-col gap-2 border-t border-primary/10 pt-2 min-[400px]:flex-row">
+                <input type="hidden" name="tenantId" value={tenantId} />
+                <input type="hidden" name="tabunganTipeId" value={tipe.id} />
+                <input type="number" name="jumlah" min="1" step="1" required placeholder="Bayar langsung (Rp)" className="flex-1 rounded-md border border-primary/30 p-1.5 text-xs" />
+                <button className="rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground">Bayar via Xendit</button>
+              </form>
+            )}
+
             <form action={submitSetoranBuktiAction} className="mt-2 space-y-1 border-t border-primary/10 pt-2" encType="multipart/form-data">
               <input type="hidden" name="tenantId" value={tenantId} />
               <input type="hidden" name="tabunganTipeId" value={tipe.id} />
-              <p className="text-xs text-foreground/60">Sudah transfer? Ajukan setoran dengan bukti untuk divalidasi bendahara.</p>
+              <p className="text-xs text-foreground/60">Sudah transfer manual? Ajukan setoran dengan bukti untuk divalidasi bendahara.</p>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
                 <input type="number" name="jumlah" min="1" step="1" required placeholder="Jumlah transfer (Rp)" className="flex-1 rounded-md border border-primary/30 p-1.5 text-xs" />
                 <input type="file" name="bukti" accept="image/*" required className="flex-1 text-xs" />
