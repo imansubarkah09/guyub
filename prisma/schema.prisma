@@ -8,6 +8,13 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator clientWorkerd {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma-workerd"
+  runtime      = "workerd"
+  moduleFormat = "esm"
+}
+
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
@@ -143,6 +150,10 @@ model TenantProfile {
 
 enum Role {
   ketua
+  /// Tangan kanan ketua: izinnya sama persis dengan ketua. Kalau sebuah tenant
+  /// tidak punya wakil ketua, ketua sendiri yang memegang perannya, jadi tidak
+  /// ada yang perlu diisi.
+  wakil_ketua
   bendahara
   sekretaris
   anggota

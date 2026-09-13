@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { getPreview } from "@/lib/preview";
+import { KETUA } from "@/lib/authz";
 import { Card } from "@/components/ui";
 import { TenantShell } from "./tenant-shell";
 
@@ -83,7 +84,7 @@ export default async function TenantLayout({
         createdAt: n.createdAt.toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }),
       }))}
       unread={unread}
-      isKetua={roles.includes("ketua")}
+      isKetua={roles.some((r) => KETUA.includes(r))}
       previewLabel={previewLabel}
     >
       {children}

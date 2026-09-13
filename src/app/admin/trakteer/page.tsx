@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/session";
 import { requirePlatformOwner } from "@/lib/authz";
 import { RUPIAH_PER_HARI, sisaHari } from "@/lib/trakteer";
 import { Card, PageTitle, EmptyState, Badge, StatCard, btnPrimary, btnGhost, inputClass, rupiah, tanggal } from "@/components/ui";
-import { tautkanDonasiAction } from "./actions";
+import { tautkanDonasiAction, tarikDonasiAction } from "./actions";
 
 export default async function AdminTrakteerPage() {
   const user = await requireUser();
@@ -27,9 +27,14 @@ export default async function AdminTrakteerPage() {
         title="Monitor Trakteer"
         desc={`Rp${RUPIAH_PER_HARI.toLocaleString("id-ID")} = 1 hari masa aktif`}
         action={
-          <a href="/admin" className={btnGhost}>
-            Kembali
-          </a>
+          <span className="flex gap-2">
+            <form action={tarikDonasiAction}>
+              <button className={btnPrimary}>Tarik dari Trakteer</button>
+            </form>
+            <a href="/admin" className={btnGhost}>
+              Kembali
+            </a>
+          </span>
         }
       />
 

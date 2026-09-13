@@ -39,6 +39,14 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Skema DB produksi ikut naik di sini, supaya "push ke main" = deploy utuh.
+      # directUrl sengaja diarahkan ke URL pooled: endpoint direct Neon prod
+      # (ep-autumn-art-…, tanpa -pooler) tidak bisa dihubungi, yang pooled jalan.
+      - name: Migrasi database produksi
+        run: pnpm exec prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL }}
       - name: Build for Cloudflare
         run: pnpm cf:build
         env:
@@ -46,6 +54,9 @@ jobs:
           DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
           NEXTAUTH_URL: https://guyub.thedreamcompany.space
+          # NEXT_PUBLIC_* di-inline saat build, jadi wajib ada di sini (bukan rahasia).
+          NEXT_PUBLIC_URL: https://guyub.thedreamcompany.space
+          NEXT_PUBLIC_TRAKTEER_SLUG: brokado
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}

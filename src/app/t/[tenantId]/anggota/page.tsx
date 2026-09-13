@@ -1,13 +1,13 @@
 import { Users, UserPlus, Link2, MessageCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { CAN_KELOLA_ANGGOTA, has } from "@/lib/authz";
+import { CAN_KELOLA_ANGGOTA, ROLE_LABEL, has } from "@/lib/authz";
 import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
 import { waShareUrl } from "@/lib/whatsapp";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, btnGhost, inputClass } from "@/components/ui";
 import { generateInviteAction, revokeInviteAction, confirmMemberAction, updateRolesAction } from "./actions";
 
-const ALL_ROLES = ["ketua", "bendahara", "sekretaris", "anggota"] as const;
+const ALL_ROLES = ["ketua", "wakil_ketua", "bendahara", "sekretaris", "anggota"] as const;
 
 export default async function AnggotaPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
@@ -117,7 +117,7 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
                       {ALL_ROLES.map((role) => (
                         <label key={role} className="flex items-center gap-1 rounded-md border border-border px-2 py-1">
                           <input type="checkbox" name="roles" value={role} defaultChecked={m.roles.includes(role)} />
-                          {role}
+                          {ROLE_LABEL[role]}
                         </label>
                       ))}
                       <button className={`${btnGhost} px-2 py-1 text-xs`}>Simpan</button>

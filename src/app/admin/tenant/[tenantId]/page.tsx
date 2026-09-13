@@ -2,11 +2,11 @@ import { notFound } from "next/navigation";
 import { Eye, UserRound } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { requirePlatformOwner } from "@/lib/authz";
+import { requirePlatformOwner, ROLE_LABEL } from "@/lib/authz";
 import { Card, PageTitle, Badge, btnPrimary, btnGhost, tanggal } from "@/components/ui";
 import { startPreviewAction } from "../../actions";
 
-const ROLES = ["ketua", "bendahara", "sekretaris", "anggota"] as const;
+const ROLES = ["ketua", "wakil_ketua", "bendahara", "sekretaris", "anggota"] as const;
 const JENIS_LABEL = { keluarga: "Keluarga", rt: "RT", paguyuban: "Paguyuban" } as const;
 
 export default async function AdminTenantPage({ params }: { params: Promise<{ tenantId: string }> }) {
@@ -43,7 +43,7 @@ export default async function AdminTenantPage({ params }: { params: Promise<{ te
               <input type="hidden" name="tenantId" value={tenantId} />
               <input type="hidden" name="mode" value="role" />
               <input type="hidden" name="value" value={role} />
-              <button className={btnGhost}>{role}</button>
+              <button className={btnGhost}>{ROLE_LABEL[role]}</button>
             </form>
           ))}
         </div>

@@ -13,7 +13,7 @@ export async function notifyTenant(
   tenantId: string,
   tipe: string,
   pesan: string,
-  opts: { href?: string; roles?: ("ketua" | "bendahara" | "sekretaris" | "anggota")[]; kecuali?: string } = {},
+  opts: { href?: string; roles?: ("ketua" | "wakil_ketua" | "bendahara" | "sekretaris" | "anggota")[]; kecuali?: string } = {},
 ) {
   const members = await prisma.membership.findMany({
     where: { tenantId, status: "active", ...(opts.roles ? { roles: { hasSome: opts.roles } } : {}) },

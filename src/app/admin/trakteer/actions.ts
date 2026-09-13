@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requirePlatformOwner } from "@/lib/authz";
-import { tambahNyawa } from "@/lib/trakteer";
+import { tambahNyawa, tarikDonasi } from "@/lib/trakteer";
 
 /**
  * Donasi yang kode tenantnya tidak terbaca dari pesan Trakteer ditautkan manual
@@ -25,4 +25,18 @@ export async function tautkanDonasiAction(formData: FormData) {
   await tambahNyawa(tenantId, donasi.hariNyawa);
 
   revalidatePath("/admin/trakteer");
+}
+
+/**
+ * Tarik donasi langsung dari API Trakteer. Webhook bisa gagal/terlewat, dan
+ * tombol ini yang jadi jaring pengamannya — aman diklik berulang karena
+ * catatDonasi() idempoten lewat orderId.
+ */
+export async function tarikDonasiAction() {
+  const user = await requireUser();
+  requirePlatformOwner(user);
+
+  const hasil = await tarikDonasi();
+  revalidatePath("/admin/trakteer");
+  if (hasil.error) throw new Error(`Gagal menarik dari Trakteer: ${hasil.error}`);
 }

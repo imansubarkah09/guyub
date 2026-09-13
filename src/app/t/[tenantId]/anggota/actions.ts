@@ -3,11 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { requireWrite, CAN_KELOLA_ANGGOTA } from "@/lib/authz";
+import { requireWrite, CAN_KELOLA_ANGGOTA, KETUA } from "@/lib/authz";
 import { notify } from "@/lib/notifikasi";
 import type { Role } from "@prisma/client";
 
-const ALL_ROLES: Role[] = ["ketua", "bendahara", "sekretaris", "anggota"];
+const ALL_ROLES: Role[] = ["ketua", "wakil_ketua", "bendahara", "sekretaris", "anggota"];
 
 export async function generateInviteAction(formData: FormData) {
   const user = await requireUser();
@@ -57,10 +57,12 @@ export async function updateRolesAction(formData: FormData) {
   const roles = ALL_ROLES.filter((r) => formData.getAll("roles").includes(r));
   if (roles.length === 0) throw new Error("Minimal satu peran harus dipilih");
 
-  // §5: sekretaris boleh mengubah role, kecuali mengangkat DIRINYA SENDIRI jadi ketua.
-  const sayaKetua = me.roles.includes("ketua");
-  if (!sayaKetua && target.userId === user.id && roles.includes("ketua") && !target.roles.includes("ketua")) {
-    throw new Error("Sekretaris tidak bisa mengangkat dirinya sendiri menjadi ketua");
+  // §5: sekretaris boleh mengubah role, kecuali mengangkat DIRINYA SENDIRI jadi
+  // ketua. Wakil ketua ikut dijaga karena izinnya sama persis dengan ketua.
+  const sayaKetua = me.roles.some((r) => KETUA.includes(r));
+  const naikJadiKetua = KETUA.some((r) => roles.includes(r) && !target.roles.includes(r));
+  if (!sayaKetua && target.userId === user.id && naikJadiKetua) {
+    throw new Error("Sekretaris tidak bisa mengangkat dirinya sendiri menjadi ketua atau wakil ketua");
   }
 
   await prisma.membership.update({ where: { id: membershipId }, data: { roles } });

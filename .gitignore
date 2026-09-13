@@ -33,3 +33,10 @@ next-env.d.ts
 
 # one-off production data scripts (direct DB writes) — never commit
 /scripts/db-ops-*.mjs
+
+# variabel lokal untuk wrangler dev — jangan commit
+.dev.vars
+
+# Prisma client hasil generate (dibuat ulang oleh postinstall/build)
+
+/src/generated/
