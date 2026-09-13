@@ -72,6 +72,7 @@ sungguhan — jangan cuma modal build/lint hijau:
   `curl -i` terhadap endpoint yang relevan (redirect, cookie flags, status
   code) dan sebutkan dengan jelas mana yang sudah diverifikasi otomatis vs
   mana yang masih butuh Iman coba sendiri di browser.
+- **Event handler di Server Component lolos tsc + eslint + build, baru meledak saat di-render** (ketemu 13 Sep 2026: `onFocus` inline di `<input>` pada halaman tanpa `"use client"` di `/t/[id]/anggota`) — errornya baru muncul di runtime browser ("Event handlers cannot be passed to Client Component props"), bukan di build. Sebelum bilang halaman baru/diedit sudah beres, grep dulu file itu untuk `onClick|onChange|onFocus|onSubmit|onBlur` dkk. dan pastikan file itu punya `"use client"` di baris pertama kalau memang butuh — kalau tidak, pindahkan interaktivitas itu ke komponen client terpisah.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
