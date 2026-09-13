@@ -1,0 +1,347 @@
+// Prisma schema for Guyub — kas & tabungan komunitas non-sekolah
+// (keluarga/RT/paguyuban). Entities per docs/arisan-app-spec.md §3.
+// Runs on Cloudflare Workers via the Neon driver adapter (no Node TCP
+// sockets on Workers), hence `driverAdapters` + `@prisma/adapter-neon`
+// in src/lib/prisma.ts instead of a plain `datasource url`.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// --- Auth (Better Auth — Google only) ---------------------------------------
+
+model User {
+  id              String   @id @default(cuid())
+  name            String
+  email           String   @unique
+  emailVerified   Boolean  @default(false)
+  image           String?
+  /// Platform-level, lintas tenant — approve/reject Tenant baru (§4.1). Set manual via seed.
+  isPlatformOwner Boolean  @default(false)
+  accounts        Account[]
+  sessions        Session[]
+  memberships     Membership[]
+  invitationsSent Invitation[]     @relation("InvitationCreatedBy")
+  familyNode      FamilyNode?
+  kasTransaksi    KasTransaksi[]   @relation("KasDicatatOleh")
+  tabunganSaldo   TabunganSaldo[]
+  qurbanSlots     QurbanSlot[]
+  arisanPeserta   ArisanPeserta[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  /// Unused (Google-only, no email/password sign-in) — Better Auth's Prisma adapter validates this column exists regardless.
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+// --- Tenancy -----------------------------------------------------------------
+
+enum TenantJenis {
+  keluarga
+  rt
+  paguyuban
+}
+
+enum TenantStatus {
+  pending
+  approved
+  suspended
+}
+
+model Tenant {
+  id                     String                  @id @default(cuid())
+  jenis                  TenantJenis
+  status                 TenantStatus            @default(pending)
+  profile                TenantProfile?
+  memberships            Membership[]
+  invitations            Invitation[]
+  familyNodes            FamilyNode[]
+  kasTransaksi           KasTransaksi[]
+  tabunganTipe           TabunganTipe[]
+  qurbanGroups           QurbanGroup[]
+  arisan                 Arisan[]
+  laporan                Laporan[]
+  approvalRequest        TenantApprovalRequest?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+}
+
+model TenantProfile {
+  id       String  @id @default(cuid())
+  tenant   Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId String  @unique
+  nama     String
+  logoUrl  String?
+  alamat   String?
+}
+
+enum Role {
+  ketua
+  bendahara
+  sekretaris
+  anggota
+}
+
+enum MembershipStatus {
+  pending_confirmation
+  active
+  removed
+}
+
+model Membership {
+  id        String           @id @default(cuid())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  tenant    Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId  String
+  roles     Role[]
+  status    MembershipStatus @default(pending_confirmation)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@unique([userId, tenantId])
+  @@index([tenantId])
+}
+
+enum InvitationStatus {
+  active
+  revoked
+}
+
+model Invitation {
+  id            String            @id @default(cuid())
+  tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId      String
+  token         String            @unique @default(cuid())
+  createdBy     User              @relation("InvitationCreatedBy", fields: [createdById], references: [id])
+  createdById   String
+  status        InvitationStatus  @default(active)
+  createdAt     DateTime          @default(now())
+
+  @@index([tenantId])
+}
+
+// --- Silsilah Keluarga ---------------------------------------------------------
+
+model FamilyNode {
+  id       String      @id @default(cuid())
+  tenant   Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId String
+  nama     String
+  parent   FamilyNode? @relation("FamilyParent", fields: [parentId], references: [id])
+  parentId String?
+  children FamilyNode[] @relation("FamilyParent")
+  spouse   FamilyNode?  @relation("FamilySpouse", fields: [spouseId], references: [id])
+  spouseOf FamilyNode[] @relation("FamilySpouse")
+  spouseId String?      @unique
+  user     User?        @relation(fields: [userId], references: [id])
+  userId   String?      @unique
+
+  @@index([tenantId])
+}
+
+// --- Kas -----------------------------------------------------------------------
+
+enum KasTipe {
+  masuk
+  keluar
+}
+
+model KasTransaksi {
+  id           String   @id @default(cuid())
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId     String
+  tanggal      DateTime
+  jumlah       Decimal  @db.Decimal(14, 2)
+  tipe         KasTipe
+  keterangan   String?
+  dicatatOleh  User     @relation("KasDicatatOleh", fields: [dicatatOlehId], references: [id])
+  dicatatOlehId String
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, tanggal])
+}
+
+// --- Tabungan --------------------------------------------------------------------
+
+enum TabunganMode {
+  individual
+  pooled
+}
+
+model TabunganTipe {
+  id       String          @id @default(cuid())
+  tenant   Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId String
+  nama     String
+  mode     TabunganMode
+  saldo    TabunganSaldo[]
+
+  @@index([tenantId])
+}
+
+model TabunganSaldo {
+  id             String       @id @default(cuid())
+  tabunganTipe   TabunganTipe @relation(fields: [tabunganTipeId], references: [id], onDelete: Cascade)
+  tabunganTipeId String
+  /// null kalau tipe tabungan mode `pooled` (saldo bersama, bukan per-anggota).
+  user           User?        @relation(fields: [userId], references: [id])
+  userId         String?
+  jumlah         Decimal      @db.Decimal(14, 2) @default(0)
+
+  @@unique([tabunganTipeId, userId])
+}
+
+// --- Qurban Joinan -----------------------------------------------------------------
+
+enum JenisHewan {
+  sapi
+  kambing
+}
+
+enum QurbanGroupStatus {
+  terbuka
+  lunas
+  selesai
+}
+
+model QurbanGroup {
+  id            String            @id @default(cuid())
+  tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId      String
+  jenisHewan    JenisHewan
+  targetPerJiwa Decimal           @db.Decimal(14, 2)
+  status        QurbanGroupStatus @default(terbuka)
+  slots         QurbanSlot[]
+
+  @@index([tenantId])
+}
+
+enum QurbanSlotStatus {
+  belum
+  lunas
+}
+
+model QurbanSlot {
+  id             String           @id @default(cuid())
+  qurbanGroup    QurbanGroup      @relation(fields: [qurbanGroupId], references: [id], onDelete: Cascade)
+  qurbanGroupId  String
+  user           User             @relation(fields: [userId], references: [id])
+  userId         String
+  saldoTerkumpul Decimal          @db.Decimal(14, 2) @default(0)
+  status         QurbanSlotStatus @default(belum)
+
+  @@unique([qurbanGroupId, userId])
+}
+
+// --- Arisan Giliran (opsional per tenant) -------------------------------------------
+
+enum ArisanStatus {
+  berjalan
+  selesai
+}
+
+model Arisan {
+  id            String          @id @default(cuid())
+  tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId      String
+  periode       String
+  jumlahSetoran Decimal         @db.Decimal(14, 2)
+  status        ArisanStatus    @default(berjalan)
+  peserta       ArisanPeserta[]
+
+  @@index([tenantId])
+}
+
+model ArisanPeserta {
+  id          String   @id @default(cuid())
+  arisan      Arisan   @relation(fields: [arisanId], references: [id], onDelete: Cascade)
+  arisanId    String
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  urutan      Int
+  statusDapat Boolean  @default(false)
+
+  @@unique([arisanId, userId])
+}
+
+// --- Laporan --------------------------------------------------------------------------
+
+model Laporan {
+  id        String   @id @default(cuid())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId  String
+  periode   String
+  shareLink String   @unique @default(cuid())
+  pdfUrl    String?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+// --- Approval Tenant Baru (oleh Platform Owner) -----------------------------------------
+
+enum TenantApprovalStatus {
+  pending
+  approved
+  rejected
+}
+
+model TenantApprovalRequest {
+  id           String                @id @default(cuid())
+  tenant       Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId     String                @unique
+  status       TenantApprovalStatus  @default(pending)
+  catatanOwner String?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+}
