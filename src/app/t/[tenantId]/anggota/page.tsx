@@ -1,7 +1,10 @@
+import { Users, UserPlus, Link2, MessageCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_KELOLA_ANGGOTA, has } from "@/lib/authz";
+import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
 import { waShareUrl } from "@/lib/whatsapp";
+import { Card, PageTitle, EmptyState, Badge, btnPrimary, btnGhost, inputClass } from "@/components/ui";
 import { generateInviteAction, revokeInviteAction, confirmMemberAction, updateRolesAction } from "./actions";
 
 const ALL_ROLES = ["ketua", "bendahara", "sekretaris", "anggota"] as const;
@@ -9,98 +12,130 @@ const ALL_ROLES = ["ketua", "bendahara", "sekretaris", "anggota"] as const;
 export default async function AnggotaPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
   const user = await requireUser();
+  const { roles, readOnly } = await effectiveRoles(user, tenantId);
+  const viewerId = await viewerUserId(user, tenantId);
 
-  const [me, memberships, invitations, tenant] = await Promise.all([
-    prisma.membership.findUniqueOrThrow({ where: { userId_tenantId: { userId: user.id, tenantId } } }),
+  const [memberships, invitations, tenant] = await Promise.all([
     prisma.membership.findMany({ where: { tenantId, status: { not: "removed" } }, include: { user: true }, orderBy: { createdAt: "asc" } }),
     prisma.invitation.findMany({ where: { tenantId, status: "active" }, orderBy: { createdAt: "desc" } }),
     prisma.tenantProfile.findUniqueOrThrow({ where: { tenantId } }),
   ]);
 
-  const canKelola = has(me.roles, CAN_KELOLA_ANGGOTA);
-  const canConfirm = has(me.roles, CAN_KELOLA_ANGGOTA);
+  const canKelola = has(roles, CAN_KELOLA_ANGGOTA) && !readOnly;
   const base = process.env.NEXT_PUBLIC_URL ?? "";
   const pending = memberships.filter((m) => m.status === "pending_confirmation");
   const active = memberships.filter((m) => m.status === "active");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      <PageTitle title="Anggota & Undangan" desc={`${active.length} anggota aktif${pending.length ? ` · ${pending.length} menunggu konfirmasi` : ""}`} />
+
       {canKelola && (
-        <section className="rounded-md border border-primary/15 p-3">
-          <h2 className="mb-2 text-sm font-semibold">Undangan</h2>
-          <form action={generateInviteAction} className="mb-2">
+        <Card>
+          <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
+            <Link2 className="h-4 w-4 text-primary" /> Link Undangan
+          </h2>
+          <p className="mb-3 text-xs text-muted">Sebar link ini sendiri lewat WhatsApp ke grup keluarga/RT — jangan ditempel di tempat publik.</p>
+          <form action={generateInviteAction} className="mb-3">
             <input type="hidden" name="tenantId" value={tenantId} />
-            <button className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">Buat Link Undangan</button>
+            <button className={btnPrimary}>
+              <UserPlus className="h-4 w-4" /> Buat Link Undangan
+            </button>
           </form>
-          <p className="mb-2 text-xs text-foreground/60">Sebar link ini sendiri lewat WhatsApp — jangan ditempel di tempat publik.</p>
           <ul className="space-y-2">
             {invitations.map((inv) => {
               const url = `${base}/invite/${inv.token}`;
               const waText = `Anda diundang bergabung ke ${tenant.nama} di Guyub, klik link ini untuk gabung: ${url}`;
               return (
-                <li key={inv.id} className="flex flex-wrap items-center gap-2 text-xs">
-                  <input readOnly value={url} className="flex-1 rounded border border-primary/30 p-1" />
-                  <a href={waShareUrl(waText)} target="_blank" rel="noreferrer" className="rounded border border-primary/30 px-2 py-1 text-emerald-700">
-                    Bagikan ke WhatsApp
+                <li key={inv.id} className="flex flex-wrap items-center gap-2">
+                  <input readOnly value={url} className={`${inputClass} flex-1 text-xs`} />
+                  <a href={waShareUrl(waText)} target="_blank" rel="noreferrer" className={`${btnGhost} text-success`}>
+                    <MessageCircle className="h-4 w-4" /> WhatsApp
                   </a>
                   <form action={revokeInviteAction}>
                     <input type="hidden" name="tenantId" value={tenantId} />
                     <input type="hidden" name="invitationId" value={inv.id} />
-                    <button className="rounded border border-primary/30 px-2 py-1">Cabut</button>
+                    <button className={btnGhost}>Cabut</button>
                   </form>
                 </li>
               );
             })}
           </ul>
-        </section>
+        </Card>
       )}
 
-      {canConfirm && pending.length > 0 && (
-        <section className="rounded-md border border-primary/15 p-3">
+      {canKelola && pending.length > 0 && (
+        <Card className="border-warning/30 bg-warning/5">
           <h2 className="mb-2 text-sm font-semibold">Menunggu Konfirmasi</h2>
           <ul className="space-y-2">
             {pending.map((m) => (
-              <li key={m.id} className="flex items-center justify-between text-sm">
-                <span>
-                  {m.user.name} ({m.user.email})
+              <li key={m.id} className="flex items-center justify-between gap-2 text-sm">
+                <span className="min-w-0 truncate">
+                  {m.user.name} <span className="text-muted">({m.user.email})</span>
                 </span>
                 <form action={confirmMemberAction}>
                   <input type="hidden" name="tenantId" value={tenantId} />
                   <input type="hidden" name="membershipId" value={m.id} />
-                  <button className="rounded-md bg-primary px-2 py-1 text-xs text-primary-foreground">Konfirmasi</button>
+                  <button className={btnPrimary}>Konfirmasi</button>
                 </form>
               </li>
             ))}
           </ul>
-        </section>
+        </Card>
       )}
 
       <section>
         <h2 className="mb-2 text-sm font-semibold">Anggota Aktif</h2>
-        <ul className="space-y-2">
-          {active.map((m) => (
-            <li key={m.id} className="rounded-md border border-primary/15 p-2 text-sm">
-              <p className="font-medium">
-                {m.user.name} <span className="font-normal text-foreground/60">({m.user.email})</span>
-              </p>
-              {canKelola ? (
-                <form action={updateRolesAction} className="mt-1 flex flex-wrap gap-2 text-xs">
-                  <input type="hidden" name="tenantId" value={tenantId} />
-                  <input type="hidden" name="membershipId" value={m.id} />
-                  {ALL_ROLES.map((role) => (
-                    <label key={role} className="flex items-center gap-1">
-                      <input type="checkbox" name="roles" value={role} defaultChecked={m.roles.includes(role)} />
-                      {role}
-                    </label>
-                  ))}
-                  <button className="rounded border border-primary/30 px-2">Simpan</button>
-                </form>
-              ) : (
-                <p className="text-xs text-foreground/60">{m.roles.join(", ")}</p>
-              )}
-            </li>
-          ))}
-        </ul>
+        {active.length === 0 ? (
+          <EmptyState icon={Users} title="Belum ada anggota" desc="Buat link undangan dan sebarkan lewat WhatsApp untuk mengajak anggota." />
+        ) : (
+          <ul className="space-y-2">
+            {active.map((m) => (
+              <li key={m.id}>
+                <Card className={m.userId === viewerId ? "bg-primary/5" : ""}>
+                  <div className="flex items-center gap-2">
+                    {m.user.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={m.user.image} alt="" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
+                    ) : (
+                      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                        {m.user.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {m.user.name} {m.userId === viewerId && <Badge tone="primary">Anda</Badge>}
+                      </p>
+                      <p className="truncate text-xs text-muted">{m.user.email}</p>
+                    </div>
+                  </div>
+
+                  {canKelola ? (
+                    <form action={updateRolesAction} className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2 text-xs">
+                      <input type="hidden" name="tenantId" value={tenantId} />
+                      <input type="hidden" name="membershipId" value={m.id} />
+                      {ALL_ROLES.map((role) => (
+                        <label key={role} className="flex items-center gap-1 rounded-md border border-border px-2 py-1">
+                          <input type="checkbox" name="roles" value={role} defaultChecked={m.roles.includes(role)} />
+                          {role}
+                        </label>
+                      ))}
+                      <button className={`${btnGhost} px-2 py-1 text-xs`}>Simpan</button>
+                    </form>
+                  ) : (
+                    <div className="mt-2 flex flex-wrap gap-1 border-t border-border pt-2">
+                      {m.roles.map((r) => (
+                        <Badge key={r} tone={r === "anggota" ? "muted" : "primary"}>
+                          {r}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );

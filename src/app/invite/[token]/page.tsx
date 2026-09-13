@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
+import { notifyTenant } from "@/lib/notifikasi";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
 
 export default async function InvitePage({ params }: { params: Promise<{ token: string }> }) {
@@ -30,6 +31,10 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
   if (!membership) {
     membership = await prisma.membership.create({
       data: { userId: user.id, tenantId: invitation.tenantId, roles: ["anggota"], status: "pending_confirmation" },
+    });
+    await notifyTenant(invitation.tenantId, "anggota_menunggu", `${user.name} mendaftar dan menunggu persetujuan`, {
+      href: `/t/${invitation.tenantId}/anggota`,
+      roles: ["ketua", "sekretaris"],
     });
   }
 
