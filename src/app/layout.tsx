@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import "./globals.css";
+import { InstallBanner } from "@/components/install-banner";
 
 export const metadata: Metadata = {
   title: "Guyub — Kas & Tabungan Komunitas",
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="id">
       <body className="min-h-screen antialiased">
         {children}
+        <InstallBanner />
         <Script id="sw-register" strategy="afterInteractive">
           {`if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');`}
         </Script>
