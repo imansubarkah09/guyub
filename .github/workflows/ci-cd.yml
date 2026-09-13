@@ -47,16 +47,27 @@ jobs:
       # sambil memigrasi database yang salah. Worker tetap jalan di DB produksi
       # yang ketinggalan dua migrasi, dan halaman meledak dengan React #441.
       # Kalau secretnya salah lagi, CI harus GAGAL, bukan diam-diam sukses.
+      #
+      # DATABASE_URL_UNPOOLED (dipakai Prisma sebagai directUrl) WAJIB endpoint
+      # direct, bukan yang -pooler: sebelum migrasi Prisma mengambil advisory lock
+      # tingkat sesi, dan lewat pgbouncer lock itu tidak pernah didapat sehingga
+      # step ini mati dengan P1002 "Timed out trying to acquire a postgres
+      # advisory lock".
       - name: Migrasi database produksi
         run: |
           case "$DATABASE_URL" in
             *ep-autumn-art*) ;;
             *) echo "::error::DATABASE_URL bukan endpoint produksi (ep-autumn-art). Perbaiki secret repo." >&2; exit 1 ;;
           esac
+          case "$DATABASE_URL_UNPOOLED" in
+            *ep-autumn-art*pooler*) echo "::error::DATABASE_URL_UNPOOLED menunjuk endpoint pooler. Migrasi butuh koneksi direct." >&2; exit 1 ;;
+            *ep-autumn-art*) ;;
+            *) echo "::error::DATABASE_URL_UNPOOLED bukan endpoint produksi (ep-autumn-art). Perbaiki secret repo." >&2; exit 1 ;;
+          esac
           pnpm exec prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
       - name: Build for Cloudflare
         run: pnpm cf:build
         env:
