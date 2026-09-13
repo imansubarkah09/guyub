@@ -39,7 +39,7 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
               const waText = `Anda diundang bergabung ke ${tenant.nama} di Guyub, klik link ini untuk gabung: ${url}`;
               return (
                 <li key={inv.id} className="flex flex-wrap items-center gap-2 text-xs">
-                  <input readOnly value={url} className="flex-1 rounded border border-primary/30 p-1" onFocus={(e) => e.currentTarget.select()} />
+                  <input readOnly value={url} className="flex-1 rounded border border-primary/30 p-1" />
                   <a href={waShareUrl(waText)} target="_blank" rel="noreferrer" className="rounded border border-primary/30 px-2 py-1 text-emerald-700">
                     Bagikan ke WhatsApp
                   </a>
