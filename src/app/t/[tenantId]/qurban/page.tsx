@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_KELOLA_TABUNGAN } from "@/lib/authz";
 import { createQurbanGroupAction, joinQurbanSlotAction, setorQurbanAction } from "./actions";
+import { EditGroupButton, EditSlotButton } from "./edit-controls";
 
 const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
 const ANIMAL = { sapi: "🐄", kambing: "🐐" } as const;
@@ -39,7 +40,8 @@ export default async function QurbanPage({ params }: { params: Promise<{ tenantI
         return (
           <div key={g.id} className="rounded-md border border-primary/15 p-3">
             <p className="font-medium">
-              {ANIMAL[g.jenisHewan]} {g.jenisHewan} · {g.slots.length}/{max} jiwa · {g.status}
+              {ANIMAL[g.jenisHewan]} {g.jenisHewan} · {g.slots.length}/{max} jiwa · {g.status}{" "}
+              {canKelola && <EditGroupButton tenantId={tenantId} group={{ id: g.id, jenisHewan: g.jenisHewan, targetPerJiwa: g.targetPerJiwa.toString() }} />}
             </p>
             <ul className="mt-2 space-y-2">
               {g.slots.map((s) => {
@@ -48,8 +50,9 @@ export default async function QurbanPage({ params }: { params: Promise<{ tenantI
                   <li key={s.id} className="text-sm">
                     <div className="flex justify-between">
                       <span>{s.user.name}</span>
-                      <span>
+                      <span className="flex items-center gap-1">
                         {rupiah.format(Number(s.saldoTerkumpul))} / {rupiah.format(Number(g.targetPerJiwa))}
+                        {canKelola && <EditSlotButton tenantId={tenantId} slotId={s.id} saldoTerkumpul={s.saldoTerkumpul.toString()} />}
                       </span>
                     </div>
                     <div className="mt-1 h-2 rounded-full bg-primary/10">

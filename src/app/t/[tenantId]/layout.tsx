@@ -2,18 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { notFound } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
-
-const NAV = [
-  { href: "", label: "Ringkasan" },
-  { href: "/kas", label: "Kas" },
-  { href: "/tabungan", label: "Tabungan" },
-  { href: "/qurban", label: "Qurban" },
-  { href: "/arisan", label: "Arisan" },
-  { href: "/silsilah", label: "Silsilah" },
-  { href: "/laporan", label: "Laporan" },
-  { href: "/anggota", label: "Anggota" },
-  { href: "/profil", label: "Profil" },
-];
+import { TenantShell } from "./tenant-shell";
 
 export default async function TenantLayout({
   children,
@@ -53,16 +42,8 @@ export default async function TenantLayout({
   }
 
   return (
-    <main className="min-h-screen">
-      <AppHeader email={user.email} title={tenant.profile?.nama} />
-      <nav className="flex gap-3 overflow-x-auto border-b border-primary/15 px-4 py-2 text-sm">
-        {NAV.map((item) => (
-          <a key={item.href} href={`/t/${tenantId}${item.href}`} className="whitespace-nowrap text-foreground/70 hover:text-primary">
-            {item.label}
-          </a>
-        ))}
-      </nav>
-      <div className="mx-auto max-w-lg p-4">{children}</div>
-    </main>
+    <TenantShell tenantId={tenantId} tenantNama={tenant.profile?.nama} email={user.email}>
+      {children}
+    </TenantShell>
   );
 }
