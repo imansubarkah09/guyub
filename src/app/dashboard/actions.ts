@@ -15,17 +15,24 @@ export async function createTenantAction(formData: FormData) {
     throw new Error("Jenis dan nama tenant wajib diisi");
   }
 
+  // Tenant milik platform owner tidak perlu antre persetujuan: dia sendiri yang
+  // jadi penyetujunya, jadi langsung approved.
+  const otomatisDisetujui = user.isPlatformOwner;
+
   const tenant = await prisma.tenant.create({
     data: {
       jenis: jenis as TenantJenis,
+      status: otomatisDisetujui ? "approved" : "pending",
       profile: { create: { nama } },
-      approvalRequest: { create: {} },
+      approvalRequest: { create: otomatisDisetujui ? { status: "approved" } : {} },
       memberships: { create: { userId: user.id, roles: ["ketua"], status: "active" } },
     },
   });
 
   // Platform owner perlu tahu ada antrean approval baru (§7.12).
-  const owners = await prisma.user.findMany({ where: { isPlatformOwner: true }, select: { id: true } });
+  const owners = otomatisDisetujui
+    ? []
+    : await prisma.user.findMany({ where: { isPlatformOwner: true }, select: { id: true } });
   if (owners.length > 0) {
     await prisma.notifikasi.createMany({
       data: owners.map((o) => ({

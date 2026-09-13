@@ -6,6 +6,10 @@
   // Domain produksi. custom_domain:true bikin wrangler yang urus record DNS-nya
   // di zona thedreamcompany.space (zona sudah di Cloudflare, NS sudah nunjuk ke sana).
   "routes": [{ "pattern": "guyub.thedreamcompany.space", "custom_domain": true }],
+  // Simpan log Worker di Cloudflare (Workers Logs), supaya error seperti 1101
+  // bisa dibaca setelah kejadian, bukan cuma lewat `wrangler tail` yang harus
+  // sudah jalan saat error terjadi.
+  "observability": { "enabled": true },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
