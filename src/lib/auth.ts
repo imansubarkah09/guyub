@@ -10,10 +10,12 @@ import { prisma } from "@/lib/prisma";
  */
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
-  secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL,
+  // Named AUTH_SECRET/NEXTAUTH_URL (not the BETTER_AUTH_* defaults) to match
+  // the env convention shared across thedreamcompany's other projects.
+  secret: process.env.AUTH_SECRET,
+  baseURL: process.env.NEXTAUTH_URL,
   trustedOrigins: [
-    ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
+    ...(process.env.NEXTAUTH_URL ? [process.env.NEXTAUTH_URL] : []),
     "https://guyub.thedreamcompany.space",
     "http://127.0.0.1:3000",
     "http://localhost:3000",
@@ -27,5 +29,17 @@ export const auth = betterAuth({
   },
   account: {
     accountLinking: { enabled: true, trustedProviders: ["google"] },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        /** First login matching OWNER_EMAIL becomes Platform Owner (§2) — there's no admin UI yet to grant this any other way. */
+        async after(user) {
+          if (process.env.OWNER_EMAIL && user.email === process.env.OWNER_EMAIL) {
+            await prisma.user.update({ where: { id: user.id }, data: { isPlatformOwner: true } });
+          }
+        },
+      },
+    },
   },
 });
