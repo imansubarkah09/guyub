@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { CAN_CATAT_KAS } from "@/lib/authz";
+import { CAN_ATUR_ARISAN, CAN_CATAT_UANG, has } from "@/lib/authz";
 import { createArisanAction, addPesertaAction, toggleDapatAction } from "./actions";
 
 const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
@@ -18,7 +18,7 @@ export default async function ArisanPage({ params }: { params: Promise<{ tenantI
     prisma.membership.findMany({ where: { tenantId, status: "active" }, include: { user: true } }),
   ]);
 
-  const canKelola = me.roles.some((r) => CAN_CATAT_KAS.includes(r));
+  const canKelola = has(me.roles, CAN_ATUR_ARISAN);
 
   return (
     <div className="space-y-4">

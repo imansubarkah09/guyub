@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { CAN_CATAT_KAS } from "@/lib/authz";
+import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { createKasTransaksiAction } from "./actions";
 
 const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
@@ -13,7 +13,7 @@ export default async function KasPage({ params }: { params: Promise<{ tenantId: 
     prisma.kasTransaksi.findMany({ where: { tenantId }, include: { dicatatOleh: true }, orderBy: { tanggal: "desc" } }),
   ]);
 
-  const canCatat = me.roles.some((r) => CAN_CATAT_KAS.includes(r));
+  const canCatat = has(me.roles, CAN_CATAT_UANG);
   const saldo = transaksi.reduce((acc, t) => acc + (t.tipe === "masuk" ? Number(t.jumlah) : -Number(t.jumlah)), 0);
 
   return (

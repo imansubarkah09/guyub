@@ -3,12 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { requireMembership, CAN_CONFIRM_ANGGOTA } from "@/lib/authz";
+import { requireWrite, CAN_BUAT_LAPORAN } from "@/lib/authz";
 import { cloudinary } from "@/lib/cloudinary";
 
 export async function createLaporanAction(tenantId: string, periode: string, pdfDataUri: string) {
   const user = await requireUser();
-  await requireMembership(user.id, tenantId, CAN_CONFIRM_ANGGOTA);
+  await requireWrite(user, tenantId, CAN_BUAT_LAPORAN);
   if (!periode.trim()) throw new Error("Periode wajib diisi");
 
   const uploaded = await cloudinary.uploader.upload(pdfDataUri, { folder: `guyub/laporan/${tenantId}`, resource_type: "auto" });

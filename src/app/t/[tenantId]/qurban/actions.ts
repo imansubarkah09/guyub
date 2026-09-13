@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { requireMembership, CAN_KELOLA_TABUNGAN } from "@/lib/authz";
+import { requireWrite, requireMemberWrite, CAN_CATAT_UANG } from "@/lib/authz";
 import type { JenisHewan } from "@prisma/client";
 
 const MAX_SLOT: Record<JenisHewan, number> = { sapi: 7, kambing: 1 };
@@ -11,7 +11,7 @@ const MAX_SLOT: Record<JenisHewan, number> = { sapi: 7, kambing: 1 };
 export async function createQurbanGroupAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireMembership(user.id, tenantId, CAN_KELOLA_TABUNGAN);
+  await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const jenisHewan = String(formData.get("jenisHewan"));
   const targetPerJiwa = String(formData.get("targetPerJiwa"));
@@ -26,7 +26,7 @@ export async function createQurbanGroupAction(formData: FormData) {
 export async function joinQurbanSlotAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireMembership(user.id, tenantId);
+  await requireMemberWrite(user, tenantId);
 
   const qurbanGroupId = String(formData.get("qurbanGroupId"));
   const group = await prisma.qurbanGroup.findUniqueOrThrow({ where: { id: qurbanGroupId }, include: { slots: true } });
@@ -54,7 +54,7 @@ async function resyncQurbanGroupStatus(qurbanGroupId: string) {
 export async function updateQurbanGroupAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireMembership(user.id, tenantId, CAN_KELOLA_TABUNGAN);
+  await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const qurbanGroupId = String(formData.get("qurbanGroupId"));
   const jenisHewan = String(formData.get("jenisHewan"));
@@ -78,7 +78,7 @@ export async function updateQurbanGroupAction(formData: FormData) {
 export async function updateQurbanSlotAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireMembership(user.id, tenantId, CAN_KELOLA_TABUNGAN);
+  await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const slotId = String(formData.get("slotId"));
   const saldoTerkumpul = String(formData.get("saldoTerkumpul"));
@@ -95,7 +95,7 @@ export async function updateQurbanSlotAction(formData: FormData) {
 export async function setorQurbanAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireMembership(user.id, tenantId, CAN_KELOLA_TABUNGAN);
+  await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const slotId = String(formData.get("slotId"));
   const jumlah = Number(formData.get("jumlah"));

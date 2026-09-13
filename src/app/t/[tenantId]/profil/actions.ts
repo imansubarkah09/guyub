@@ -3,13 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { requireMembership, CAN_UPDATE_PROFIL } from "@/lib/authz";
+import { requireWrite, CAN_UPDATE_PROFIL } from "@/lib/authz";
 import { uploadImage } from "@/lib/upload";
 
 export async function updateProfilAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireMembership(user.id, tenantId, CAN_UPDATE_PROFIL);
+  await requireWrite(user, tenantId, CAN_UPDATE_PROFIL);
 
   const nama = String(formData.get("nama") ?? "").trim();
   const alamat = String(formData.get("alamat") ?? "").trim() || null;

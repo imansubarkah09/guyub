@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { CAN_KELOLA_TABUNGAN } from "@/lib/authz";
+import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { createQurbanGroupAction, joinQurbanSlotAction, setorQurbanAction } from "./actions";
 import { EditGroupButton, EditSlotButton } from "./edit-controls";
 
@@ -16,7 +16,7 @@ export default async function QurbanPage({ params }: { params: Promise<{ tenantI
     prisma.qurbanGroup.findMany({ where: { tenantId }, include: { slots: { include: { user: true } } }, orderBy: { id: "desc" } }),
   ]);
 
-  const canKelola = me.roles.some((r) => CAN_KELOLA_TABUNGAN.includes(r));
+  const canKelola = has(me.roles, CAN_CATAT_UANG);
 
   return (
     <div className="space-y-4">

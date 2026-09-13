@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { CAN_KELOLA_ANGGOTA } from "@/lib/authz";
+import { CAN_KELOLA_ANGGOTA, has } from "@/lib/authz";
 import { addFamilyNodeAction } from "./actions";
 import { NodeRow } from "./node-row";
 
@@ -48,7 +48,7 @@ export default async function SilsilahPage({ params }: { params: Promise<{ tenan
     loadNodes(tenantId),
   ]);
 
-  const canKelola = me.roles.some((r) => CAN_KELOLA_ANGGOTA.includes(r));
+  const canKelola = has(me.roles, CAN_KELOLA_ANGGOTA);
   const byParent = new Map<string | null, Node[]>();
   for (const n of nodes) {
     const list = byParent.get(n.parentId) ?? [];

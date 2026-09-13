@@ -22,6 +22,8 @@ model User {
   email           String   @unique
   emailVerified   Boolean  @default(false)
   image           String?
+  /// Nomor WhatsApp — dicek checklist Ringkasan (§7.3) kalau masih kosong.
+  phone           String?
   /// Platform-level, lintas tenant — approve/reject Tenant baru (§4.1). Set manual via seed.
   isPlatformOwner Boolean  @default(false)
   accounts        Account[]
@@ -35,6 +37,10 @@ model User {
   setoranDivalidasi TabunganSetoran[] @relation("SetoranDivalidasiOleh")
   qurbanSlots     QurbanSlot[]
   arisanPeserta   ArisanPeserta[]
+  arisanBayar     ArisanPembayaran[]
+  infaqDicatat    InfaqShodaqoh[]  @relation("InfaqDicatatOleh")
+  kegiatanDicatat DanaKegiatan[]   @relation("KegiatanDicatatOleh")
+  notifikasi      Notifikasi[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -112,6 +118,9 @@ model Tenant {
   qurbanGroups           QurbanGroup[]
   arisan                 Arisan[]
   laporan                Laporan[]
+  infaq                  InfaqShodaqoh[]
+  danaKegiatan           DanaKegiatan[]
+  notifikasi             Notifikasi[]
   approvalRequest        TenantApprovalRequest?
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
@@ -230,6 +239,7 @@ model TabunganTipe {
   mode     TabunganMode
   saldo    TabunganSaldo[]
   setoran  TabunganSetoran[]
+  danaKegiatan DanaKegiatan[]
 
   @@index([tenantId])
 }
@@ -333,13 +343,18 @@ enum ArisanStatus {
 }
 
 model Arisan {
-  id            String          @id @default(cuid())
-  tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  tenantId      String
-  periode       String
-  jumlahSetoran Decimal         @db.Decimal(14, 2)
-  status        ArisanStatus    @default(berjalan)
-  peserta       ArisanPeserta[]
+  id             String             @id @default(cuid())
+  tenant         Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId       String
+  periode        String
+  jumlahSetoran  Decimal            @db.Decimal(14, 2)
+  status         ArisanStatus       @default(berjalan)
+  /// Putaran/giliran ke berapa yang sedang berjalan (§7.7) — status bayar dicatat per putaran.
+  putaranBerjalan Int               @default(1)
+  jadwalTanggal  DateTime?
+  jadwalTempat   String?
+  peserta        ArisanPeserta[]
+  pembayaran     ArisanPembayaran[]
 
   @@index([tenantId])
 }
@@ -356,6 +371,21 @@ model ArisanPeserta {
   @@unique([arisanId, userId])
 }
 
+/// Status bayar per anggota per putaran (§7.7). Baris hanya dibuat saat ditandai lunas —
+/// tidak ada baris = belum bayar.
+model ArisanPembayaran {
+  id           String   @id @default(cuid())
+  arisan       Arisan   @relation(fields: [arisanId], references: [id], onDelete: Cascade)
+  arisanId     String
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
+  putaran      Int
+  tanggalBayar DateTime @default(now())
+
+  @@unique([arisanId, userId, putaran])
+  @@index([arisanId, putaran])
+}
+
 // --- Laporan --------------------------------------------------------------------------
 
 model Laporan {
@@ -365,9 +395,74 @@ model Laporan {
   periode   String
   shareLink String   @unique @default(cuid())
   pdfUrl    String?
+  /// Snapshot agregat untuk halaman publik (§7.11) — HANYA dua angka ini yang boleh
+  /// dibaca tanpa login, supaya tidak ada nama anggota / transaksi individu yang bocor.
+  totalMasuk  Decimal @db.Decimal(14, 2) @default(0)
+  totalKeluar Decimal @db.Decimal(14, 2) @default(0)
   createdAt DateTime @default(now())
 
   @@index([tenantId])
+}
+
+// --- Infaq & Shodaqoh (§7.8) --------------------------------------------------------------
+
+model InfaqShodaqoh {
+  id              String   @id @default(cuid())
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId        String
+  tanggalPertemuan DateTime
+  jumlah          Decimal  @db.Decimal(14, 2)
+  keterangan      String?
+  dicatatOleh     User     @relation("InfaqDicatatOleh", fields: [dicatatOlehId], references: [id])
+  dicatatOlehId   String
+  createdAt       DateTime @default(now())
+
+  @@index([tenantId, tanggalPertemuan])
+}
+
+// --- Dana Kegiatan / pengeluaran (§7.9) ----------------------------------------------------
+
+/// Pool sumber dana. `tabungan` memakai sumberTabunganTipeId untuk menunjuk jenis tabungan mana.
+enum SumberDana {
+  kas
+  infaq
+  tabungan
+}
+
+model DanaKegiatan {
+  id                   String        @id @default(cuid())
+  tenant               Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId             String
+  namaKegiatan         String
+  sumberDana           SumberDana
+  sumberTabunganTipe   TabunganTipe? @relation(fields: [sumberTabunganTipeId], references: [id])
+  sumberTabunganTipeId String?
+  jumlah               Decimal       @db.Decimal(14, 2)
+  tanggal              DateTime
+  keterangan           String?
+  buktiUrl             String?
+  dicatatOleh          User          @relation("KegiatanDicatatOleh", fields: [dicatatOlehId], references: [id])
+  dicatatOlehId        String
+  createdAt            DateTime      @default(now())
+
+  @@index([tenantId, tanggal])
+}
+
+// --- Notifikasi (§7.12) ---------------------------------------------------------------------
+
+model Notifikasi {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId  String?
+  tipe      String
+  pesan     String
+  href      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead, createdAt])
 }
 
 // --- Approval Tenant Baru (oleh Platform Owner) -----------------------------------------

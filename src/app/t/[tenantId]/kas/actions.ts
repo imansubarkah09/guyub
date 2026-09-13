@@ -3,14 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { requireMembership, CAN_CATAT_KAS } from "@/lib/authz";
+import { requireWrite, CAN_CATAT_UANG } from "@/lib/authz";
 import { uploadImage } from "@/lib/upload";
 import type { KasTipe } from "@prisma/client";
 
 export async function createKasTransaksiAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireMembership(user.id, tenantId, CAN_CATAT_KAS);
+  await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const tanggal = String(formData.get("tanggal"));
   const jumlah = String(formData.get("jumlah"));

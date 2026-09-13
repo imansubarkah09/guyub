@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { CAN_KELOLA_TABUNGAN } from "@/lib/authz";
+import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { createTabunganTipeAction, setorAction, submitSetoranBuktiAction, submitSetoranXenditAction, validasiSetoranAction } from "./actions";
 
 const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
@@ -22,7 +22,7 @@ export default async function TabunganPage({ params }: { params: Promise<{ tenan
     }),
   ]);
 
-  const canKelola = me.roles.some((r) => CAN_KELOLA_TABUNGAN.includes(r));
+  const canKelola = has(me.roles, CAN_CATAT_UANG);
 
   return (
     <div className="space-y-4">

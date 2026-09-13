@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { CAN_CONFIRM_ANGGOTA } from "@/lib/authz";
+import { CAN_BUAT_LAPORAN, has } from "@/lib/authz";
 import { GenerateLaporanButton } from "./generate-button";
 
 export default async function LaporanPage({ params }: { params: Promise<{ tenantId: string }> }) {
@@ -13,7 +13,7 @@ export default async function LaporanPage({ params }: { params: Promise<{ tenant
     prisma.laporan.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" } }),
   ]);
 
-  const canGenerate = me.roles.some((r) => CAN_CONFIRM_ANGGOTA.includes(r));
+  const canGenerate = has(me.roles, CAN_BUAT_LAPORAN);
   const kasRows = kas.map((k) => ({
     tanggal: k.tanggal.toLocaleDateString("id-ID"),
     tipe: k.tipe,

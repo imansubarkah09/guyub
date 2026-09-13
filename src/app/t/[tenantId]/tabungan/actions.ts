@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { requireMembership, CAN_KELOLA_TABUNGAN } from "@/lib/authz";
+import { requireWrite, requireMemberWrite, CAN_CATAT_UANG } from "@/lib/authz";
 import { uploadImage } from "@/lib/upload";
 import { creditSaldo } from "@/lib/tabungan";
 import { createXenditInvoice } from "@/lib/xendit";
@@ -13,7 +13,7 @@ import type { TabunganMode } from "@prisma/client";
 export async function createTabunganTipeAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireMembership(user.id, tenantId, CAN_KELOLA_TABUNGAN);
+  await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const nama = String(formData.get("nama") ?? "").trim();
   const mode = String(formData.get("mode"));
@@ -26,7 +26,7 @@ export async function createTabunganTipeAction(formData: FormData) {
 export async function setorAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireMembership(user.id, tenantId, CAN_KELOLA_TABUNGAN);
+  await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const tabunganTipeId = String(formData.get("tabunganTipeId"));
   const jumlah = Number(formData.get("jumlah"));
@@ -45,7 +45,7 @@ export async function setorAction(formData: FormData) {
 export async function submitSetoranBuktiAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireMembership(user.id, tenantId);
+  await requireMemberWrite(user, tenantId);
 
   const tabunganTipeId = String(formData.get("tabunganTipeId"));
   const jumlah = Number(formData.get("jumlah"));
@@ -66,7 +66,7 @@ export async function submitSetoranBuktiAction(formData: FormData) {
 export async function submitSetoranXenditAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireMembership(user.id, tenantId);
+  await requireMemberWrite(user, tenantId);
 
   const tabunganTipeId = String(formData.get("tabunganTipeId"));
   const jumlah = Number(formData.get("jumlah"));
@@ -95,7 +95,7 @@ export async function submitSetoranXenditAction(formData: FormData) {
 export async function validasiSetoranAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireMembership(user.id, tenantId, CAN_KELOLA_TABUNGAN);
+  await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const setoranId = String(formData.get("setoranId"));
   const decision = String(formData.get("decision"));

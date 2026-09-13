@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { CAN_UPDATE_PROFIL } from "@/lib/authz";
+import { CAN_UPDATE_PROFIL, has } from "@/lib/authz";
 import { updateProfilAction } from "./actions";
 
 export default async function ProfilPage({ params }: { params: Promise<{ tenantId: string }> }) {
@@ -11,7 +11,7 @@ export default async function ProfilPage({ params }: { params: Promise<{ tenantI
     prisma.tenantProfile.findUniqueOrThrow({ where: { tenantId } }),
   ]);
 
-  if (!me.roles.some((r) => CAN_UPDATE_PROFIL.includes(r))) {
+  if (!has(me.roles, CAN_UPDATE_PROFIL)) {
     return (
       <div className="space-y-2 text-sm">
         {profile.logoUrl && <img src={profile.logoUrl} alt="" className="h-16 w-16 rounded-md object-cover" />}

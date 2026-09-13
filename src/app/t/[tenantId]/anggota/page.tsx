@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { CAN_KELOLA_ANGGOTA, CAN_CONFIRM_ANGGOTA } from "@/lib/authz";
+import { CAN_KELOLA_ANGGOTA, has } from "@/lib/authz";
 import { waShareUrl } from "@/lib/whatsapp";
 import { generateInviteAction, revokeInviteAction, confirmMemberAction, updateRolesAction } from "./actions";
 
@@ -17,8 +17,8 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
     prisma.tenantProfile.findUniqueOrThrow({ where: { tenantId } }),
   ]);
 
-  const canKelola = me.roles.some((r) => CAN_KELOLA_ANGGOTA.includes(r));
-  const canConfirm = me.roles.some((r) => CAN_CONFIRM_ANGGOTA.includes(r));
+  const canKelola = has(me.roles, CAN_KELOLA_ANGGOTA);
+  const canConfirm = has(me.roles, CAN_KELOLA_ANGGOTA);
   const base = process.env.NEXT_PUBLIC_URL ?? "";
   const pending = memberships.filter((m) => m.status === "pending_confirmation");
   const active = memberships.filter((m) => m.status === "active");

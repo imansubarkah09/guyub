@@ -3,12 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { requireMembership, CAN_CATAT_KAS } from "@/lib/authz";
+import { requireWrite, CAN_ATUR_ARISAN } from "@/lib/authz";
 
 export async function createArisanAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireMembership(user.id, tenantId, CAN_CATAT_KAS);
+  await requireWrite(user, tenantId, CAN_ATUR_ARISAN);
 
   const periode = String(formData.get("periode") ?? "").trim();
   const jumlahSetoran = String(formData.get("jumlahSetoran"));
@@ -21,7 +21,7 @@ export async function createArisanAction(formData: FormData) {
 export async function addPesertaAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireMembership(user.id, tenantId, CAN_CATAT_KAS);
+  await requireWrite(user, tenantId, CAN_ATUR_ARISAN);
 
   const arisanId = String(formData.get("arisanId"));
   const userId = String(formData.get("userId"));
@@ -33,7 +33,7 @@ export async function addPesertaAction(formData: FormData) {
 export async function toggleDapatAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireMembership(user.id, tenantId, CAN_CATAT_KAS);
+  await requireWrite(user, tenantId, CAN_ATUR_ARISAN);
 
   const pesertaId = String(formData.get("pesertaId"));
   const peserta = await prisma.arisanPeserta.update({
