@@ -24,7 +24,7 @@ export default async function KasPage({ params }: { params: Promise<{ tenantId: 
       </div>
 
       {canCatat && (
-        <form action={createKasTransaksiAction} className="space-y-2 rounded-md border border-primary/15 p-3">
+        <form action={createKasTransaksiAction} className="space-y-2 rounded-md border border-primary/15 p-3" encType="multipart/form-data">
           <input type="hidden" name="tenantId" value={tenantId} />
           <div className="flex gap-2">
             <input type="date" name="tanggal" required defaultValue={new Date().toISOString().slice(0, 10)} className="flex-1 rounded-md border border-primary/30 p-2 text-sm" />
@@ -35,6 +35,10 @@ export default async function KasPage({ params }: { params: Promise<{ tenantId: 
           </div>
           <input type="number" name="jumlah" min="0" step="1" required placeholder="Jumlah (Rp)" className="w-full rounded-md border border-primary/30 p-2 text-sm" />
           <input name="keterangan" placeholder="Keterangan" className="w-full rounded-md border border-primary/30 p-2 text-sm" />
+          <div>
+            <label className="mb-1 block text-xs text-foreground/60">Bukti transfer (opsional)</label>
+            <input type="file" name="bukti" accept="image/*" className="w-full text-sm" />
+          </div>
           <button type="submit" className="w-full rounded-md bg-primary py-2 text-sm font-medium text-primary-foreground">
             Catat Transaksi
           </button>
@@ -48,6 +52,14 @@ export default async function KasPage({ params }: { params: Promise<{ tenantId: 
               <p>{t.keterangan ?? "(tanpa keterangan)"}</p>
               <p className="text-xs text-foreground/60">
                 {t.tanggal.toLocaleDateString("id-ID")} · dicatat {t.dicatatOleh.name}
+                {t.buktiUrl && (
+                  <>
+                    {" · "}
+                    <a href={t.buktiUrl} target="_blank" rel="noreferrer" className="text-primary underline">
+                      Lihat bukti
+                    </a>
+                  </>
+                )}
               </p>
             </div>
             <span className={t.tipe === "masuk" ? "text-emerald-700" : "text-red-700"}>

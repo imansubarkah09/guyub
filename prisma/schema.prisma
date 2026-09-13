@@ -31,6 +31,8 @@ model User {
   familyNode      FamilyNode?
   kasTransaksi    KasTransaksi[]   @relation("KasDicatatOleh")
   tabunganSaldo   TabunganSaldo[]
+  setoranDiajukan TabunganSetoran[] @relation("SetoranDiajukanOleh")
+  setoranDivalidasi TabunganSetoran[] @relation("SetoranDivalidasiOleh")
   qurbanSlots     QurbanSlot[]
   arisanPeserta   ArisanPeserta[]
   createdAt       DateTime @default(now())
@@ -204,6 +206,8 @@ model KasTransaksi {
   jumlah       Decimal  @db.Decimal(14, 2)
   tipe         KasTipe
   keterangan   String?
+  /// Fase 4 (§5) — foto bukti transfer, opsional (uang tunai tidak selalu punya bukti).
+  buktiUrl     String?
   dicatatOleh  User     @relation("KasDicatatOleh", fields: [dicatatOlehId], references: [id])
   dicatatOlehId String
   createdAt    DateTime @default(now())
@@ -225,6 +229,7 @@ model TabunganTipe {
   nama     String
   mode     TabunganMode
   saldo    TabunganSaldo[]
+  setoran  TabunganSetoran[]
 
   @@index([tenantId])
 }
@@ -239,6 +244,32 @@ model TabunganSaldo {
   jumlah         Decimal      @db.Decimal(14, 2) @default(0)
 
   @@unique([tabunganTipeId, userId])
+}
+
+/// Fase 4 (§5) — anggota mengajukan setoran transfer + foto bukti; baru menambah
+/// TabunganSaldo setelah bendahara/ketua memvalidasi (beda dari setor langsung di
+/// TabunganTipe yang dicatat pengurus sendiri untuk uang tunai, tidak perlu bukti).
+enum SetoranStatus {
+  pending
+  valid
+  ditolak
+}
+
+model TabunganSetoran {
+  id                String        @id @default(cuid())
+  tabunganTipe      TabunganTipe  @relation(fields: [tabunganTipeId], references: [id], onDelete: Cascade)
+  tabunganTipeId    String
+  user              User          @relation("SetoranDiajukanOleh", fields: [userId], references: [id])
+  userId            String
+  jumlah            Decimal       @db.Decimal(14, 2)
+  buktiUrl          String
+  status            SetoranStatus @default(pending)
+  catatanBendahara  String?
+  divalidasiOleh    User?         @relation("SetoranDivalidasiOleh", fields: [divalidasiOlehId], references: [id])
+  divalidasiOlehId  String?
+  createdAt         DateTime      @default(now())
+
+  @@index([tabunganTipeId, status])
 }
 
 // --- Qurban Joinan -----------------------------------------------------------------

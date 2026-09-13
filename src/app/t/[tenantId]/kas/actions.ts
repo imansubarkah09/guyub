@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requireMembership, CAN_CATAT_KAS } from "@/lib/authz";
+import { uploadImage } from "@/lib/upload";
 import type { KasTipe } from "@prisma/client";
 
 export async function createKasTransaksiAction(formData: FormData) {
@@ -19,8 +20,14 @@ export async function createKasTransaksiAction(formData: FormData) {
     throw new Error("Tanggal, jumlah, dan tipe wajib diisi");
   }
 
+  let buktiUrl: string | undefined;
+  const bukti = formData.get("bukti");
+  if (bukti instanceof File && bukti.size > 0) {
+    buktiUrl = await uploadImage(bukti, `guyub/kas/${tenantId}`);
+  }
+
   await prisma.kasTransaksi.create({
-    data: { tenantId, tanggal: new Date(tanggal), jumlah, tipe: tipe as KasTipe, keterangan, dicatatOlehId: user.id },
+    data: { tenantId, tanggal: new Date(tanggal), jumlah, tipe: tipe as KasTipe, keterangan, buktiUrl, dicatatOlehId: user.id },
   });
 
   revalidatePath(`/t/${tenantId}/kas`);

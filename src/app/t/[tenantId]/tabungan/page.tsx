@@ -1,23 +1,56 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_KELOLA_TABUNGAN } from "@/lib/authz";
-import { createTabunganTipeAction, setorAction } from "./actions";
+import { createTabunganTipeAction, setorAction, submitSetoranBuktiAction, validasiSetoranAction } from "./actions";
 
 const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
 
 export default async function TabunganPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
   const user = await requireUser();
-  const [me, tipeList, anggota] = await Promise.all([
+  const [me, tipeList, anggota, pendingSetoran] = await Promise.all([
     prisma.membership.findUniqueOrThrow({ where: { userId_tenantId: { userId: user.id, tenantId } } }),
     prisma.tabunganTipe.findMany({ where: { tenantId }, include: { saldo: { include: { user: true } } }, orderBy: { nama: "asc" } }),
     prisma.membership.findMany({ where: { tenantId, status: "active" }, include: { user: true } }),
+    prisma.tabunganSetoran.findMany({
+      where: { status: "pending", tabunganTipe: { tenantId } },
+      include: { user: true, tabunganTipe: true },
+      orderBy: { createdAt: "asc" },
+    }),
   ]);
 
   const canKelola = me.roles.some((r) => CAN_KELOLA_TABUNGAN.includes(r));
 
   return (
     <div className="space-y-4">
+      {canKelola && pendingSetoran.length > 0 && (
+        <section className="rounded-md border border-primary/15 p-3">
+          <h2 className="mb-2 text-sm font-semibold">Menunggu Validasi Setoran</h2>
+          <ul className="space-y-2">
+            {pendingSetoran.map((s) => (
+              <li key={s.id} className="rounded-md border border-primary/15 p-2 text-sm">
+                <p>
+                  {s.user.name} · {s.tabunganTipe.nama} · {rupiah.format(Number(s.jumlah))}
+                </p>
+                <a href={s.buktiUrl} target="_blank" rel="noreferrer" className="text-xs text-primary underline">
+                  Lihat bukti transfer
+                </a>
+                <form action={validasiSetoranAction} className="mt-1 flex gap-2">
+                  <input type="hidden" name="tenantId" value={tenantId} />
+                  <input type="hidden" name="setoranId" value={s.id} />
+                  <button name="decision" value="valid" className="rounded-md bg-primary px-2 py-1 text-xs text-primary-foreground">
+                    Validasi
+                  </button>
+                  <button name="decision" value="ditolak" className="rounded-md border border-primary/30 px-2 py-1 text-xs">
+                    Tolak
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {canKelola && (
         <form action={createTabunganTipeAction} className="space-y-2 rounded-md border border-primary/15 p-3">
           <input type="hidden" name="tenantId" value={tenantId} />
@@ -69,10 +102,21 @@ export default async function TabunganPage({ params }: { params: Promise<{ tenan
                     ))}
                   </select>
                 )}
-                <input type="number" name="jumlah" min="1" step="1" required placeholder="Setoran (Rp)" className="flex-1 rounded-md border border-primary/30 p-1.5 text-xs" />
+                <input type="number" name="jumlah" min="1" step="1" required placeholder="Setoran tunai (Rp)" className="flex-1 rounded-md border border-primary/30 p-1.5 text-xs" />
                 <button className="rounded-md border border-primary/30 px-3 py-1.5 text-xs">Catat Setoran</button>
               </form>
             )}
+
+            <form action={submitSetoranBuktiAction} className="mt-2 space-y-1 border-t border-primary/10 pt-2" encType="multipart/form-data">
+              <input type="hidden" name="tenantId" value={tenantId} />
+              <input type="hidden" name="tabunganTipeId" value={tipe.id} />
+              <p className="text-xs text-foreground/60">Sudah transfer? Ajukan setoran dengan bukti untuk divalidasi bendahara.</p>
+              <div className="flex flex-col gap-2 min-[400px]:flex-row">
+                <input type="number" name="jumlah" min="1" step="1" required placeholder="Jumlah transfer (Rp)" className="flex-1 rounded-md border border-primary/30 p-1.5 text-xs" />
+                <input type="file" name="bukti" accept="image/*" required className="flex-1 text-xs" />
+                <button className="rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground">Ajukan</button>
+              </div>
+            </form>
           </div>
         );
       })}

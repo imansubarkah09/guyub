@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requireMembership, CAN_UPDATE_PROFIL } from "@/lib/authz";
-import { cloudinary } from "@/lib/cloudinary";
+import { uploadImage } from "@/lib/upload";
 
 export async function updateProfilAction(formData: FormData) {
   const user = await requireUser();
@@ -18,10 +18,7 @@ export async function updateProfilAction(formData: FormData) {
   let logoUrl: string | undefined;
   const logo = formData.get("logo");
   if (logo instanceof File && logo.size > 0) {
-    const buffer = Buffer.from(await logo.arrayBuffer());
-    const dataUri = `data:${logo.type};base64,${buffer.toString("base64")}`;
-    const uploaded = await cloudinary.uploader.upload(dataUri, { folder: `guyub/tenant/${tenantId}` });
-    logoUrl = uploaded.secure_url;
+    logoUrl = await uploadImage(logo, `guyub/tenant/${tenantId}`);
   }
 
   await prisma.tenantProfile.update({
