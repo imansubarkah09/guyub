@@ -5,7 +5,8 @@ import { Play, RotateCcw } from "lucide-react";
 import { btnPrimary, btnGhost, rupiah } from "@/components/ui";
 import { simpanUndianAction } from "./actions";
 
-export type Slot = { id: string; label: string };
+/** `label` dipakai di irisan roda (pendek biar muat), `penuh` di pengumuman hasil. */
+export type Slot = { id: string; label: string; penuh: string };
 
 const WARNA = ["#c1652d", "#0f766e", "#b45309", "#15803d", "#7c3aed", "#be123c", "#0369a1", "#a16207"];
 
@@ -105,7 +106,7 @@ export function SpinWheel({
                   dominantBaseline="middle"
                   transform={`rotate(${i * sudut + sudut / 2} ${tx} ${ty})`}
                 >
-                  {s.label.length > 14 ? `${s.label.slice(0, 13)}…` : s.label}
+                  {s.label.length > 12 ? `${s.label.slice(0, 11)}…` : s.label}
                 </text>
               </g>
             );
@@ -124,7 +125,7 @@ export function SpinWheel({
       {pemenang.length > 0 && (
         <div className="rounded-[var(--radius)] border border-primary/30 bg-primary/5 p-3 text-center">
           <p className="text-xs text-muted">Hasil kocokan</p>
-          <p className="text-lg font-semibold text-primary">{pemenang.map((p) => p.label).join(" & ")}</p>
+          <p className="text-lg font-semibold text-primary">{pemenang.map((p) => p.penuh).join(" & ")}</p>
           <p className="mt-1 text-xs text-muted">
             Masing-masing menerima {rupiah.format(potBersih / pemenang.length)} (setelah potongan)
           </p>

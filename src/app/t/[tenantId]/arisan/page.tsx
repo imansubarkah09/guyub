@@ -141,7 +141,7 @@ export default async function ArisanPage({ params }: { params: Promise<{ tenantI
                 <SpinWheel
                   tenantId={tenantId}
                   arisanId={a.id}
-                  slots={belumDapat.map((p) => ({ id: p.id, label: `${p.user.name}${p.nomorSlot > 1 ? ` ${p.nomorSlot}` : ""}` }))}
+                  slots={belumDapat.map((p) => ({ id: p.id, label: `${p.user.name.split(" ")[0]} ${p.nomorSlot}`, penuh: `${p.user.name}${p.nomorSlot > 1 ? ` ${p.nomorSlot}` : ""}` }))}
                   pemenangPerPutaran={a.pemenangPerPutaran}
                   potBersih={potBersih}
                   bisaKocok={canAtur}

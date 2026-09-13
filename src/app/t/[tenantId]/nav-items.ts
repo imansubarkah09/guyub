@@ -30,7 +30,7 @@ export type NavGroup = { label: string | null; items: NavItem[] };
 
 /** Kategorisasi wajib §6 — jangan kembalikan ke 9 menu flat sejajar. */
 export const NAV_GROUPS: NavGroup[] = [
-  { label: null, items: [{ href: "", label: "Ringkasan", icon: LayoutDashboard, primary: true }] },
+  { label: null, items: [{ href: "", label: "Dashboard", icon: LayoutDashboard, primary: true }] },
   {
     label: "Keuangan",
     items: [

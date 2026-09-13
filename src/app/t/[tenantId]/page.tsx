@@ -4,6 +4,9 @@ import { requireUser } from "@/lib/session";
 import { ringkasanTenant, pesanGamifiedQurban } from "@/lib/ringkasan";
 import { Card, StatCard, PageTitle, Badge, Progress, EmptyState, rupiah, tanggal } from "@/components/ui";
 import { HewanIcon } from "@/components/hewan";
+import { NyawaBar, DonaturList } from "@/components/nyawa";
+import { TrakteerModal } from "@/components/trakteer-modal";
+import { TRAKTEER_MODAL_URL, sisaHari } from "@/lib/trakteer";
 
 export default async function RingkasanPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
@@ -11,10 +14,21 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
   const r = await ringkasanTenant(tenantId);
   const base = `/t/${tenantId}`;
 
-  const [nodeSaya, anggotaAktif] = await Promise.all([
+  const [nodeSaya, anggotaAktif, tenant, donaturTerbaru, donaturTerbesar] = await Promise.all([
     prisma.familyNode.findFirst({ where: { tenantId, userId: user.id } }),
     prisma.membership.count({ where: { tenantId, status: "active" } }),
+    prisma.tenant.findUniqueOrThrow({ where: { id: tenantId }, include: { profile: true } }),
+    prisma.trakteerDonasi.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 50 }),
+    prisma.trakteerDonasi.findMany({ where: { tenantId }, orderBy: { jumlah: "desc" }, take: 50 }),
   ]);
+
+  const keDonatur = (d: (typeof donaturTerbaru)[number]) => ({
+    id: d.id,
+    nama: d.namaDonatur,
+    jumlah: Number(d.jumlah),
+    hari: d.hariNyawa,
+    tanggal: tanggal.format(d.createdAt),
+  });
 
   // Saldo tabungan pribadi + berapa anggota yang sudah menabung (§7.3).
   const saldoSaya = r.tabunganTipe
@@ -44,7 +58,18 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
 
   return (
     <div className="space-y-5">
-      <PageTitle title="Ringkasan" desc={`${anggotaAktif} anggota aktif`} />
+      <PageTitle title="Dashboard" desc={`${anggotaAktif} anggota aktif`} />
+
+      <NyawaBar sisaHari={sisaHari(tenant.nyawaSampai)} sampai={tenant.nyawaSampai ? tanggal.format(tenant.nyawaSampai) : null} />
+
+      <section className="grid gap-3 min-[520px]:grid-cols-2">
+        <DonaturList judul="Donatur Terbaru" items={donaturTerbaru.map(keDonatur)} urut="terbaru" />
+        <DonaturList judul="Donasi Terbesar" items={donaturTerbesar.map(keDonatur)} urut="terbesar" />
+      </section>
+
+      {TRAKTEER_MODAL_URL && (
+        <TrakteerModal modalUrl={TRAKTEER_MODAL_URL} kodeDonasi={tenant.kodeDonasi} namaTenant={tenant.profile?.nama ?? "tenant ini"} />
+      )}
 
       <section className="grid grid-cols-2 gap-3">
         <StatCard label="Saldo Kas" value={rupiah.format(r.saldoKas)} icon={Wallet} />
