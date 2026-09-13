@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_KELOLA_ANGGOTA } from "@/lib/authz";
 import { addFamilyNodeAction } from "./actions";
+import { NodeRow } from "./node-row";
 
 type Node = Awaited<ReturnType<typeof loadNodes>>[number];
 
@@ -9,17 +10,29 @@ async function loadNodes(tenantId: string) {
   return prisma.familyNode.findMany({ where: { tenantId }, include: { spouse: true, user: true } });
 }
 
-function Branch({ node, byParent }: { node: Node; byParent: Map<string | null, Node[]> }) {
+function Branch({
+  node,
+  byParent,
+  tenantId,
+  options,
+  canKelola,
+}: {
+  node: Node;
+  byParent: Map<string | null, Node[]>;
+  tenantId: string;
+  options: { id: string; nama: string }[];
+  canKelola: boolean;
+}) {
   const children = byParent.get(node.id) ?? [];
   return (
     <li>
-      <span className="font-medium">{node.nama}</span>
+      {canKelola ? <NodeRow tenantId={tenantId} node={node} options={options} /> : <span className="font-medium">{node.nama}</span>}
       {node.spouse && <span className="text-foreground/60"> ⚭ {node.spouse.nama}</span>}
       {node.user && <span className="text-xs text-foreground/50"> ({node.user.email})</span>}
       {children.length > 0 && (
         <ul className="mt-1 ml-4 space-y-1 border-l border-primary/15 pl-3">
           {children.map((c) => (
-            <Branch key={c.id} node={c} byParent={byParent} />
+            <Branch key={c.id} node={c} byParent={byParent} tenantId={tenantId} options={options} canKelola={canKelola} />
           ))}
         </ul>
       )}
@@ -49,7 +62,7 @@ export default async function SilsilahPage({ params }: { params: Promise<{ tenan
       {roots.length === 0 && <p className="text-sm text-foreground/60">Belum ada data silsilah.</p>}
       <ul className="space-y-2 text-sm">
         {roots.map((n) => (
-          <Branch key={n.id} node={n} byParent={byParent} />
+          <Branch key={n.id} node={n} byParent={byParent} tenantId={tenantId} options={nodes} canKelola={canKelola} />
         ))}
       </ul>
 
