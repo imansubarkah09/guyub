@@ -20,6 +20,9 @@ export default async function PlatformPage() {
     <main className="min-h-screen">
       <AppHeader email={user.email} title="Guyub · Platform Owner" />
       <div className="mx-auto max-w-lg space-y-3 p-4">
+        <a href="/platform/owners" className="text-sm text-primary underline">
+          Kelola Platform Owner
+        </a>
         <h1 className="text-lg font-semibold">Persetujuan Tenant Baru</h1>
         {requests.length === 0 && <p className="text-sm text-foreground/60">Tidak ada permintaan menunggu.</p>}
         {requests.map((r) => {
