@@ -42,8 +42,18 @@ jobs:
       # Skema DB produksi ikut naik di sini, supaya "push ke main" = deploy utuh.
       # directUrl sengaja diarahkan ke URL pooled: endpoint direct Neon prod
       # (ep-autumn-art-…, tanpa -pooler) tidak bisa dihubungi, yang pooled jalan.
+      # Pagar wajib (ketemu 13 Sep 2026): secret DATABASE_URL sempat menunjuk ke
+      # database DEV, jadi step ini rajin melapor "No pending migrations to apply"
+      # sambil memigrasi database yang salah. Worker tetap jalan di DB produksi
+      # yang ketinggalan dua migrasi, dan halaman meledak dengan React #441.
+      # Kalau secretnya salah lagi, CI harus GAGAL, bukan diam-diam sukses.
       - name: Migrasi database produksi
-        run: pnpm exec prisma migrate deploy
+        run: |
+          case "$DATABASE_URL" in
+            *ep-autumn-art*) ;;
+            *) echo "::error::DATABASE_URL bukan endpoint produksi (ep-autumn-art). Perbaiki secret repo." >&2; exit 1 ;;
+          esac
+          pnpm exec prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL }}

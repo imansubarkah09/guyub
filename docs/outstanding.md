@@ -59,7 +59,37 @@ Sisa yang perlu perhatian:
       2026: `/dashboard` terukur 45 ms CPU dengan outcome `ok` di produksi, jadi
       batas 10 ms ala Free plan jelas tidak berlaku di akun ini.
 
-## 3. Silsilah (13 Sep 2026)
+## 3. WAJIB SEGERA: DB produksi ketinggalan dua migrasi (13 Sep 2026)
+
+Gejalanya di browser: `Minified React error #441`, yang artinya "An error
+occurred in the Server Components render". Pesan aslinya disembunyikan di build
+produksi, jadi yang terlihat cuma kode itu.
+
+Penyebabnya: secret `DATABASE_URL` di GitHub Actions menunjuk ke database DEV
+(`ep-wispy-moon`), bukan produksi (`ep-autumn-art`). Jadi step "Migrasi database
+produksi" rajin melaporkan "No pending migrations to apply" sambil memigrasi
+database yang salah, sementara Worker jalan di DB produksi yang ketinggalan
+`20260913150000_tambah_role_wakil_ketua` dan
+`20260913160000_silsilah_urutan_dan_akun`. Kode meminta kolom `urutan` dan nilai
+enum `wakil_ketua` yang belum ada di sana, lalu render server gagal.
+
+- [ ] Jalankan migrasi ke DB produksi (Claude diblokir menulis ke DB produksi):
+
+```bash
+node --env-file=.env.production -e 'process.env.DATABASE_URL_UNPOOLED=process.env.DATABASE_URL; require("child_process").spawnSync(process.execPath,["node_modules/prisma/build/index.js","migrate","deploy"],{stdio:"inherit"})'
+```
+
+- [ ] Betulkan secret repo supaya push berikutnya memigrasi DB yang benar:
+
+```bash
+gh secret set DATABASE_URL --repo imansubarkah09/thedreamcompany-guyub          # isi dari .env.production
+gh secret set DATABASE_URL_UNPOOLED --repo imansubarkah09/thedreamcompany-guyub # isi dari .env.production
+```
+
+CI sekarang punya pagar: kalau `DATABASE_URL` bukan endpoint produksi, job deploy
+GAGAL, tidak lagi diam-diam sukses sambil memigrasi database dev.
+
+## 4. Silsilah (13 Sep 2026)
 
 - Akun kini bisa ditautkan ke node lewat kolom "Tautkan akun" di form tambah dan
   di form edit. Sebelumnya `addFamilyNodeAction` membaca `userId` dari form tapi
@@ -74,7 +104,7 @@ Sisa yang perlu perhatian:
 - Cabang bisa dibuka/tutup per tingkat memakai `<details>` bawaan browser, tanpa
   JavaScript tambahan.
 
-## 4. Trakteer
+## 5. Trakteer
 
 - Slug dipakai `brokado` (satu akun Trakteer dengan Brokado, unit "Traktir Kopi
   Brokado"). `NEXT_PUBLIC_TRAKTEER_SLUG=brokado` sudah diisi di `.env.production`,
@@ -90,7 +120,7 @@ Sisa yang perlu perhatian:
 - [ ] Klik tombol "Tarik dari Trakteer" sekali sebagai uji nyata. Pencatatan ke DB
       belum pernah dijalankan end to end, baru bentuk respons APInya yang dicocokkan.
 
-## 5. Xendit (Fase 5, bayar setoran tabungan otomatis)
+## 6. Xendit (Fase 5, bayar setoran tabungan otomatis)
 
 - [ ] `XENDIT_API_KEY` dan `XENDIT_CALLBACK_TOKEN` di `.env.development` dan
       `.env.production` masih placeholder. Tombol "Bayar via Xendit" baru muncul kalau
@@ -104,7 +134,7 @@ Sisa yang perlu perhatian:
       dicatat pengurus langsung (tidak ada alur bayar dari anggota), dan Arisan belum
       punya ledger setoran per giliran sama sekali. Perlu didesain dulu kalau mau.
 
-## 6. Keputusan bisnis (spec §7, open questions, belum pernah dijawab)
+## 7. Keputusan bisnis (spec §7, open questions, belum pernah dijawab)
 
 - [ ] Mekanisme billing untuk fitur berbayar (upload bukti transfer sudah aktif gratis
       untuk sekarang; payment gateway otomatis untuk tenant-paying-platform belum ada
@@ -117,14 +147,14 @@ Sisa yang perlu perhatian:
 - [ ] Retensi/limit data untuk tenant yang di-suspend atau tidak aktif: dihapus setelah
       berapa lama, atau disimpan selamanya?
 
-## 7. SEO / Analytics (Fase 2 §8, kodenya sudah ada tinggal isi env)
+## 8. SEO / Analytics (Fase 2 §8, kodenya sudah ada tinggal isi env)
 
 - [ ] `GOOGLE_SITE_VERIFICATION`: kode verifikasi HTML tag dari Google Search Console.
       Belum ada di `.env.production`, jadi meta verifikasinya tidak ikut ter-build.
 - [ ] `NEXT_PUBLIC_GA_MEASUREMENT_ID`: measurement ID dari Google Analytics (GA4).
       Sama, belum ada di `.env.production` dan belum dioper di workflow CI.
 
-## 8. Utang teknis kecil
+## 9. Utang teknis kecil
 
 - [ ] Dua migrasi lama (`20260913110540_tabungan_setoran_xendit` dan
       `20260913125656_arisan_undian_kegiatan_trakteer`) pernah diubah setelah
