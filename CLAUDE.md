@@ -75,6 +75,16 @@ sungguhan, jangan cuma modal build/lint hijau:
 
 ## Dua jebakan Cloudflare Workers yang sudah pernah menjatuhkan produksi (13 Sep 2026)
 
+**Cakupan Prisma client: satu per REQUEST, bukan per proses dan bukan per
+pemanggilan.** `cache()` React sempat dipakai untuk ini dan ternyata tidak
+mengikat ke request di aplikasi ini: terukur 3 client dibuat untuk satu kali
+muat halaman. Efek diamnya jauh lebih berbahaya daripada borosnya koneksi,
+`$transaction([...])` yang tersusun dari beberapa client TIDAK atomik, sehingga
+penautan pasangan di Silsilah tersimpan setengah jalan lalu menabrak unique
+spouseId (500 P2002). `src/lib/prisma.ts` sekarang menitipkan client ke
+ExecutionContext request di workerd, dan memakai singleton proses di Node.
+Kalau menyentuh file itu, ukur dulu jumlah client per request sebelum percaya.
+
 **1101, Prisma client tidak boleh singleton modul.** Modul hidup lebih lama dari
 satu request di sebuah isolate, sedangkan koneksi WebSocket Neon yang dibuka
 request sebelumnya haram dipakai request berikutnya. Gejalanya di log Worker:
@@ -127,8 +137,8 @@ exception per request.
 
 # This is NOT the Next.js you know
 
-This version has breaking changes, APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
-This block is written and re-added by `next dev`, verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->

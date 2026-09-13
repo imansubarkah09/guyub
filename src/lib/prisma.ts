@@ -1,4 +1,3 @@
-import { cache } from "react";
 import { PrismaClient } from "@/generated/prisma-workerd/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 
@@ -6,25 +5,58 @@ import { PrismaNeon } from "@prisma/adapter-neon";
  * Cloudflare Workers tidak punya TCP socket mentah, jadi Prisma memakai driver
  * adapter Neon (WebSocket), bukan engine bawaan.
  *
- * PENTING (ketemu 13 Sep 2026, error 1101 di produksi): client TIDAK BOLEH
- * jadi singleton modul. Modul hidup lebih lama dari satu request di sebuah
- * isolate, sedangkan koneksi WebSocket yang dibuat pada request A haram dipakai
- * request B. Gejalanya: "Cannot perform I/O on behalf of a different request"
- * plus "Connection terminated", lalu Worker melempar exception dan Cloudflare
- * membalas halaman error 1101. Request pertama di isolate baru selalu lolos,
- * makanya bugnya terasa acak.
+ * Ada dua syarat yang saling bertabrakan di sini, dan keduanya pernah
+ * menjatuhkan produksi dalam satu hari (13 Sep 2026):
  *
- * `cache()` React mengikat pembuatan client ke satu request. Di luar konteks
- * request (misalnya dipanggil dari skrip) cache() hanya membuat instance baru,
- * jadi kasus terburuknya boros koneksi, bukan koneksi dipakai lintas request.
+ * 1. DI WORKERS, client TIDAK BOLEH dipakai lintas request. Koneksi yang dibuka
+ *    request A haram dipakai request B: "Cannot perform I/O on behalf of a
+ *    different request", lalu Worker melempar exception dan Cloudflare membalas
+ *    error 1101.
+ * 2. TAPI dalam SATU request, client harus SATU. Percobaan pertama memakai
+ *    `cache()` React, dan ternyata di aplikasi ini cache-nya tidak mengikat ke
+ *    request: terukur 3 client dibuat untuk satu kali muat halaman. Akibatnya
+ *    tiap query membuka koneksi sendiri dan, yang jauh lebih berbahaya,
+ *    `$transaction([...])` tersusun dari beberapa client sehingga TIDAK atomik.
+ *    Penautan pasangan di Silsilah jadi setengah jalan lalu menabrak unique
+ *    spouseId (error 500 P2002 yang dilihat pengguna).
+ *
+ * Jadi cakupannya dipatok eksplisit, tidak diserahkan ke framework:
+ * - workerd: satu client per request, dititipkan ke ExecutionContext request itu.
+ * - Node (next dev / next start): satu client per proses, koneksi tetap hangat
+ *   seperti aplikasi Node biasa. Di Node tidak ada larangan lintas request.
  */
-const getClient = cache(
-  () => new PrismaClient({ adapter: new PrismaNeon({ connectionString: process.env.DATABASE_URL }) }),
-);
+function buatClient() {
+  return new PrismaClient({ adapter: new PrismaNeon({ connectionString: process.env.DATABASE_URL }) });
+}
+
+const diWorkers = () => typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers";
+
+type Wadah = { __prisma?: PrismaClient };
+
+function ambilClient(): PrismaClient {
+  if (diWorkers()) {
+    try {
+      // require dinamis, bukan import statis: modul ini khusus bundel Workers dan
+      // tidak perlu ikut dimuat waktu jalan di Node (next dev / next start).
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { getCloudflareContext } = require("@opennextjs/cloudflare") as {
+        getCloudflareContext: () => { ctx: unknown };
+      };
+      const wadah = getCloudflareContext().ctx as Wadah;
+      return (wadah.__prisma ??= buatClient());
+    } catch {
+      // Di luar konteks request (misalnya prerender saat build) tidak ada ctx.
+      // Client sekali pakai aman di sini: tidak ada request lain yang mewarisinya.
+      return buatClient();
+    }
+  }
+  const g = globalThis as Wadah;
+  return (g.__prisma ??= buatClient());
+}
 
 export const prisma = new Proxy({} as PrismaClient, {
   get(_target, prop) {
-    const client = getClient();
+    const client = ambilClient();
     const value = Reflect.get(client, prop) as unknown;
     return typeof value === "function" ? value.bind(client) : value;
   },

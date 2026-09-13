@@ -59,7 +59,22 @@ Sisa yang perlu perhatian:
       2026: `/dashboard` terukur 45 ms CPU dengan outcome `ok` di produksi, jadi
       batas 10 ms ala Free plan jelas tidak berlaku di akun ini.
 
-## 3. Trakteer
+## 3. Silsilah (13 Sep 2026)
+
+- Akun kini bisa ditautkan ke node lewat kolom "Tautkan akun" di form tambah dan
+  di form edit. Sebelumnya `addFamilyNodeAction` membaca `userId` dari form tapi
+  tidak ada satu pun field yang mengirimnya, jadi peringatan "Anda belum punya
+  posisi di silsilah ini" tidak mungkin hilang.
+- `FamilyNode.userId` dulu unik GLOBAL, artinya satu akun cuma bisa punya posisi
+  di satu tenant. Sekarang unik per tenant.
+- Tambah kolom "Anak ke-" yang diisi manual, karena urutan input sering beda dari
+  urutan kelahiran. Urutan tampil mengikuti angka itu, yang kosong turun ke bawah.
+- Tambah tombol Hapus. Anak dari node yang dihapus dinaikkan ke orang tua di
+  atasnya supaya cabangnya tidak lenyap.
+- Cabang bisa dibuka/tutup per tingkat memakai `<details>` bawaan browser, tanpa
+  JavaScript tambahan.
+
+## 4. Trakteer
 
 - Slug dipakai `brokado` (satu akun Trakteer dengan Brokado, unit "Traktir Kopi
   Brokado"). `NEXT_PUBLIC_TRAKTEER_SLUG=brokado` sudah diisi di `.env.production`,
@@ -75,7 +90,7 @@ Sisa yang perlu perhatian:
 - [ ] Klik tombol "Tarik dari Trakteer" sekali sebagai uji nyata. Pencatatan ke DB
       belum pernah dijalankan end to end, baru bentuk respons APInya yang dicocokkan.
 
-## 4. Xendit (Fase 5, bayar setoran tabungan otomatis)
+## 5. Xendit (Fase 5, bayar setoran tabungan otomatis)
 
 - [ ] `XENDIT_API_KEY` dan `XENDIT_CALLBACK_TOKEN` di `.env.development` dan
       `.env.production` masih placeholder. Tombol "Bayar via Xendit" baru muncul kalau
@@ -89,7 +104,7 @@ Sisa yang perlu perhatian:
       dicatat pengurus langsung (tidak ada alur bayar dari anggota), dan Arisan belum
       punya ledger setoran per giliran sama sekali. Perlu didesain dulu kalau mau.
 
-## 5. Keputusan bisnis (spec §7, open questions, belum pernah dijawab)
+## 6. Keputusan bisnis (spec §7, open questions, belum pernah dijawab)
 
 - [ ] Mekanisme billing untuk fitur berbayar (upload bukti transfer sudah aktif gratis
       untuk sekarang; payment gateway otomatis untuk tenant-paying-platform belum ada
@@ -102,14 +117,14 @@ Sisa yang perlu perhatian:
 - [ ] Retensi/limit data untuk tenant yang di-suspend atau tidak aktif: dihapus setelah
       berapa lama, atau disimpan selamanya?
 
-## 6. SEO / Analytics (Fase 2 §8, kodenya sudah ada tinggal isi env)
+## 7. SEO / Analytics (Fase 2 §8, kodenya sudah ada tinggal isi env)
 
 - [ ] `GOOGLE_SITE_VERIFICATION`: kode verifikasi HTML tag dari Google Search Console.
       Belum ada di `.env.production`, jadi meta verifikasinya tidak ikut ter-build.
 - [ ] `NEXT_PUBLIC_GA_MEASUREMENT_ID`: measurement ID dari Google Analytics (GA4).
       Sama, belum ada di `.env.production` dan belum dioper di workflow CI.
 
-## 7. Utang teknis kecil
+## 8. Utang teknis kecil
 
 - [ ] Dua migrasi lama (`20260913110540_tabungan_setoran_xendit` dan
       `20260913125656_arisan_undian_kegiatan_trakteer`) pernah diubah setelah

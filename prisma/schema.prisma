@@ -37,7 +37,9 @@ model User {
   sessions        Session[]
   memberships     Membership[]
   invitationsSent Invitation[]     @relation("InvitationCreatedBy")
-  familyNode      FamilyNode?
+  /// Satu posisi per tenant (lihat @@unique([tenantId, userId]) di FamilyNode),
+  /// jadi di sisi User bentuknya daftar: satu orang bisa ada di pohon beberapa tenant.
+  familyNodes     FamilyNode[]
   kasTransaksi    KasTransaksi[]   @relation("KasDicatatOleh")
   tabunganSaldo   TabunganSaldo[]
   setoranDiajukan TabunganSetoran[] @relation("SetoranDiajukanOleh")
@@ -212,8 +214,17 @@ model FamilyNode {
   spouseOf FamilyNode[] @relation("FamilySpouse")
   spouseId String?      @unique
   user     User?        @relation(fields: [userId], references: [id])
-  userId   String?      @unique
+  userId   String?
+  /// Anak ke berapa dalam satu orang tua. Urutan dibuat bisa diisi manual karena
+  /// urutan input sering tidak sama dengan urutan kelahiran. Null = belum diatur,
+  /// ditaruh paling bawah.
+  urutan   Int?
 
+  /// Satu akun boleh punya posisi di pohon SETIAP tenant (dia bisa anggota
+  /// keluarga sendiri sekaligus paguyuban mertua), tapi cuma satu posisi per
+  /// tenant. Dulu `userId` unik global, jadi begitu seseorang ditautkan di satu
+  /// tenant, tenant lain tidak bisa menautkannya lagi.
+  @@unique([tenantId, userId])
   @@index([tenantId])
 }
 

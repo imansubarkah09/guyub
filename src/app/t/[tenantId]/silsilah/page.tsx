@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TreePine, Search } from "lucide-react";
+import { TreePine, Search, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_KELOLA_ANGGOTA, has } from "@/lib/authz";
@@ -14,11 +14,22 @@ async function loadNodes(tenantId: string) {
   return prisma.familyNode.findMany({ where: { tenantId }, include: { spouse: true, user: true } });
 }
 
+/** Kandidat akun yang bisa ditautkan ke sebuah node: anggota aktif tenant ini. */
+async function loadAnggota(tenantId: string) {
+  const m = await prisma.membership.findMany({
+    where: { tenantId, status: "active" },
+    include: { user: { select: { id: true, name: true, email: true } } },
+    orderBy: { createdAt: "asc" },
+  });
+  return m.map((x) => x.user);
+}
+
 function Branch({
   node,
   byParent,
   tenantId,
   options,
+  anggota,
   canKelola,
   highlightId,
   matchIds,
@@ -27,6 +38,7 @@ function Branch({
   byParent: Map<string | null, Node[]>;
   tenantId: string;
   options: { id: string; nama: string }[];
+  anggota: { id: string; name: string; email: string }[];
   canKelola: boolean;
   highlightId: string | null;
   matchIds: Set<string> | null;
@@ -37,17 +49,31 @@ function Branch({
   return (
     <li>
       <span className={`inline-flex flex-wrap items-center gap-1 rounded-lg px-2 py-1 ${isMe ? "bg-primary/10 ring-1 ring-primary/40" : isMatch ? "bg-warning/10" : ""}`}>
-        {canKelola ? <NodeRow tenantId={tenantId} node={node} options={options} /> : <span className="font-medium">{node.nama}</span>}
+        {node.urutan != null && <Badge tone="muted">Anak ke-{node.urutan}</Badge>}
+        {canKelola ? (
+          <NodeRow tenantId={tenantId} node={node} options={options} anggota={anggota} />
+        ) : (
+          <span className="font-medium">{node.nama}</span>
+        )}
         {node.spouse && <span className="text-muted">⚭ {node.spouse.nama}</span>}
         {isMe && <Badge tone="primary">Anda</Badge>}
         {node.user && !isMe && <span className="text-xs text-muted">({node.user.name})</span>}
       </span>
+      {/* <details> bawaan browser: buka/tutup satu tingkat tanpa JavaScript sama
+          sekali, dan tetap jalan sebelum hidrasi. Barisnya sengaja DI LUAR
+          <summary> supaya tombol edit/hapus tidak ikut men-toggle cabang. */}
       {children.length > 0 && (
-        <ul className="mt-1 ml-3 space-y-1 border-l border-border pl-3">
-          {children.map((c) => (
-            <Branch key={c.id} node={c} byParent={byParent} tenantId={tenantId} options={options} canKelola={canKelola} highlightId={highlightId} matchIds={matchIds} />
-          ))}
-        </ul>
+        <details open className="group ml-1">
+          <summary className="inline-flex cursor-pointer select-none items-center gap-1 text-[11px] text-muted marker:content-none [&::-webkit-details-marker]:hidden">
+            <ChevronRight className="h-3 w-3 transition-transform group-open:rotate-90" />
+            {children.length} anak
+          </summary>
+          <ul className="mt-1 ml-3 space-y-1 border-l border-border pl-3">
+            {children.map((c) => (
+              <Branch key={c.id} node={c} byParent={byParent} tenantId={tenantId} options={options} anggota={anggota} canKelola={canKelola} highlightId={highlightId} matchIds={matchIds} />
+            ))}
+          </ul>
+        </details>
       )}
     </li>
   );
@@ -65,7 +91,7 @@ export default async function SilsilahPage({
   const user = await requireUser();
   const { roles } = await effectiveRoles(user, tenantId);
   const viewerId = await viewerUserId(user, tenantId);
-  const nodes = await loadNodes(tenantId);
+  const [nodes, anggota] = await Promise.all([loadNodes(tenantId), loadAnggota(tenantId)]);
 
   const canKelola = has(roles, CAN_KELOLA_ANGGOTA);
   const byId = new Map(nodes.map((n) => [n.id, n]));
@@ -74,6 +100,11 @@ export default async function SilsilahPage({
     const list = byParent.get(n.parentId) ?? [];
     list.push(n);
     byParent.set(n.parentId, list);
+  }
+  // "Anak ke-" yang diisi manual menentukan urutan; yang belum diatur turun ke
+  // bawah dan diurutkan nama, supaya susunannya tidak berubah-ubah tiap render.
+  for (const list of byParent.values()) {
+    list.sort((a, b) => (a.urutan ?? Infinity) - (b.urutan ?? Infinity) || a.nama.localeCompare(b.nama));
   }
 
   const nodeSaya = nodes.find((n) => n.userId === viewerId) ?? null;
@@ -156,6 +187,7 @@ export default async function SilsilahPage({
                 byParent={byParent}
                 tenantId={tenantId}
                 options={nodes.map((x) => ({ id: x.id, nama: x.nama }))}
+                anggota={anggota}
                 canKelola={canKelola}
                 highlightId={nodeSaya?.id ?? null}
                 matchIds={matchIds}
@@ -167,7 +199,11 @@ export default async function SilsilahPage({
 
       {!nodeSaya && (
         <Card className="border-warning/30 bg-warning/5">
-          <p className="text-sm">Anda belum punya posisi di silsilah ini. Tambahkan diri Anda lewat form di bawah, lalu hubungkan ke orang tua/pasangan.</p>
+          <p className="text-sm">
+            {canKelola
+              ? "Anda belum punya posisi di silsilah ini. Tambahkan nama Anda lewat form di bawah, lalu pilih akun Anda di kolom \"Tautkan akun\" supaya kotaknya ditandai sebagai Anda. Kalau nama Anda sudah ada di pohon, cukup klik edit di nama itu dan tautkan akunnya."
+              : "Anda belum punya posisi di silsilah ini. Minta pengurus menautkan akun Anda ke nama Anda di pohon keluarga."}
+          </p>
         </Card>
       )}
 
@@ -190,6 +226,15 @@ export default async function SilsilahPage({
               {nodes.map((n) => (
                 <option key={n.id} value={n.id}>
                   Pasangan: {n.nama}
+                </option>
+              ))}
+            </select>
+            <input type="number" name="urutan" min={1} placeholder="Anak ke- (opsional)" className={inputClass} />
+            <select name="userId" className={inputClass} defaultValue="">
+              <option value="">Tautkan akun: tidak ada</option>
+              {anggota.map((a) => (
+                <option key={a.id} value={a.id}>
+                  Tautkan akun: {a.name} ({a.email})
                 </option>
               ))}
             </select>
