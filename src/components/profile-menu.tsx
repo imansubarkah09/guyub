@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut, UserRound, ShieldCheck } from "lucide-react";
@@ -75,10 +76,10 @@ export function ProfileMenu({ user }: { user: AccountInfo }) {
             <div className="mt-3 space-y-2 border-t border-border pt-3">
               <InstallButton />
               {user.isPlatformOwner && (
-                <a href="/admin" className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm transition hover:bg-primary/5">
+                <Link href="/admin" className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm transition hover:bg-primary/5">
                   <ShieldCheck className="h-4 w-4 text-accent" />
                   Area Platform Owner
-                </a>
+                </Link>
               )}
               <button
                 onClick={() => signOut().then(() => router.push("/login"))}

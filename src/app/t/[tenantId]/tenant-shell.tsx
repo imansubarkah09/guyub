@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, MoreHorizontal, X, Eye } from "lucide-react";
@@ -54,9 +55,9 @@ export function TenantShell({
           <button onClick={() => setDrawer(true)} aria-label="Buka menu" className="flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-primary/10 lg:hidden">
             <Menu className="h-5 w-5" />
           </button>
-          <a href={base} className="truncate px-1 font-semibold tracking-tight text-primary">
+          <Link href={base} className="truncate px-1 font-semibold tracking-tight text-primary">
             {tenantNama}
-          </a>
+          </Link>
         </div>
         <div className="flex items-center gap-1">
           <NotifBell items={notif} unread={unread} />
@@ -93,14 +94,14 @@ export function TenantShell({
       {/* Bottom nav mobile: menu tersering + "Lainnya" (§4). */}
       <nav className="pb-safe fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-surface lg:hidden" aria-label="Navigasi utama">
         {primary.map((item) => (
-          <a
+          <Link
             key={item.href}
             href={`${base}${item.href}`}
             className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${isActive(item.href) ? "text-primary" : "text-muted"}`}
           >
             <item.icon className="h-5 w-5" />
             {item.short ?? item.label}
-          </a>
+          </Link>
         ))}
         <button
           onClick={() => setDrawer(true)}
@@ -136,16 +137,21 @@ function SidebarNav({
             <ul className="space-y-0.5">
               {items.map((item) => (
                 <li key={item.href}>
-                  <a
+                  <Link
                     href={`${base}${item.href}`}
                     onClick={onNavigate}
+                    // prefetch={false}: sidebar memuat 10+ tautan sekaligus dan tiap
+                    // halaman tenant menembak DB. Prefetch bawaan berarti belasan render
+                    // SSR cuma karena menu terlihat. Transisi client-side sendiri sudah
+                    // membuang reload dokumen penuh, itu bagian terbesar dari lambatnya.
+                    prefetch={false}
                     className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
                       isActive(item.href) ? "bg-primary text-primary-foreground" : "text-foreground/80 hover:bg-primary/10"
                     }`}
                   >
                     <item.icon className="h-4 w-4 flex-shrink-0" />
                     {item.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

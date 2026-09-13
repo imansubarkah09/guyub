@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { TreePine, Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
@@ -125,14 +126,14 @@ export default async function SilsilahPage({
         <p className="flex items-center justify-between gap-2 text-xs text-muted">
           <span>{konteks}</span>
           {!query && nodeSaya && (
-            <a href={`/t/${tenantId}/silsilah?semua=1`} className="text-primary underline">
+            <Link href={`/t/${tenantId}/silsilah?semua=1`} className="text-primary underline">
               Lihat semua pohon
-            </a>
+            </Link>
           )}
           {query && (
-            <a href={`/t/${tenantId}/silsilah`} className="text-primary underline">
+            <Link href={`/t/${tenantId}/silsilah`} className="text-primary underline">
               Reset
-            </a>
+            </Link>
           )}
         </p>
       )}

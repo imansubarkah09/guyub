@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
@@ -97,9 +98,9 @@ function Shell({ children }: { children: React.ReactNode }) {
     <main className="mx-auto max-w-lg p-4">
       <Card>
         <p className="text-sm">{children}</p>
-        <a href="/dashboard" className="mt-2 inline-block text-sm text-primary underline">
+        <Link href="/dashboard" className="mt-2 inline-block text-sm text-primary underline">
           Kembali ke Dashboard
-        </a>
+        </Link>
       </Card>
     </main>
   );

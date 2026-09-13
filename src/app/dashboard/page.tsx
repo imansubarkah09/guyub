@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Home, Plus, ShieldCheck, MessageCircle, Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
@@ -32,10 +33,10 @@ export default async function DashboardPage() {
         <PageTitle title={`Halo, ${user.name.split(" ")[0]}`} desc="Pilih tenant yang ingin Anda buka" />
 
         {user.isPlatformOwner && (
-          <a href="/admin" className="flex items-center gap-2 rounded-[var(--radius)] border border-accent/30 bg-accent/5 p-3 text-sm font-medium text-accent">
+          <Link href="/admin" className="flex items-center gap-2 rounded-[var(--radius)] border border-accent/30 bg-accent/5 p-3 text-sm font-medium text-accent">
             <ShieldCheck className="h-4 w-4" />
             Area Platform Owner — kelola & preview semua tenant
-          </a>
+          </Link>
         )}
 
         <section>
@@ -45,9 +46,9 @@ export default async function DashboardPage() {
               title="Belum tergabung di tenant manapun"
               desc="Cari arisan keluarga/RT/paguyuban Anda, atau daftarkan yang baru lewat form di bawah."
               action={
-                <a href="/cari" className={btnPrimary}>
+                <Link href="/cari" className={btnPrimary}>
                   <Search className="h-4 w-4" /> Cari Tenant
-                </a>
+                </Link>
               }
             />
           ) : (
@@ -59,13 +60,13 @@ export default async function DashboardPage() {
                   <li key={m.id}>
                     <Card className={aktif ? "transition hover:border-primary/40" : "opacity-75"}>
                       {aktif ? (
-                        <a href={`/t/${m.tenantId}`} className="block">
+                        <Link href={`/t/${m.tenantId}`} className="block">
                           <p className="font-medium text-primary">{nama}</p>
                           <p className="mt-0.5 text-xs text-muted">
                             {JENIS_LABEL[m.tenant.jenis]} · {m.roles.join(", ")}
                             {m.tenant.status !== "approved" && " · menunggu persetujuan Platform Owner"}
                           </p>
-                        </a>
+                        </Link>
                       ) : (
                         <>
                           <p className="font-medium">{nama}</p>
@@ -83,9 +84,9 @@ export default async function DashboardPage() {
         </section>
 
         <div className="flex flex-wrap gap-2">
-          <a href="/cari" className={btnGhost}>
+          <Link href="/cari" className={btnGhost}>
             <Search className="h-4 w-4" /> Cari Tenant
-          </a>
+          </Link>
           <a href={waShareUrl(ajakText)} target="_blank" rel="noreferrer" className={`${btnGhost} text-success`}>
             <MessageCircle className="h-4 w-4" /> Ajak lewat WhatsApp
           </a>

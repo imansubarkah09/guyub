@@ -99,6 +99,26 @@ tidak sembuh dengan reload biasa. Sekarang navigasi selalu network-first, cache
 cuma cadangan offline untuk "/", dan cache versi lama dibuang saat activate.
 Halaman selain "/" sengaja tidak pernah disimpan karena isinya data tenant privat.
 
+**Navigasi internal WAJIB pakai `next/link`, bukan `<a href>`** (ketemu 13 Sep
+2026, ini alasan utama guyub terasa lebih lambat dari school-community). Seluruh
+menu guyub dulu memakai `<a>`, jadi setiap ketukan menu adalah muat dokumen
+penuh: HTML diambil ulang dari Worker, semua chunk diunduh dan dieksekusi lagi,
+React hidrasi ulang dari nol. `references/app/school-community` memakai
+`next/link` di 39 file dan nol `<a>` internal, itu sebabnya terasa instan.
+Diukur di build produksi lokal (tanpa latensi jaringan): muat dokumen penuh
+median 557 ms, transisi client-side median 104 ms.
+
+Dua catatan yang menyertainya:
+- Sidebar tenant memakai `prefetch={false}` karena 10+ tautannya terlihat
+  sekaligus dan tiap halaman tenant menembak DB; prefetch bawaan berarti belasan
+  render SSR cuma karena menu tampak.
+- `<a>` tetap benar untuk tautan eksternal (wa.me, Trakteer, bukti Cloudinary)
+  dan di `t/[tenantId]/error.tsx`, karena di sana muat ulang penuh justru cara
+  pulih dari state client yang rusak.
+- Uji client-side transition HARUS di build produksi. Di `next dev`, pindah ke
+  route yang belum terkompilasi tetap memicu muat dokumen penuh, jadi tes di dev
+  akan bilang perbaikannya gagal padahal tidak.
+
 Cara membaca lognya: `observability` sudah aktif di `wrangler.jsonc`, dan
 `npx wrangler tail --format json` menampilkan `cpuTime`, `outcome`, serta
 exception per request.

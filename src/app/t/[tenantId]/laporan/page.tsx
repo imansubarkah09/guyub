@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_BUAT_LAPORAN, has } from "@/lib/authz";
@@ -111,9 +112,9 @@ export default async function LaporanPage({ params }: { params: Promise<{ tenant
                         PDF
                       </a>
                     )}
-                    <a href={`${base}/laporan/${l.shareLink}`} className="text-primary underline">
+                    <Link href={`${base}/laporan/${l.shareLink}`} className="text-primary underline">
                       Link publik
-                    </a>
+                    </Link>
                   </div>
                 </Card>
               </li>

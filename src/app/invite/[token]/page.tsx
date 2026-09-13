@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { notifyTenant } from "@/lib/notifikasi";
@@ -42,9 +43,9 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
     return (
       <Shell>
         Anda sudah jadi anggota <strong>{invitation.tenant.profile?.nama}</strong>.{" "}
-        <a href={`/t/${invitation.tenantId}`} className="text-primary underline">
+        <Link href={`/t/${invitation.tenantId}`} className="text-primary underline">
           Buka tenant
-        </a>
+        </Link>
       </Shell>
     );
   }

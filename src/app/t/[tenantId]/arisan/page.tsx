@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CircleDollarSign, CheckCircle2, Clock, Trophy, CalendarDays, Home, Dices } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
@@ -45,9 +46,9 @@ export default async function ArisanPage({ params }: { params: Promise<{ tenantI
         title="Arisan"
         desc="Kocokan, status bayar, dan saldo putaran berjalan"
         action={
-          <a href={`/t/${tenantId}/arisan/jadwal`} className={btnGhost}>
+          <Link href={`/t/${tenantId}/arisan/jadwal`} className={btnGhost}>
             <CalendarDays className="h-4 w-4" /> Jadwal
-          </a>
+          </Link>
         }
       />
 

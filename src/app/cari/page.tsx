@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
@@ -53,9 +54,9 @@ export default async function CariPage({ searchParams }: { searchParams: Promise
                 <p className="text-xs text-foreground/60">{JENIS_LABEL[r.jenis]}</p>
               </div>
               {status === "active" ? (
-                <a href={`/t/${r.id}`} className="text-xs text-primary underline">
+                <Link href={`/t/${r.id}`} className="text-xs text-primary underline">
                   Buka
-                </a>
+                </Link>
               ) : status === "pending_confirmation" ? (
                 <span className="text-xs text-foreground/60">Menunggu konfirmasi</span>
               ) : (
@@ -71,9 +72,9 @@ export default async function CariPage({ searchParams }: { searchParams: Promise
 
       <p className="text-center text-sm text-foreground/60">
         Tidak ketemu?{" "}
-        <a href="/dashboard" className="text-primary underline">
+        <Link href="/dashboard" className="text-primary underline">
           Daftarkan tenant baru
-        </a>
+        </Link>
       </p>
     </main>
   );

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Eye, UserRound } from "lucide-react";
 import { prisma } from "@/lib/prisma";
@@ -26,9 +27,9 @@ export default async function AdminTenantPage({ params }: { params: Promise<{ te
         title={tenant.profile?.nama ?? "(tanpa nama)"}
         desc={`${JENIS_LABEL[tenant.jenis]} · ${tenant.memberships.length} anggota · daftar ${tanggal.format(tenant.createdAt)}`}
         action={
-          <a href="/admin" className={btnGhost}>
+          <Link href="/admin" className={btnGhost}>
             Kembali
-          </a>
+          </Link>
         }
       />
 

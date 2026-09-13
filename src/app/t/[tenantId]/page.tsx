@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Wallet, HandCoins, CircleDollarSign, HeartHandshake, PiggyBank, CalendarDays, CheckCircle2, ListTodo } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
@@ -144,10 +145,10 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
           <ul className="space-y-2">
             {checklist.map((c) => (
               <li key={c.pesan}>
-                <a href={c.href} className="flex items-start gap-2 rounded-[var(--radius)] border border-warning/30 bg-warning/5 p-3 text-sm transition hover:bg-warning/10">
+                <Link href={c.href} className="flex items-start gap-2 rounded-[var(--radius)] border border-warning/30 bg-warning/5 p-3 text-sm transition hover:bg-warning/10">
                   <span className="mt-0.5 h-2 w-2 flex-shrink-0 rounded-full bg-warning" />
                   {c.pesan}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

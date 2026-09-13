@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Heart, Link2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
@@ -31,9 +32,9 @@ export default async function AdminTrakteerPage() {
             <form action={tarikDonasiAction}>
               <button className={btnPrimary}>Tarik dari Trakteer</button>
             </form>
-            <a href="/admin" className={btnGhost}>
+            <Link href="/admin" className={btnGhost}>
               Kembali
-            </a>
+            </Link>
           </span>
         }
       />

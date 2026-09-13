@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Building2, Search, ShieldCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
@@ -32,9 +33,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         title="Platform Owner"
         desc="Kelola semua tenant Guyub"
         action={
-          <a href="/dashboard" className={btnGhost}>
+          <Link href="/dashboard" className={btnGhost}>
             Ke Dashboard
-          </a>
+          </Link>
         }
       />
 
@@ -95,9 +96,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge tone={STATUS_TONE[t.status]}>{t.status}</Badge>
-                    <a href={`/admin/tenant/${t.id}`} className={`${btnGhost} px-2 py-1 text-xs`}>
+                    <Link href={`/admin/tenant/${t.id}`} className={`${btnGhost} px-2 py-1 text-xs`}>
                       Preview
-                    </a>
+                    </Link>
                     {t.status !== "pending" && (
                       <form action={suspendTenantAction}>
                         <input type="hidden" name="tenantId" value={t.id} />
@@ -117,10 +118,10 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <ShieldCheck className="h-4 w-4" />
         Mode preview selalu read-only — semua aksi tulis ditolak server walau tombolnya dipaksa lewat API.
       </p>
-      <a href="/admin/trakteer" className="mt-2 mr-4 inline-block text-sm text-primary underline">Monitor Trakteer</a>
-      <a href="/platform/owners" className="mt-2 inline-block text-sm text-primary underline">
+      <Link href="/admin/trakteer" className="mt-2 mr-4 inline-block text-sm text-primary underline">Monitor Trakteer</Link>
+      <Link href="/platform/owners" className="mt-2 inline-block text-sm text-primary underline">
         Kelola Platform Owner
-      </a>
+      </Link>
     </main>
   );
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowDownLeft, ArrowUpRight, Lock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
@@ -53,9 +54,9 @@ export default async function LaporanPublikPage({ params }: { params: Promise<{ 
           <Lock className="h-4 w-4" />
           Untuk melihat detail lengkap, daftar/masuk sebagai anggota.
         </p>
-        <a href="/login" className={`${btnPrimary} mt-3`}>
+        <Link href="/login" className={`${btnPrimary} mt-3`}>
           Masuk / Daftar
-        </a>
+        </Link>
       </Card>
 
       <p className="text-center text-xs text-muted">Dikelola dengan Guyub</p>

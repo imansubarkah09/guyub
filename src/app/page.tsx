@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getSessionUser } from "@/lib/session";
 import { TRAKTEER_PAGE_URL } from "@/lib/trakteer";
 
@@ -15,12 +16,12 @@ export default async function Home() {
     <main>
       <header className="flex items-center justify-between px-4 py-3">
         <span className="font-semibold text-primary">Guyub</span>
-        <a
+        <Link
           href={user ? "/dashboard" : "/login"}
           className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
         >
           {user ? "Dashboard" : "Masuk"}
-        </a>
+        </Link>
       </header>
 
       <section className="mx-auto max-w-md px-4 md:max-w-2xl py-10 text-center">
@@ -29,9 +30,9 @@ export default async function Home() {
           Selama ini catatan kas cuma ada di grup WhatsApp atau buku tulis satu orang — begitu ganti pengurus, riwayatnya ikut hilang.
           Guyub menyimpan kas, tabungan, qurban joinan, dan silsilah keluarga di satu tempat yang bisa dilihat semua anggota, kapan saja.
         </p>
-        <a href="/login" className="mt-6 inline-block rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground">
+        <Link href="/login" className="mt-6 inline-block rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground">
           Daftarkan Tenant Anda
-        </a>
+        </Link>
       </section>
 
       <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8">
