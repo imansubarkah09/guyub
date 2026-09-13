@@ -3,6 +3,47 @@
 Status kode: Fase 0-5 (docs/arisan-app-spec.md §8) semua sudah dibangun. Daftar di
 bawah ini hal yang butuh kredensial, keputusan, atau percobaan manual dari Iman.
 
+## 0. YANG HARUS IMAN LAKUKAN (ringkasan, urut prioritas)
+
+Rinciannya ada di bagian bernomor di bawah.
+
+### A. Sekarang juga, produksi sedang rusak
+
+- [ ] **Terapkan dua migrasi yang tertinggal ke DB produksi.** Ini yang bikin
+      halaman meledak dengan `React error #441`. Lihat §3.
+
+      node --env-file=.env.production -e 'process.env.DATABASE_URL_UNPOOLED=process.env.DATABASE_URL; require("child_process").spawnSync(process.execPath,["node_modules/prisma/build/index.js","migrate","deploy"],{stdio:"inherit"})'
+
+- [ ] **Betulkan dua secret repo** yang menunjuk ke database dev, isi dengan nilai
+      dari `.env.production`. Selama belum dibetulkan, job deploy di GitHub Actions
+      sengaja GAGAL di step migrasi (pagar baru, lihat §3).
+
+      gh secret set DATABASE_URL --repo imansubarkah09/thedreamcompany-guyub
+      gh secret set DATABASE_URL_UNPOOLED --repo imansubarkah09/thedreamcompany-guyub
+
+- [ ] Sesudah dua langkah di atas, buka `https://guyub.thedreamcompany.space`,
+      masuk, lalu buka Silsilah. Kalau masih error, kabari dan jalankan
+      `npx wrangler tail` saat kejadian supaya errornya kebaca.
+
+### B. Menyusul, tidak mendesak
+
+- [ ] Isi `TRAKTEER_WEBHOOK_TOKEN` di `.env.production`, daftarkan callbacknya di
+      dashboard Trakteer, lalu `npx wrangler secret bulk .env.production`. Lihat §5.
+- [ ] Klik tombol "Tarik dari Trakteer" di `/admin/trakteer` sekali, sebagai uji
+      nyata pencatatan donasi ke DB. Lihat §5.
+- [ ] Isi `GOOGLE_SITE_VERIFICATION` dan `NEXT_PUBLIC_GA_MEASUREMENT_ID` di
+      `.env.production` kalau mau Search Console dan GA4 aktif. Lihat §8.
+- [ ] Pastikan akun Cloudflare ini Workers Paid, bukan Free. Lihat §2.
+- [ ] Isi kunci Xendit kalau mau lanjut fase pembayaran. Lihat §6.
+
+### C. Keputusan yang menunggu jawabanmu
+
+- [ ] Lima pertanyaan terbuka di §7 (billing, masa berlaku link undangan, nama
+      produk, root silsilah, retensi data tenant nonaktif). Belum ada satu pun yang
+      dijawab, dan beberapa fitur lanjutan menunggu jawaban itu.
+- [ ] Boleh tidak database dev di-reset? Ada dua migrasi lama yang checksumnya
+      berubah sehingga `prisma migrate dev` minta reset. Lihat §9.
+
 ## 1. Deploy Cloudflare Workers (13 Sep 2026: sudah live)
 
 Worker aktif di `https://guyub.thedreamcompany.space` dan
@@ -26,10 +67,12 @@ Sisa yang perlu perhatian:
       tidak bisa dihubungi dari mesin lokal (Prisma P1001) padahal TCP 5432-nya
       terbuka. Sementara ini semua migrasi dijalankan lewat URL pooled, termasuk di
       GitHub Actions. Cek di dashboard Neon kalau mau dibereskan.
-- [ ] Login Google di produksi: pastikan redirect URI
-      `https://guyub.thedreamcompany.space/api/auth/callback/google` terdaftar di
-      Google Cloud Console. Login asli tidak bisa diotomasi dari sisi Claude.
-- [ ] `?error=state_mismatch` saat mencoba login (13 Sep 2026). Diperiksa ulang lewat
+- [x] Login Google di produksi: SUDAH JALAN, terbukti Iman berhasil masuk sebagai
+      imansubarkah09@gmail.com pada 13 Sep 2026, jadi redirect URI di Google Cloud
+      Console memang sudah benar.
+- [x] `?error=state_mismatch` saat mencoba login (13 Sep 2026): SUDAH TIDAK MUNCUL,
+      Iman berhasil login sesudahnya. Catatan penyelidikannya disimpan di bawah.
+      Diperiksa lewat
       curl: `POST /api/auth/sign-in/social` berhasil membuat state di tabel
       `Verification` dan callback dengan state itu lolos pemeriksaan state (gagal
       berikutnya karena `code` dummy). Artinya jalurnya sehat sekarang. Dugaan kuat:
