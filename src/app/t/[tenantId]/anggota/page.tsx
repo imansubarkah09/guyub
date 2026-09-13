@@ -12,7 +12,7 @@ const ALL_ROLES = ["ketua", "bendahara", "sekretaris", "anggota"] as const;
 export default async function AnggotaPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
   const user = await requireUser();
-  const { roles, readOnly } = await effectiveRoles(user, tenantId);
+  const { roles } = await effectiveRoles(user, tenantId);
   const viewerId = await viewerUserId(user, tenantId);
 
   const [memberships, invitations, tenant] = await Promise.all([
@@ -21,7 +21,7 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
     prisma.tenantProfile.findUniqueOrThrow({ where: { tenantId } }),
   ]);
 
-  const canKelola = has(roles, CAN_KELOLA_ANGGOTA) && !readOnly;
+  const canKelola = has(roles, CAN_KELOLA_ANGGOTA);
   const base = process.env.NEXT_PUBLIC_URL ?? "";
   const pending = memberships.filter((m) => m.status === "pending_confirmation");
   const active = memberships.filter((m) => m.status === "active");

@@ -11,7 +11,7 @@ const XENDIT_READY = Boolean(process.env.XENDIT_API_KEY) && process.env.XENDIT_A
 export default async function TabunganPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
   const user = await requireUser();
-  const { roles, readOnly } = await effectiveRoles(user, tenantId);
+  const { roles } = await effectiveRoles(user, tenantId);
   const viewerId = await viewerUserId(user, tenantId);
 
   const [tipeList, anggota, pendingSetoran] = await Promise.all([
@@ -29,7 +29,7 @@ export default async function TabunganPage({ params }: { params: Promise<{ tenan
     }),
   ]);
 
-  const canKelola = has(roles, CAN_CATAT_UANG) && !readOnly;
+  const canKelola = has(roles, CAN_CATAT_UANG);
 
   return (
     <div className="space-y-5">
@@ -158,7 +158,7 @@ export default async function TabunganPage({ params }: { params: Promise<{ tenan
                   </form>
                 )}
 
-                {!readOnly && (
+                {(
                   <div className="mt-3 space-y-2 border-t border-border pt-3">
                     <p className="text-xs text-muted">Sudah transfer sendiri? Ajukan dengan bukti untuk divalidasi bendahara.</p>
                     <form action={submitSetoranBuktiAction} className="flex flex-col gap-2 min-[420px]:flex-row" encType="multipart/form-data">

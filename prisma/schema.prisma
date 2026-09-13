@@ -121,6 +121,12 @@ model Tenant {
   infaq                  InfaqShodaqoh[]
   danaKegiatan           DanaKegiatan[]
   notifikasi             Notifikasi[]
+  trakteer               TrakteerDonasi[]
+  /// Kode pendek yang ditulis donatur di pesan Trakteer supaya donasinya
+  /// masuk ke tenant yang benar.
+  kodeDonasi             String                  @unique @default(cuid())
+  /// Masa aktif platform untuk tenant ini; null = belum pernah didukung.
+  nyawaSampai            DateTime?
   approvalRequest        TenantApprovalRequest?
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
@@ -239,7 +245,7 @@ model TabunganTipe {
   mode     TabunganMode
   saldo    TabunganSaldo[]
   setoran  TabunganSetoran[]
-  danaKegiatan DanaKegiatan[]
+  danaKegiatanSumber DanaKegiatanSumber[]
 
   @@index([tenantId])
 }
@@ -349,26 +355,67 @@ model Arisan {
   periode        String
   jumlahSetoran  Decimal            @db.Decimal(14, 2)
   status         ArisanStatus       @default(berjalan)
-  /// Putaran/giliran ke berapa yang sedang berjalan (§7.7) — status bayar dicatat per putaran.
+  /// Putaran/giliran ke berapa yang sedang berjalan — status bayar dicatat per putaran.
   putaranBerjalan Int               @default(1)
+  /// Berapa nama yang ditarik sekali kocok (bisa 2 pemenang per periode).
+  pemenangPerPutaran Int            @default(1)
+  /// Potongan dari pot sebelum diserahkan ke pemenang, mis. 10 = konsumsi 10%.
+  potonganPersen Decimal            @db.Decimal(5, 2) @default(0)
+  potonganKeterangan String?
   jadwalTanggal  DateTime?
   jadwalTempat   String?
+  /// Kandidat tuan rumah berikutnya = pemenang terakhir, tapi masih bisa menolak.
+  kandidatTuanRumah   ArisanPeserta? @relation("KandidatTuanRumah", fields: [kandidatTuanRumahId], references: [id])
+  kandidatTuanRumahId String?        @unique
   peserta        ArisanPeserta[]
   pembayaran     ArisanPembayaran[]
+  undian         ArisanUndian[]
 
   @@index([tenantId])
 }
 
+/// Satu ORANG bisa punya beberapa slot di satu arisan (Iman 1..Iman 5); tiap slot
+/// diundi sendiri-sendiri dan yang sudah dapat berhenti ikut undian.
 model ArisanPeserta {
   id          String   @id @default(cuid())
   arisan      Arisan   @relation(fields: [arisanId], references: [id], onDelete: Cascade)
   arisanId    String
   user        User     @relation(fields: [userId], references: [id])
   userId      String
+  /// Nomor slot milik orang yang sama, dipakai untuk label "Iman 2".
+  nomorSlot   Int      @default(1)
   urutan      Int
   statusDapat Boolean  @default(false)
+  /// Putaran saat slot ini menang; null kalau belum pernah.
+  putaranDapat Int?
+  undian      ArisanUndian[]
+  kandidatDi  Arisan?  @relation("KandidatTuanRumah")
 
-  @@unique([arisanId, userId])
+  @@unique([arisanId, userId, nomorSlot])
+  @@index([arisanId, statusDapat])
+}
+
+enum UndianStatus {
+  menang
+  dibatalkan
+}
+
+/// Riwayat kocokan. Kalau pemenang menolak, statusnya `dibatalkan` dan slotnya
+/// otomatis ikut lagi di kocokan berikutnya.
+model ArisanUndian {
+  id         String       @id @default(cuid())
+  arisan     Arisan       @relation(fields: [arisanId], references: [id], onDelete: Cascade)
+  arisanId   String
+  peserta    ArisanPeserta @relation(fields: [pesertaId], references: [id], onDelete: Cascade)
+  pesertaId  String
+  putaran    Int
+  status     UndianStatus @default(menang)
+  /// Nominal bersih yang diterima setelah potongan, dibekukan saat undian.
+  jumlahDiterima Decimal  @db.Decimal(14, 2) @default(0)
+  catatan    String?
+  createdAt  DateTime     @default(now())
+
+  @@index([arisanId, putaran])
 }
 
 /// Status bayar per anggota per putaran (§7.7). Baris hanya dibuat saat ditandai lunas —
@@ -422,30 +469,83 @@ model InfaqShodaqoh {
 
 // --- Dana Kegiatan / pengeluaran (§7.9) ----------------------------------------------------
 
-/// Pool sumber dana. `tabungan` memakai sumberTabunganTipeId untuk menunjuk jenis tabungan mana.
+/// Pool sumber dana. `tabungan` memakai sumberTabunganTipeId untuk menunjuk jenis
+/// tabungan mana; `donasi` artinya dana dikumpulkan terpisah (lihat DanaKegiatanDonasi).
 enum SumberDana {
   kas
   infaq
   tabungan
+  donasi
 }
 
+/// Satu kegiatan (mis. "Santunan Anak Yatim 2026") boleh ditopang beberapa sumber
+/// sekaligus: sebagian kas, sebagian infaq, sisanya donasi terbuka.
 model DanaKegiatan {
   id                   String        @id @default(cuid())
   tenant               Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   tenantId             String
   namaKegiatan         String
-  sumberDana           SumberDana
-  sumberTabunganTipe   TabunganTipe? @relation(fields: [sumberTabunganTipeId], references: [id])
-  sumberTabunganTipeId String?
-  jumlah               Decimal       @db.Decimal(14, 2)
+  /// Target dana yang ingin dikumpulkan; null = tidak menargetkan apa pun.
+  targetDana           Decimal?      @db.Decimal(14, 2)
   tanggal              DateTime
   keterangan           String?
   buktiUrl             String?
   dicatatOleh          User          @relation("KegiatanDicatatOleh", fields: [dicatatOlehId], references: [id])
   dicatatOlehId        String
+  sumber               DanaKegiatanSumber[]
+  donasi               DanaKegiatanDonasi[]
   createdAt            DateTime      @default(now())
 
   @@index([tenantId, tanggal])
+}
+
+/// Satu baris = satu potongan dana yang diambil dari satu pool.
+model DanaKegiatanSumber {
+  id                   String        @id @default(cuid())
+  kegiatan             DanaKegiatan  @relation(fields: [kegiatanId], references: [id], onDelete: Cascade)
+  kegiatanId           String
+  sumberDana           SumberDana
+  sumberTabunganTipe   TabunganTipe? @relation(fields: [sumberTabunganTipeId], references: [id])
+  sumberTabunganTipeId String?
+  jumlah               Decimal       @db.Decimal(14, 2)
+
+  @@index([kegiatanId])
+}
+
+/// Pemasukan donasi terbuka untuk satu kegiatan, dicatat bendahara.
+model DanaKegiatanDonasi {
+  id            String       @id @default(cuid())
+  kegiatan      DanaKegiatan @relation(fields: [kegiatanId], references: [id], onDelete: Cascade)
+  kegiatanId    String
+  namaDonatur   String
+  jumlah        Decimal      @db.Decimal(14, 2)
+  tanggal       DateTime     @default(now())
+  keterangan    String?
+  createdAt     DateTime     @default(now())
+
+  @@index([kegiatanId])
+}
+
+// --- Trakteer: nyawa platform per tenant ---------------------------------------
+
+/// Donasi Trakteer yang menambah masa aktif ("nyawa") sebuah tenant.
+/// `orderId` unik supaya callback yang dikirim ulang tidak dihitung dua kali.
+model TrakteerDonasi {
+  id            String   @id @default(cuid())
+  orderId       String   @unique
+  tenant        Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  /// Null kalau kode tenant tidak terbaca dari pesan dukungan — platform owner
+  /// menautkannya manual lewat /admin/trakteer.
+  tenantId      String?
+  namaDonatur   String
+  pesan         String?
+  jumlah        Decimal  @db.Decimal(14, 2)
+  /// Hari nyawa yang diberikan donasi ini, dibekukan saat dicatat.
+  hariNyawa     Int
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([jumlah])
 }
 
 // --- Notifikasi (§7.12) ---------------------------------------------------------------------

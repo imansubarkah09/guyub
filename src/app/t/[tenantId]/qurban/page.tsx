@@ -14,7 +14,7 @@ const MAX_SLOT = { sapi: 7, kambing: 1 } as const;
 export default async function QurbanPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
   const user = await requireUser();
-  const { roles, readOnly } = await effectiveRoles(user, tenantId);
+  const { roles } = await effectiveRoles(user, tenantId);
   const viewerId = await viewerUserId(user, tenantId);
 
   const groups = await prisma.qurbanGroup.findMany({
@@ -23,7 +23,7 @@ export default async function QurbanPage({ params }: { params: Promise<{ tenantI
     orderBy: { id: "desc" },
   });
 
-  const canKelola = has(roles, CAN_CATAT_UANG) && !readOnly;
+  const canKelola = has(roles, CAN_CATAT_UANG);
 
   // Rekap agregat tenant (§7.6).
   const rekap = { kambingLunas: 0, kambingTerbuka: 0, sapiLunas: 0, sapiTerbuka: 0, jiwaSapiTerisi: 0, jiwaSapiTotal: 0, total: 0 };
@@ -90,7 +90,7 @@ export default async function QurbanPage({ params }: { params: Promise<{ tenantI
           {groups.map((g) => {
             const max = MAX_SLOT[g.jenisHewan];
             const lunasNama = g.slots.filter((s) => s.status === "lunas").map((s) => s.user.name);
-            const canJoin = !readOnly && g.slots.length < max && !g.slots.some((s) => s.userId === viewerId);
+            const canJoin = g.slots.length < max && !g.slots.some((s) => s.userId === viewerId);
             return (
               <Card key={g.id}>
                 <div className="flex items-start justify-between gap-2">

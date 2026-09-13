@@ -9,7 +9,7 @@ import { createArisanAction, addPesertaAction, geserUrutanAction, toggleBayarAct
 export default async function ArisanPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
   const user = await requireUser();
-  const { roles, readOnly } = await effectiveRoles(user, tenantId);
+  const { roles } = await effectiveRoles(user, tenantId);
   const viewerId = await viewerUserId(user, tenantId);
 
   const [arisanList, anggota] = await Promise.all([
@@ -21,8 +21,8 @@ export default async function ArisanPage({ params }: { params: Promise<{ tenantI
     prisma.membership.findMany({ where: { tenantId, status: "active" }, include: { user: true }, orderBy: { createdAt: "asc" } }),
   ]);
 
-  const canAtur = has(roles, CAN_ATUR_ARISAN) && !readOnly;
-  const canTandaiBayar = has(roles, CAN_CATAT_UANG) && !readOnly;
+  const canAtur = has(roles, CAN_ATUR_ARISAN);
+  const canTandaiBayar = has(roles, CAN_CATAT_UANG);
 
   return (
     <div className="space-y-5">

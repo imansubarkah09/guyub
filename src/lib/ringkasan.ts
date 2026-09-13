@@ -14,13 +14,15 @@ export async function ringkasanTenant(tenantId: string) {
       include: { peserta: { include: { user: true }, orderBy: { urutan: "asc" } }, pembayaran: true },
     }),
     prisma.infaqShodaqoh.findMany({ where: { tenantId } }),
-    prisma.danaKegiatan.findMany({ where: { tenantId } }),
+    prisma.danaKegiatan.findMany({ where: { tenantId }, include: { sumber: true, donasi: true } }),
   ]);
 
   const kasMasuk = kas.filter((k) => k.tipe === "masuk").reduce((a, k) => a + Number(k.jumlah), 0);
   const kasKeluar = kas.filter((k) => k.tipe === "keluar").reduce((a, k) => a + Number(k.jumlah), 0);
-  const keluarDariKas = kegiatan.filter((k) => k.sumberDana === "kas").reduce((a, k) => a + Number(k.jumlah), 0);
-  const keluarDariInfaq = kegiatan.filter((k) => k.sumberDana === "infaq").reduce((a, k) => a + Number(k.jumlah), 0);
+  // Satu kegiatan bisa menarik dari beberapa pool sekaligus, jadi dijumlah per baris sumber.
+  const semuaSumber = kegiatan.flatMap((k) => k.sumber);
+  const keluarDariKas = semuaSumber.filter((s) => s.sumberDana === "kas").reduce((a, s) => a + Number(s.jumlah), 0);
+  const keluarDariInfaq = semuaSumber.filter((s) => s.sumberDana === "infaq").reduce((a, s) => a + Number(s.jumlah), 0);
 
   const saldoKas = kasMasuk - kasKeluar - keluarDariKas;
   const infaqTotal = infaq.reduce((a, i) => a + Number(i.jumlah), 0);

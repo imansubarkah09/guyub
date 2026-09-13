@@ -9,7 +9,7 @@ import { LaporanTabs, type TabData } from "./laporan-client";
 export default async function LaporanPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
   const user = await requireUser();
-  const { roles, readOnly } = await effectiveRoles(user, tenantId);
+  const { roles } = await effectiveRoles(user, tenantId);
 
   const [tenant, r, kas, tabunganTipe, qurbanGroups, arisanList, infaq, laporanList, anggota] = await Promise.all([
     prisma.tenantProfile.findUniqueOrThrow({ where: { tenantId } }),
@@ -23,7 +23,7 @@ export default async function LaporanPage({ params }: { params: Promise<{ tenant
     prisma.membership.findMany({ where: { tenantId, status: "active" }, include: { user: true } }),
   ]);
 
-  const canGenerate = has(roles, CAN_BUAT_LAPORAN) && !readOnly;
+  const canGenerate = has(roles, CAN_BUAT_LAPORAN);
   const base = process.env.NEXT_PUBLIC_URL ?? "";
 
   const tabs: TabData[] = [

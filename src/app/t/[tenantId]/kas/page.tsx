@@ -17,7 +17,7 @@ export default async function KasPage({
   const { tenantId } = await params;
   const { dari, sampai } = await searchParams;
   const user = await requireUser();
-  const { roles, readOnly } = await effectiveRoles(user, tenantId);
+  const { roles } = await effectiveRoles(user, tenantId);
 
   const where = {
     tenantId,
@@ -30,7 +30,7 @@ export default async function KasPage({
     ringkasanTenant(tenantId),
   ]);
 
-  const canCatat = has(roles, CAN_CATAT_UANG) && !readOnly;
+  const canCatat = has(roles, CAN_CATAT_UANG);
 
   return (
     <div className="space-y-5">
@@ -120,7 +120,7 @@ export default async function KasPage({
             ))}
           </ul>
         )}
-        {r.kegiatan.filter((k) => k.sumberDana === "kas").length > 0 && (
+        {r.kegiatan.some((k) => k.sumber.some((s) => s.sumberDana === "kas")) && (
           <p className="mt-2 text-xs text-muted">
             <Badge tone="muted">Catatan</Badge> Saldo di atas sudah dikurangi pengeluaran Dana Kegiatan yang mengambil dari kas.
           </p>

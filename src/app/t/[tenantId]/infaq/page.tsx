@@ -10,14 +10,14 @@ import { catatInfaqAction, hapusInfaqAction } from "./actions";
 export default async function InfaqPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
   const user = await requireUser();
-  const { roles, readOnly } = await effectiveRoles(user, tenantId);
+  const { roles } = await effectiveRoles(user, tenantId);
 
   const [riwayat, r] = await Promise.all([
     prisma.infaqShodaqoh.findMany({ where: { tenantId }, include: { dicatatOleh: true }, orderBy: { tanggalPertemuan: "desc" } }),
     ringkasanTenant(tenantId),
   ]);
 
-  const canCatat = has(roles, CAN_CATAT_UANG) && !readOnly;
+  const canCatat = has(roles, CAN_CATAT_UANG);
   const terkumpul = riwayat.reduce((a, i) => a + Number(i.jumlah), 0);
   const terpakai = terkumpul - r.saldoInfaq;
 

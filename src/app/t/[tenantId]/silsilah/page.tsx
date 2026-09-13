@@ -62,11 +62,11 @@ export default async function SilsilahPage({
   const { tenantId } = await params;
   const { q, semua } = await searchParams;
   const user = await requireUser();
-  const { roles, readOnly } = await effectiveRoles(user, tenantId);
+  const { roles } = await effectiveRoles(user, tenantId);
   const viewerId = await viewerUserId(user, tenantId);
   const nodes = await loadNodes(tenantId);
 
-  const canKelola = has(roles, CAN_KELOLA_ANGGOTA) && !readOnly;
+  const canKelola = has(roles, CAN_KELOLA_ANGGOTA);
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const byParent = new Map<string | null, Node[]>();
   for (const n of nodes) {
@@ -164,7 +164,7 @@ export default async function SilsilahPage({
         </Card>
       )}
 
-      {!nodeSaya && !readOnly && (
+      {!nodeSaya && (
         <Card className="border-warning/30 bg-warning/5">
           <p className="text-sm">Anda belum punya posisi di silsilah ini. Tambahkan diri Anda lewat form di bawah, lalu hubungkan ke orang tua/pasangan.</p>
         </Card>

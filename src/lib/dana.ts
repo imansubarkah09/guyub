@@ -21,6 +21,7 @@ export async function daftarPool(tenantId: string) {
   ]);
   return [
     { value: "kas", label: "Saldo Kas", saldo: r.saldoKas },
+    { value: "donasi", label: "Donasi terbuka (dikumpulkan terpisah)", saldo: 0 },
     { value: "infaq", label: "Saldo Infaq & Shodaqoh", saldo: r.saldoInfaq },
     ...tipeList.map((t) => ({
       value: `tabungan:${t.id}`,
