@@ -1,6 +1,7 @@
 allowBuilds:
   '@prisma/client': true
   '@prisma/engines': true
+  core-js: true
   esbuild: true
   prisma: true
   unrs-resolver: true
@@ -8,6 +9,7 @@ allowBuilds:
 onlyBuiltDependencies:
   - "@prisma/client"
   - "@prisma/engines"
+  - core-js
   - esbuild
   - prisma
   - unrs-resolver

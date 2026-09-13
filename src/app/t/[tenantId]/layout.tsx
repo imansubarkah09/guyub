@@ -7,6 +7,10 @@ const NAV = [
   { href: "", label: "Ringkasan" },
   { href: "/kas", label: "Kas" },
   { href: "/tabungan", label: "Tabungan" },
+  { href: "/qurban", label: "Qurban" },
+  { href: "/arisan", label: "Arisan" },
+  { href: "/silsilah", label: "Silsilah" },
+  { href: "/laporan", label: "Laporan" },
   { href: "/anggota", label: "Anggota" },
   { href: "/profil", label: "Profil" },
 ];
