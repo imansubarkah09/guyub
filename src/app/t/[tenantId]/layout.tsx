@@ -17,9 +17,29 @@ export default async function TenantLayout({
     where: { userId_tenantId: { userId: user.id, tenantId } },
     include: { tenant: { include: { profile: true, approvalRequest: true } } },
   });
-  if (!membership || membership.status !== "active") notFound();
+  if (!membership) notFound();
 
   const { tenant } = membership;
+
+  if (membership.status !== "active") {
+    return (
+      <main className="min-h-screen">
+        <AppHeader email={user.email} title={tenant.profile?.nama} />
+        <div className="mx-auto max-w-lg p-4">
+          <div className="rounded-md border border-primary/30 bg-primary/5 p-4 text-sm">
+            {membership.status === "pending_confirmation" ? (
+              <p>Permintaan Anda bergabung ke tenant ini masih menunggu konfirmasi pengurus.</p>
+            ) : (
+              <p>Anda sudah tidak menjadi anggota tenant ini.</p>
+            )}
+            <a href="/dashboard" className="mt-2 inline-block text-primary underline">
+              Kembali ke Dashboard
+            </a>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   if (tenant.status !== "approved") {
     return (
