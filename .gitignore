@@ -30,3 +30,6 @@ next-env.d.ts
 
 # read-only reference material (schoolcommunity.space source), not this project's code
 /references/
+
+# one-off production data scripts (direct DB writes) — never commit
+/scripts/db-ops-*.mjs

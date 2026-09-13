@@ -30,6 +30,11 @@ export const auth = betterAuth({
   account: {
     accountLinking: { enabled: true, trustedProviders: ["google"] },
   },
+  user: {
+    additionalFields: {
+      isPlatformOwner: { type: "boolean", defaultValue: false, input: false },
+    },
+  },
   databaseHooks: {
     user: {
       create: {
