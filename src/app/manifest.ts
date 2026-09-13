@@ -8,11 +8,13 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Kelola kas, tabungan, dan qurban joinan keluarga, RT, atau paguyuban dari satu aplikasi.",
     lang: "id",
     dir: "ltr",
-    start_url: "/",
+    // Langsung ke ruang kerja, bukan landing page — kalau belum login, guard-nya
+    // yang mengarahkan ke /login seperti biasa.
+    start_url: "/dashboard",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#FFF8EE",
+    background_color: "#FDF8F2",
     theme_color: "#C1652D",
     categories: ["finance", "lifestyle"],
     icons: [

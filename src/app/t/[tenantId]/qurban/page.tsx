@@ -31,9 +31,12 @@ export default async function QurbanPage({ params }: { params: Promise<{ tenantI
     const lunasCount = g.slots.filter((s) => s.status === "lunas").length;
     const selesai = lunasCount === max;
     rekap.total += g.slots.reduce((a, s) => a + Number(s.saldoTerkumpul), 0);
-    if (g.jenisHewan === "kambing") selesai ? rekap.kambingLunas++ : rekap.kambingTerbuka++;
-    else {
-      selesai ? rekap.sapiLunas++ : rekap.sapiTerbuka++;
+    if (g.jenisHewan === "kambing") {
+      if (selesai) rekap.kambingLunas++;
+      else rekap.kambingTerbuka++;
+    } else {
+      if (selesai) rekap.sapiLunas++;
+      else rekap.sapiTerbuka++;
       rekap.jiwaSapiTerisi += g.slots.length;
       rekap.jiwaSapiTotal += max;
     }

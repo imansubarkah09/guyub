@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Download } from "lucide-react";
 import { btnGhost } from "@/components/ui";
 
@@ -16,6 +16,14 @@ export function InstallButton() {
   const [installed, setInstalled] = useState(false);
   const [showIosHint, setShowIosHint] = useState(false);
 
+  // Dibaca lewat useSyncExternalStore, bukan setState di dalam effect — selain
+  // dilarang lint, itu memicu render bertingkat tanpa alasan.
+  const standalone = useSyncExternalStore(
+    () => () => {},
+    () => window.matchMedia("(display-mode: standalone)").matches,
+    () => false,
+  );
+
   useEffect(() => {
     const onPrompt = (e: Event) => {
       e.preventDefault();
@@ -24,14 +32,13 @@ export function InstallButton() {
     const onInstalled = () => setInstalled(true);
     window.addEventListener("beforeinstallprompt", onPrompt);
     window.addEventListener("appinstalled", onInstalled);
-    if (window.matchMedia("(display-mode: standalone)").matches) setInstalled(true);
     return () => {
       window.removeEventListener("beforeinstallprompt", onPrompt);
       window.removeEventListener("appinstalled", onInstalled);
     };
   }, []);
 
-  if (installed) return null;
+  if (installed || standalone) return null;
 
   const isIos = typeof navigator !== "undefined" && /iphone|ipad|ipod/i.test(navigator.userAgent);
 
