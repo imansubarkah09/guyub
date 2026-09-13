@@ -8,9 +8,9 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },
-      { url: "/pwa-icon/192", type: "image/png", sizes: "192x192" },
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
     ],
-    apple: "/apple-icon",
+    apple: "/apple-icon.png",
   },
   appleWebApp: { capable: true, title: "Guyub", statusBarStyle: "default" },
   verification: process.env.GOOGLE_SITE_VERIFICATION ? { google: process.env.GOOGLE_SITE_VERIFICATION } : undefined,
