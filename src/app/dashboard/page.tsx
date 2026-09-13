@@ -1,7 +1,9 @@
+import { Home, Plus, ShieldCheck, MessageCircle, Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { AppHeader } from "@/components/app-header";
 import { waShareUrl } from "@/lib/whatsapp";
+import { Card, PageTitle, EmptyState, Badge, btnPrimary, btnGhost, inputClass } from "@/components/ui";
+import { ProfileMenu } from "@/components/profile-menu";
 import { createTenantAction } from "./actions";
 
 const JENIS_LABEL = { keluarga: "Keluarga", rt: "RT", paguyuban: "Paguyuban" } as const;
@@ -19,41 +21,80 @@ export default async function DashboardPage() {
 
   return (
     <main className="min-h-screen">
-      <AppHeader email={user.email} />
-      <div className="mx-auto max-w-lg space-y-6 p-4">
-        <a
-          href={waShareUrl(ajakText)}
-          target="_blank"
-          rel="noreferrer"
-          className="block rounded-md border border-primary/30 p-3 text-center text-sm font-medium text-emerald-700"
-        >
-          Ajak Orang Lain Pakai Guyub via WhatsApp
-        </a>
+      <header className="flex h-14 items-center justify-between border-b border-border bg-surface px-4">
+        <span className="font-semibold tracking-tight text-primary">Guyub</span>
+        <ProfileMenu
+          user={{ name: user.name, email: user.email, phone: user.phone ?? null, image: user.image ?? null, isPlatformOwner: user.isPlatformOwner }}
+        />
+      </header>
+
+      <div className="mx-auto max-w-2xl space-y-5 p-4">
+        <PageTitle title={`Halo, ${user.name.split(" ")[0]}`} desc="Pilih tenant yang ingin Anda buka" />
+
+        {user.isPlatformOwner && (
+          <a href="/admin" className="flex items-center gap-2 rounded-[var(--radius)] border border-accent/30 bg-accent/5 p-3 text-sm font-medium text-accent">
+            <ShieldCheck className="h-4 w-4" />
+            Area Platform Owner — kelola & preview semua tenant
+          </a>
+        )}
 
         <section>
-          <h1 className="mb-2 text-lg font-semibold">Tenant Anda</h1>
-          {memberships.length === 0 && <p className="text-sm text-foreground/60">Belum tergabung di tenant manapun.</p>}
-          <ul className="space-y-2">
-            {memberships.map((m) => (
-              <li key={m.id} className="rounded-md border border-primary/15 p-3">
-                {m.status === "active" ? (
-                  <a href={`/t/${m.tenantId}`} className="font-medium text-primary">
-                    {m.tenant.profile?.nama ?? "(tanpa nama)"}
-                  </a>
-                ) : (
-                  <span className="font-medium">{m.tenant.profile?.nama ?? "(tanpa nama)"}</span>
-                )}
-                <p className="text-xs text-foreground/60">
-                  {JENIS_LABEL[m.tenant.jenis]} · {m.roles.join(", ")} · {STATUS_LABEL[m.status]}
-                  {m.status === "active" && m.tenant.status !== "approved" && " · Menunggu persetujuan Iman"}
-                </p>
-              </li>
-            ))}
-          </ul>
+          {memberships.length === 0 ? (
+            <EmptyState
+              icon={Home}
+              title="Belum tergabung di tenant manapun"
+              desc="Cari arisan keluarga/RT/paguyuban Anda, atau daftarkan yang baru lewat form di bawah."
+              action={
+                <a href="/cari" className={btnPrimary}>
+                  <Search className="h-4 w-4" /> Cari Tenant
+                </a>
+              }
+            />
+          ) : (
+            <ul className="space-y-2">
+              {memberships.map((m) => {
+                const nama = m.tenant.profile?.nama ?? "(tanpa nama)";
+                const aktif = m.status === "active";
+                return (
+                  <li key={m.id}>
+                    <Card className={aktif ? "transition hover:border-primary/40" : "opacity-75"}>
+                      {aktif ? (
+                        <a href={`/t/${m.tenantId}`} className="block">
+                          <p className="font-medium text-primary">{nama}</p>
+                          <p className="mt-0.5 text-xs text-muted">
+                            {JENIS_LABEL[m.tenant.jenis]} · {m.roles.join(", ")}
+                            {m.tenant.status !== "approved" && " · menunggu persetujuan Platform Owner"}
+                          </p>
+                        </a>
+                      ) : (
+                        <>
+                          <p className="font-medium">{nama}</p>
+                          <p className="mt-0.5 text-xs text-muted">
+                            {JENIS_LABEL[m.tenant.jenis]} · <Badge tone="warning">{STATUS_LABEL[m.status]}</Badge>
+                          </p>
+                        </>
+                      )}
+                    </Card>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </section>
 
-        <section className="rounded-md border border-primary/15 p-3">
-          <h2 className="mb-2 text-sm font-semibold">Daftarkan Tenant Baru</h2>
+        <div className="flex flex-wrap gap-2">
+          <a href="/cari" className={btnGhost}>
+            <Search className="h-4 w-4" /> Cari Tenant
+          </a>
+          <a href={waShareUrl(ajakText)} target="_blank" rel="noreferrer" className={`${btnGhost} text-success`}>
+            <MessageCircle className="h-4 w-4" /> Ajak lewat WhatsApp
+          </a>
+        </div>
+
+        <Card>
+          <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold">
+            <Plus className="h-4 w-4 text-primary" /> Daftarkan Tenant Baru
+          </h2>
           <form
             action={async (formData) => {
               "use server";
@@ -63,22 +104,18 @@ export default async function DashboardPage() {
             }}
             className="space-y-2"
           >
-            <select name="jenis" required className="w-full rounded-md border border-primary/30 p-2 text-sm">
+            <select name="jenis" required className={inputClass}>
               <option value="keluarga">Keluarga</option>
               <option value="rt">RT</option>
               <option value="paguyuban">Paguyuban</option>
             </select>
-            <input
-              name="nama"
-              required
-              placeholder="Nama tenant, misal: Keluarga Besar Suharto"
-              className="w-full rounded-md border border-primary/30 p-2 text-sm"
-            />
-            <button type="submit" className="w-full rounded-md bg-primary py-2 text-sm font-medium text-primary-foreground">
+            <input name="nama" required placeholder="Nama tenant, misal: Keluarga Besar Suharto" className={inputClass} />
+            <button type="submit" className={`${btnPrimary} w-full`}>
               Daftarkan
             </button>
           </form>
-        </section>
+          <p className="mt-2 text-xs text-muted">Tenant baru perlu disetujui Platform Owner sebelum bisa dipakai.</p>
+        </Card>
       </div>
     </main>
   );

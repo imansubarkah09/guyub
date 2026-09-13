@@ -24,6 +24,20 @@ export async function createTenantAction(formData: FormData) {
     },
   });
 
+  // Platform owner perlu tahu ada antrean approval baru (§7.12).
+  const owners = await prisma.user.findMany({ where: { isPlatformOwner: true }, select: { id: true } });
+  if (owners.length > 0) {
+    await prisma.notifikasi.createMany({
+      data: owners.map((o) => ({
+        userId: o.id,
+        tenantId: tenant.id,
+        tipe: "tenant_baru",
+        pesan: `Tenant baru "${nama}" menunggu persetujuan`,
+        href: "/admin",
+      })),
+    });
+  }
+
   revalidatePath("/dashboard");
   return tenant.id;
 }
