@@ -1,135 +1,157 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { Menu, MoreHorizontal, LogOut } from "lucide-react";
-import { signOut } from "@/lib/auth-client";
-import { NAV_ITEMS } from "./nav-items";
+import { usePathname } from "next/navigation";
+import { Menu, MoreHorizontal, X, Eye } from "lucide-react";
+import { NAV_GROUPS, ALL_NAV } from "./nav-items";
+import { NotifBell, type NotifItem } from "@/components/notif-bell";
+import { ProfileMenu, type AccountInfo } from "@/components/profile-menu";
+import { exitPreviewAction } from "@/app/account-actions";
 
 export function TenantShell({
   tenantId,
   tenantNama,
-  email,
+  account,
+  notif,
+  unread,
+  isKetua,
+  previewLabel,
   children,
 }: {
   tenantId: string;
-  tenantNama?: string | null;
-  email: string;
+  tenantNama: string;
+  account: AccountInfo;
+  notif: NotifItem[];
+  unread: number;
+  isKetua: boolean;
+  previewLabel: string | null;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [moreOpen, setMoreOpen] = useState(false);
+  const [drawer, setDrawer] = useState(false);
   const base = `/t/${tenantId}`;
-  const primary = NAV_ITEMS.filter((i) => i.primary);
-  const overflow = NAV_ITEMS.filter((i) => !i.primary);
+  const visible = (i: { ketuaOnly?: boolean }) => !i.ketuaOnly || isKetua;
   const isActive = (href: string) => pathname === `${base}${href}`;
+  const primary = ALL_NAV.filter((i) => i.primary && visible(i));
+  const overflow = ALL_NAV.filter((i) => !i.primary && visible(i));
 
   return (
-    <>
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-primary/15 bg-background px-3">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setSidebarOpen((v) => !v)}
-            className="hidden h-9 w-9 items-center justify-center rounded-md text-foreground/70 hover:bg-primary/10 lg:inline-flex"
-            aria-label={sidebarOpen ? "Sembunyikan menu" : "Tampilkan menu"}
-            aria-expanded={sidebarOpen}
-          >
+    <div className="min-h-screen">
+      {previewLabel && (
+        <div className="sticky top-0 z-50 flex items-center justify-between gap-2 bg-accent px-3 py-2 text-xs text-white">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <Eye className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">Mode Preview — {previewLabel}. Semua aksi tulis dinonaktifkan.</span>
+          </span>
+          <form action={exitPreviewAction}>
+            <button className="flex-shrink-0 rounded-md bg-white/20 px-2 py-1 font-medium">Keluar Preview</button>
+          </form>
+        </div>
+      )}
+
+      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-border bg-surface/90 px-3 backdrop-blur">
+        <div className="flex min-w-0 items-center gap-1">
+          <button onClick={() => setDrawer(true)} aria-label="Buka menu" className="flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-primary/10 lg:hidden">
             <Menu className="h-5 w-5" />
           </button>
-          <a href="/dashboard" className="truncate px-1 font-semibold text-primary">
-            {tenantNama ?? "Guyub"}
+          <a href={base} className="truncate px-1 font-semibold tracking-tight text-primary">
+            {tenantNama}
           </a>
         </div>
-        <div className="flex items-center gap-3 text-sm text-foreground/70">
-          <span className="hidden sm:inline">{email}</span>
-          <button
-            onClick={() => signOut().then(() => router.push("/login"))}
-            className="rounded-md border border-primary/30 px-2 py-1 text-xs"
-          >
-            Keluar
-          </button>
+        <div className="flex items-center gap-1">
+          <NotifBell items={notif} unread={unread} />
+          <ProfileMenu user={account} />
         </div>
       </header>
 
       <div className="flex">
-        {sidebarOpen && (
-          <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-56 flex-shrink-0 overflow-y-auto border-r border-primary/15 p-3 lg:block">
-            <nav className="space-y-1">
-              {NAV_ITEMS.map((item) => (
-                <a
-                  key={item.href}
-                  href={`${base}${item.href}`}
-                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm ${
-                    isActive(item.href) ? "bg-primary text-primary-foreground" : "text-foreground/70 hover:bg-primary/10"
-                  }`}
-                >
-                  <item.icon className="h-4 w-4 flex-shrink-0" />
-                  {item.label}
-                </a>
-              ))}
-            </nav>
-          </aside>
-        )}
+        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-60 flex-shrink-0 overflow-y-auto border-r border-border p-3 lg:block">
+          <SidebarNav base={base} isActive={isActive} visible={visible} />
+        </aside>
 
-        <main className="min-w-0 flex-1 pb-20 lg:pb-0">
-          <div className="mx-auto max-w-lg p-4">{children}</div>
+        <main className="min-w-0 flex-1 pb-24 lg:pb-8">
+          <div key={pathname} className="animate-in mx-auto max-w-3xl p-4">{children}</div>
         </main>
       </div>
 
-      {/* Bottom tab bar, satu-satunya navigasi mobile — 3 menu utama + "Lainnya". */}
-      <nav
-        className="fixed inset-x-0 bottom-0 z-30 flex border-t border-primary/15 bg-background lg:hidden"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-        aria-label="Navigasi utama"
-      >
+      {/* Drawer mobile — menu lengkap berkategori (§6). */}
+      {drawer && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <button aria-label="Tutup menu" onClick={() => setDrawer(false)} className="absolute inset-0 bg-black/40" />
+          <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] overflow-y-auto bg-surface p-3 shadow-xl">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="truncate font-semibold text-primary">{tenantNama}</span>
+              <button onClick={() => setDrawer(false)} aria-label="Tutup" className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-primary/10">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <SidebarNav base={base} isActive={isActive} visible={visible} onNavigate={() => setDrawer(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* Bottom nav mobile: menu tersering + "Lainnya" (§4). */}
+      <nav className="pb-safe fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-surface lg:hidden" aria-label="Navigasi utama">
         {primary.map((item) => (
           <a
             key={item.href}
             href={`${base}${item.href}`}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium ${isActive(item.href) ? "text-primary" : "text-foreground/60"}`}
+            className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${isActive(item.href) ? "text-primary" : "text-muted"}`}
           >
             <item.icon className="h-5 w-5" />
             {item.label}
           </a>
         ))}
         <button
-          onClick={() => setMoreOpen((v) => !v)}
-          className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium ${
-            overflow.some((i) => isActive(i.href)) ? "text-primary" : "text-foreground/60"
-          }`}
+          onClick={() => setDrawer(true)}
+          className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${overflow.some((i) => isActive(i.href)) ? "text-primary" : "text-muted"}`}
         >
           <MoreHorizontal className="h-5 w-5" />
           Lainnya
         </button>
       </nav>
+    </div>
+  );
+}
 
-      {moreOpen && (
-        <>
-          <button aria-label="Tutup menu" onClick={() => setMoreOpen(false)} className="fixed inset-0 z-30 bg-black/20 lg:hidden" />
-          <div className="fixed inset-x-4 bottom-16 z-30 rounded-md border border-primary/15 bg-background p-1 shadow-lg lg:hidden">
-            {overflow.map((item) => (
-              <a
-                key={item.href}
-                href={`${base}${item.href}`}
-                onClick={() => setMoreOpen(false)}
-                className={`flex items-center gap-3 rounded-md px-3 py-3 text-sm ${isActive(item.href) ? "text-primary" : "hover:bg-primary/10"}`}
-              >
-                <item.icon className="h-5 w-5" />
-                {item.label}
-              </a>
-            ))}
-            <button
-              onClick={() => signOut().then(() => router.push("/login"))}
-              className="flex w-full items-center gap-3 rounded-md px-3 py-3 text-sm text-foreground/70 hover:bg-primary/10"
-            >
-              <LogOut className="h-5 w-5" />
-              Keluar
-            </button>
+function SidebarNav({
+  base,
+  isActive,
+  visible,
+  onNavigate,
+}: {
+  base: string;
+  isActive: (href: string) => boolean;
+  visible: (i: { ketuaOnly?: boolean }) => boolean;
+  onNavigate?: () => void;
+}) {
+  return (
+    <nav className="space-y-4">
+      {NAV_GROUPS.map((group, gi) => {
+        const items = group.items.filter(visible);
+        if (items.length === 0) return null;
+        return (
+          <div key={gi}>
+            {group.label && <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wide text-muted">{group.label}</p>}
+            <ul className="space-y-0.5">
+              {items.map((item) => (
+                <li key={item.href}>
+                  <a
+                    href={`${base}${item.href}`}
+                    onClick={onNavigate}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
+                      isActive(item.href) ? "bg-primary text-primary-foreground" : "text-foreground/80 hover:bg-primary/10"
+                    }`}
+                  >
+                    <item.icon className="h-4 w-4 flex-shrink-0" />
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
-        </>
-      )}
-    </>
+        );
+      })}
+    </nav>
   );
 }

@@ -2,19 +2,68 @@
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
 }
 
 :root {
-  --background: #fff8ee;
-  --foreground: #3a2a1e;
+  /* Warm home + futuristik: dasar cream/terracotta, aksen teal untuk elemen modern. */
+  --background: #fdf8f2;
+  --surface: #ffffff;
+  --foreground: #2e2118;
+  --muted: #8a7867;
+  --border: #ebddcd;
   --primary: #c1652d;
   --primary-foreground: #fff8ee;
+  --accent: #0f766e;
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #b91c1c;
+  --radius: 14px;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Transisi halus antar halaman (micro-interaction §4). */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.animate-in {
+  animation: fade-up 0.22s ease-out both;
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--border);
+  border-radius: 8px;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: shimmer 1.4s infinite;
+}
+
+/* Ruang aman untuk bottom nav di HP (home indicator iOS / gesture bar Android). */
+.pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 0.25rem);
 }

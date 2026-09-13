@@ -33,6 +33,7 @@ export const auth = betterAuth({
   user: {
     additionalFields: {
       isPlatformOwner: { type: "boolean", defaultValue: false, input: false },
+      phone: { type: "string", required: false, input: false },
     },
   },
   databaseHooks: {
