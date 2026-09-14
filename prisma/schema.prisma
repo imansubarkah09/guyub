@@ -51,6 +51,9 @@ model User {
   arisanBayar     ArisanPembayaran[]
   infaqDicatat    InfaqShodaqoh[]  @relation("InfaqDicatatOleh")
   kegiatanDicatat DanaKegiatan[]   @relation("KegiatanDicatatOleh")
+  pinjamanDiajukan Pinjaman[]      @relation("PinjamanPeminjam")
+  pinjamanDiputuskan Pinjaman[]    @relation("PinjamanDiputuskanOleh")
+  cicilanDicatat  PinjamanCicilan[] @relation("CicilanDicatatOleh")
   notifikasi      Notifikasi[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -131,6 +134,7 @@ model Tenant {
   laporan                Laporan[]
   infaq                  InfaqShodaqoh[]
   danaKegiatan           DanaKegiatan[]
+  pinjaman               Pinjaman[]
   notifikasi             Notifikasi[]
   trakteer               TrakteerDonasi[]
   /// Kode pendek yang ditulis donatur di pesan Trakteer supaya donasinya
@@ -252,6 +256,63 @@ model KasTransaksi {
   createdAt    DateTime @default(now())
 
   @@index([tenantId, tanggal])
+}
+
+// --- Simpan Pinjam -----------------------------------------------------------------
+
+enum PinjamanStatus {
+  diajukan
+  disetujui
+  ditolak
+  lunas
+}
+
+/// `persen`: bunga dihitung otomatis dari sisa pokok tiap cicilan (bungaPersen wajib diisi).
+/// `sukarela`: bendahara/peminjam bebas menambah nominal bunga tiap cicilan, tanpa aturan tetap.
+/// `tanpa`: murni pokok, tidak ada tambahan.
+enum BungaMode {
+  tanpa
+  persen
+  sukarela
+}
+
+/// Anggota mengajukan, bendahara yang approve baru dana keluar dari saldo Kas
+/// (dicatat sebagai KasTransaksi tipe keluar, bukan kolom saldo terpisah — supaya
+/// saldoKas di ringkasan.ts tetap satu sumber kebenaran tanpa perlu diubah).
+model Pinjaman {
+  id              String            @id @default(cuid())
+  tenant          Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId        String
+  peminjam        User              @relation("PinjamanPeminjam", fields: [peminjamId], references: [id])
+  peminjamId      String
+  jumlahPokok     Decimal           @db.Decimal(14, 2)
+  bungaMode       BungaMode         @default(tanpa)
+  bungaPersen     Decimal?          @db.Decimal(5, 2)
+  keterangan      String?
+  status          PinjamanStatus    @default(diajukan)
+  diajukanPada    DateTime          @default(now())
+  /// Yang MEMUTUSKAN, baik disetujui maupun ditolak — bukan cuma yang menyetujui.
+  diputuskanOleh   User?            @relation("PinjamanDiputuskanOleh", fields: [diputuskanOlehId], references: [id])
+  diputuskanOlehId String?
+  diputuskanPada   DateTime?
+  cicilan         PinjamanCicilan[]
+
+  @@index([tenantId, status])
+  @@index([peminjamId])
+}
+
+model PinjamanCicilan {
+  id            String   @id @default(cuid())
+  pinjaman      Pinjaman @relation(fields: [pinjamanId], references: [id], onDelete: Cascade)
+  pinjamanId    String
+  tanggal       DateTime
+  jumlahPokok   Decimal  @db.Decimal(14, 2)
+  jumlahBunga   Decimal  @db.Decimal(14, 2) @default(0)
+  dicatatOleh   User     @relation("CicilanDicatatOleh", fields: [dicatatOlehId], references: [id])
+  dicatatOlehId String
+  createdAt     DateTime @default(now())
+
+  @@index([pinjamanId])
 }
 
 // --- Tabungan --------------------------------------------------------------------

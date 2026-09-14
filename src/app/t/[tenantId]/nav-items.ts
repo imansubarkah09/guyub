@@ -3,6 +3,7 @@ import {
   Wallet,
   PiggyBank,
   HandCoins,
+  Banknote,
   HeartHandshake,
   Receipt,
   CalendarDays,
@@ -36,6 +37,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/kas", label: "Kas", icon: Wallet, primary: true },
       { href: "/tabungan", label: "Tabungan", icon: PiggyBank, primary: true },
+      { href: "/pinjaman", label: "Simpan Pinjam", icon: Banknote },
       { href: "/qurban", label: "Qurban", icon: HandCoins },
       { href: "/infaq", label: "Infaq & Shodaqoh", icon: HeartHandshake },
       { href: "/kegiatan", label: "Dana Kegiatan", icon: Receipt },
