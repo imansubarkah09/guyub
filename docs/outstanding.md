@@ -7,23 +7,22 @@ bawah ini hal yang butuh kredensial, keputusan, atau percobaan manual dari Iman.
 
 Rinciannya ada di bagian bernomor di bawah.
 
-### A. Sekarang juga, produksi sedang rusak
+### A. Produksi sehat (diperiksa 14 Sep 2026 pagi)
 
-- [ ] **Terapkan dua migrasi yang tertinggal ke DB produksi.** Ini yang bikin
-      halaman meledak dengan `React error #441`. Lihat §3.
+Tiga hal yang dulu mendesak di sini sudah beres, jadi tidak ada lagi yang harus
+dikerjakan sekarang juga:
 
-      node --env-file=.env.production -e 'process.env.DATABASE_URL_UNPOOLED=process.env.DATABASE_URL; require("child_process").spawnSync(process.execPath,["node_modules/prisma/build/index.js","migrate","deploy"],{stdio:"inherit"})'
+- [x] Secret `DATABASE_URL` dan `DATABASE_URL_UNPOOLED` di repo sudah menunjuk ke
+      endpoint produksi. Buktinya pagar di CI (`case *ep-autumn-art*`) lolos, bukan
+      gagal seperti sebelumnya.
+- [x] Migrasi produksi berjalan otomatis tiap push. Terakhir yang diterapkan:
+      `20260914060641_simpan_pinjam`.
+- [x] `https://guyub.thedreamcompany.space` menjawab: `/` dan `/login` 200,
+      `/api/auth/get-session` 200, dan webhook Trakteer menolak permintaan tanpa
+      token dengan 401 (artinya jalur DB di Worker hidup).
 
-- [ ] **Betulkan dua secret repo** yang menunjuk ke database dev, isi dengan nilai
-      dari `.env.production`. Selama belum dibetulkan, job deploy di GitHub Actions
-      sengaja GAGAL di step migrasi (pagar baru, lihat §3).
-
-      gh secret set DATABASE_URL --repo imansubarkah09/thedreamcompany-guyub
-      gh secret set DATABASE_URL_UNPOOLED --repo imansubarkah09/thedreamcompany-guyub
-
-- [ ] Sesudah dua langkah di atas, buka `https://guyub.thedreamcompany.space`,
-      masuk, lalu buka Silsilah. Kalau masih error, kabari dan jalankan
-      `npx wrangler tail` saat kejadian supaya errornya kebaca.
+Yang belum bisa diperiksa dari sisi Claude: alur yang butuh login Google asli.
+Itu tetap perlu kamu buka sendiri sekali.
 
 ### B. Menyusul, tidak mendesak
 
@@ -102,7 +101,7 @@ Sisa yang perlu perhatian:
       2026: `/dashboard` terukur 45 ms CPU dengan outcome `ok` di produksi, jadi
       batas 10 ms ala Free plan jelas tidak berlaku di akun ini.
 
-## 3. WAJIB SEGERA: DB produksi ketinggalan dua migrasi (13 Sep 2026)
+## 3. SUDAH BERES: DB produksi pernah ketinggalan migrasi (13 Sep 2026)
 
 Gejalanya di browser: `Minified React error #441`, yang artinya "An error
 occurred in the Server Components render". Pesan aslinya disembunyikan di build
@@ -116,13 +115,15 @@ database yang salah, sementara Worker jalan di DB produksi yang ketinggalan
 `20260913160000_silsilah_urutan_dan_akun`. Kode meminta kolom `urutan` dan nilai
 enum `wakil_ketua` yang belum ada di sana, lalu render server gagal.
 
-- [ ] Jalankan migrasi ke DB produksi (Claude diblokir menulis ke DB produksi):
+Sejak 14 Sep 2026 hal ini sudah tidak berlaku: secretnya sudah dibetulkan dan
+migrasi berjalan otomatis di tiap push. Perintah di bawah disimpan kalau suatu
+saat perlu menjalankannya manual (Claude diblokir menulis ke DB produksi):
 
 ```bash
 node --env-file=.env.production -e 'process.env.DATABASE_URL_UNPOOLED=process.env.DATABASE_URL; require("child_process").spawnSync(process.execPath,["node_modules/prisma/build/index.js","migrate","deploy"],{stdio:"inherit"})'
 ```
 
-- [ ] Betulkan secret repo supaya push berikutnya memigrasi DB yang benar:
+Perintah membetulkan secret, disimpan sebagai rujukan:
 
 ```bash
 gh secret set DATABASE_URL --repo imansubarkah09/thedreamcompany-guyub          # isi dari .env.production
@@ -196,6 +197,23 @@ GAGAL, tidak lagi diam-diam sukses sambil memigrasi database dev.
       Belum ada di `.env.production`, jadi meta verifikasinya tidak ikut ter-build.
 - [ ] `NEXT_PUBLIC_GA_MEASUREMENT_ID`: measurement ID dari Google Analytics (GA4).
       Sama, belum ada di `.env.production` dan belum dioper di workflow CI.
+
+## 10. Hasil audit query 14 Sep 2026 (yang masih perlu diawasi)
+
+Perubahannya sudah live. Tiga hal yang perlu kamu tahu, bukan dikerjakan:
+
+- [ ] **`relationJoins` adalah fitur PREVIEW Prisma.** Sudah diuji setara dengan
+      strategi lama untuk delapan bentuk query yang dipakai aplikasi, tapi setiap
+      kali versi Prisma naik, jalankan ulang `scripts/db-ops-cek-relationjoins.mjs`
+      sebelum deploy. Skripnya gitignored, isinya ada di riwayat commit `997e364`.
+- [ ] **Cookie cache sesi cuma hemat di menit pertama sesudah login.** Penyegarnya
+      butuh middleware/proxy, dan dukungan middleware Node.js di Cloudflare masih
+      eksperimental: dicoba dan setiap request mati 500. Kalau OpenNext sudah stabil
+      mendukungnya, `src/proxy.ts` tinggal dipasang lagi (isinya di commit `f427890`).
+- [ ] **`scripts/db-ops-e2e.mjs` (suite E2E lama) sudah basi sejak revamp** — masih
+      memakai `danaKegiatan.sumberDana` yang sudah dipecah jadi tabel sendiri, jadi
+      selalu gagal di langkah Dana Kegiatan. Perlu diputuskan: diperbarui atau dibuang.
+      Yang masih hidup dan dipakai adalah `scripts/db-ops-e2e-baru.mjs` (30/30 lulus).
 
 ## 9. Utang teknis kecil
 
