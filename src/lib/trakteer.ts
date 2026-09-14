@@ -8,7 +8,6 @@ export const TRAKTEER_SLUG = process.env.NEXT_PUBLIC_TRAKTEER_SLUG ?? "";
 export const TRAKTEER_ORIGIN = "https://trakteer.id";
 /** Modal overlay resmi Trakteer; `ref` diisi URL halaman pemanggil. */
 export const TRAKTEER_MODAL_URL = TRAKTEER_SLUG ? `${TRAKTEER_ORIGIN}/v1/${TRAKTEER_SLUG}/tip/embed/modal` : null;
-export const TRAKTEER_PAGE_URL = TRAKTEER_SLUG ? `${TRAKTEER_ORIGIN}/${TRAKTEER_SLUG}/tip` : null;
 
 /**
  * Berapa rupiah yang setara satu hari masa aktif ("nyawa") sebuah tenant.

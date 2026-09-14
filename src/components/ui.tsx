@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 /** Komponen dasar dipakai di semua halaman supaya tampilannya konsisten (§4). */
 
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`rounded-[var(--radius)] border border-border bg-surface p-4 shadow-sm ${className}`}>{children}</div>;
+  return <div className={`overflow-hidden break-words rounded-[var(--radius)] border border-border bg-surface p-4 shadow-sm ${className}`}>{children}</div>;
 }
 
 export function PageTitle({ title, desc, action }: { title: string; desc?: string; action?: React.ReactNode }) {

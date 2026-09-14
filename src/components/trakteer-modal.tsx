@@ -16,7 +16,19 @@ const TRAKTEER_ORIGIN = "https://trakteer.id";
  * "ini untuk tenant mana", jadi donatur perlu menempelkan kode itu di pesan
  * dukungan supaya webhook bisa menambah nyawa ke tenant yang benar.
  */
-export function TrakteerModal({ modalUrl, kodeDonasi, namaTenant }: { modalUrl: string; kodeDonasi: string; namaTenant: string }) {
+export function TrakteerModal({
+  modalUrl,
+  kodeDonasi,
+  namaTenant,
+  label = "Dukung Tenant Ini",
+  className,
+}: {
+  modalUrl: string;
+  kodeDonasi?: string;
+  namaTenant?: string;
+  label?: string;
+  className?: string;
+}) {
   const [tahap, setTahap] = useState<"tutup" | "kode" | "overlay">("tutup");
   const [tersalin, setTersalin] = useState(false);
 
@@ -40,11 +52,11 @@ export function TrakteerModal({ modalUrl, kodeDonasi, namaTenant }: { modalUrl: 
 
   return (
     <>
-      <button onClick={() => setTahap("kode")} className={`${btnPrimary} w-full`}>
-        <Heart className="h-4 w-4" /> Dukung Tenant Ini
+      <button onClick={() => setTahap(kodeDonasi ? "kode" : "overlay")} className={className ?? `${btnPrimary} w-full`}>
+        <Heart className="h-4 w-4" /> {label}
       </button>
 
-      {tahap === "kode" && (
+      {tahap === "kode" && kodeDonasi && (
         <div className="fixed inset-0 z-[9999998] flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
           <div className="w-full max-w-sm rounded-[var(--radius)] bg-surface p-4 shadow-xl">
             <p className="font-semibold">Dukung {namaTenant}</p>

@@ -14,7 +14,7 @@ export function AppHeader({ email, title }: { email: string; title?: string }) {
       <div className="flex items-center gap-3 text-sm text-foreground/70">
         <span>{email}</span>
         <button
-          onClick={() => signOut().then(() => router.push("/login"))}
+          onClick={() => signOut().then(() => router.push("/"))}
           className="rounded-md border border-primary/30 px-2 py-1 text-xs"
         >
           Keluar

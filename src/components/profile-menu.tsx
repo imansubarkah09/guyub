@@ -82,7 +82,7 @@ export function ProfileMenu({ user }: { user: AccountInfo }) {
                 </Link>
               )}
               <button
-                onClick={() => signOut().then(() => router.push("/login"))}
+                onClick={() => signOut().then(() => router.push("/"))}
                 className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-danger transition hover:bg-danger/5"
               >
                 <LogOut className="h-4 w-4" />
