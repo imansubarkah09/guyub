@@ -1,42 +1,51 @@
+import Link from "next/link";
 import { Wheat, Coins, ArrowRightLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
 import { angkaPlerek, kilogram } from "@/lib/plerek";
+import { ambilDari } from "@/lib/paging";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, inputClass, rupiah, tanggal } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
 import { catatPutaranAction, catatBerasKeluarAction, setorKeKasAction } from "./actions";
 
 const hariIni = () => new Date().toISOString().slice(0, 10);
 
-export default async function PlerekPage({ params }: { params: Promise<{ tenantId: string }> }) {
+export default async function PlerekPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ tenantId: string }>;
+  searchParams: Promise<{ ambil?: string }>;
+}) {
   const { tenantId } = await params;
+  const { ambil: ambilParam } = await searchParams;
+  const ambil = ambilDari(ambilParam, 200, 2000);
   const user = await requireUser();
   const { roles } = await effectiveRoles(user, tenantId);
 
-  // ponytail: 200 baris terbaru per jenis. Saldo di kartu atas tetap dihitung
-  // penuh di SQL lewat angkaPlerek(), jadi batas ini tidak membuat angkanya salah.
-  // ganti ke paging kalau riwayat per jenis rutin tembus 200 baris.
+  // Saldo di kartu atas tetap dihitung penuh di SQL lewat angkaPlerek(),
+  // jadi `ambil` di bawah cuma membatasi daftar riwayatnya, bukan angkanya.
   const [angka, putaran, berasKeluar, setoran] = await Promise.all([
     angkaPlerek(tenantId),
     prisma.plerekPutaran.findMany({
       where: { tenantId },
       select: { id: true, tanggal: true, petugas: true, jumlahUang: true, berasKg: true, keterangan: true, dicatatOleh: { select: { name: true } } },
       orderBy: { tanggal: "desc" },
-      take: 200,
+      take: ambil,
     }),
     prisma.plerekBerasKeluar.findMany({
       where: { tenantId },
       select: { id: true, tanggal: true, berasKg: true, hasilPenjualan: true, keterangan: true, dicatatOleh: { select: { name: true } } },
       orderBy: { tanggal: "desc" },
-      take: 200,
+      take: ambil,
     }),
     prisma.plerekSetoranKas.findMany({
       where: { tenantId },
       select: { id: true, tanggal: true, jumlah: true, dicatatOleh: { select: { name: true } } },
       orderBy: { tanggal: "desc" },
-      take: 200,
+      take: ambil,
     }),
   ]);
 
@@ -188,6 +197,13 @@ export default async function PlerekPage({ params }: { params: Promise<{ tenantI
               </li>
             ))}
           </ul>
+        )}
+        {(putaran.length === ambil || berasKeluar.length === ambil || setoran.length === ambil) && (
+          <p className="mt-2 text-center">
+            <Link href={`?ambil=${ambil + 200}`} className="text-xs text-primary underline">
+              Muat 200 lagi
+            </Link>
+          </p>
         )}
       </section>
 

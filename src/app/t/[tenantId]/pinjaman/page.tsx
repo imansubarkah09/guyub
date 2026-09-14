@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { Banknote, HandCoins, History } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
+import { ambilDari } from "@/lib/paging";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, btnGhost, inputClass, rupiah, tanggal } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
 import { ajukanPinjamanAction, putuskanPinjamanAction, catatCicilanAction } from "./actions";
@@ -21,8 +23,16 @@ const STATUS_LABEL = {
   lunas: "Lunas",
 } as const;
 
-export default async function PinjamanPage({ params }: { params: Promise<{ tenantId: string }> }) {
+export default async function PinjamanPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ tenantId: string }>;
+  searchParams: Promise<{ ambil?: string }>;
+}) {
   const { tenantId } = await params;
+  const { ambil: ambilParam } = await searchParams;
+  const ambil = ambilDari(ambilParam, 50, 500);
   const user = await requireUser();
   const { roles } = await effectiveRoles(user, tenantId);
   const viewerId = await viewerUserId(user, tenantId);
@@ -63,9 +73,7 @@ export default async function PinjamanPage({ params }: { params: Promise<{ tenan
         cicilan: { select: { id: true, tanggal: true, jumlahPokok: true, jumlahBunga: true }, orderBy: { tanggal: "desc" } },
       },
       orderBy: { diajukanPada: "desc" },
-      // ponytail: dibatasi 50 pinjaman terbaru milik viewer — cukup untuk riwayat pribadi, bukan ledger tenant.
-      // ganti ke paging kalau ada viewer dengan >50 pinjaman aktif.
-      take: 50,
+      take: ambil,
     }),
   ]);
 
@@ -226,6 +234,13 @@ export default async function PinjamanPage({ params }: { params: Promise<{ tenan
               );
             })}
           </ul>
+        )}
+        {milikSaya.length === ambil && (
+          <p className="mt-2 text-center">
+            <Link href={`?ambil=${ambil + 50}`} className="text-xs text-primary underline">
+              Muat 50 lagi
+            </Link>
+          </p>
         )}
       </section>
     </div>

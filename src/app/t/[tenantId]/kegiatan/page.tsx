@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { Receipt, HandHeart } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
 import { daftarPool } from "@/lib/dana";
+import { ambilDari } from "@/lib/paging";
 import { Card, PageTitle, EmptyState, Badge, Progress, btnPrimary, btnGhost, inputClass, rupiah, tanggal } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
 import { catatKegiatanAction, catatDonasiAction } from "./actions";
@@ -11,14 +13,21 @@ import { SumberFields } from "./sumber-fields";
 
 const LABEL_SUMBER = { kas: "Kas", infaq: "Infaq & Shodaqoh", donasi: "Donasi terbuka", tabungan: "Tabungan", plerek: "Plerek" } as const;
 
-export default async function KegiatanPage({ params }: { params: Promise<{ tenantId: string }> }) {
+export default async function KegiatanPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ tenantId: string }>;
+  searchParams: Promise<{ ambil?: string }>;
+}) {
   const { tenantId } = await params;
+  const { ambil: ambilParam } = await searchParams;
+  const ambil = ambilDari(ambilParam, 100, 1000);
   const user = await requireUser();
   const { roles } = await effectiveRoles(user, tenantId);
 
   // Donasi per kegiatan dulu ditarik SEMUA baris padahal yang tampil cuma 5 teratas
   // dan totalnya. Sekarang: 5 baris untuk tampilan, total & jumlahnya dari SQL.
-  // ponytail: riwayat kegiatan dibatasi 100 terbaru, ganti ke paging kalau ada yang mentok.
   const [riwayat, donasiRekap, pools] = await Promise.all([
     prisma.danaKegiatan.findMany({
       where: { tenantId },
@@ -29,7 +38,7 @@ export default async function KegiatanPage({ params }: { params: Promise<{ tenan
         _count: { select: { donasi: true } },
       },
       orderBy: { tanggal: "desc" },
-      take: 100,
+      take: ambil,
     }),
     prisma.danaKegiatanDonasi.groupBy({ by: ["kegiatanId"], where: { kegiatan: { tenantId } }, _sum: { jumlah: true } }),
     daftarPool(tenantId),
@@ -171,6 +180,13 @@ export default async function KegiatanPage({ params }: { params: Promise<{ tenan
               );
             })}
           </div>
+        )}
+        {riwayat.length === ambil && (
+          <p className="mt-2 text-center">
+            <Link href={`?ambil=${ambil + 100}`} className="text-xs text-primary underline">
+              Muat 100 lagi
+            </Link>
+          </p>
         )}
       </section>
     </div>

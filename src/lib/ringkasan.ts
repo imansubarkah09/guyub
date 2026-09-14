@@ -24,12 +24,15 @@ export async function angkaTenant(tenantId: string) {
   const kasKeluar = angka(kas.find((k) => k.tipe === "keluar")?._sum.jumlah);
   const keluarDariKas = angka(sumber.find((s) => s.sumberDana === "kas")?._sum.jumlah);
   const keluarDariInfaq = angka(sumber.find((s) => s.sumberDana === "infaq")?._sum.jumlah);
+  const infaqMasuk = angka(infaq._sum.jumlah);
 
   return {
     kasMasuk,
     kasKeluar: kasKeluar + keluarDariKas + keluarDariInfaq,
     saldoKas: kasMasuk - kasKeluar - keluarDariKas,
-    saldoInfaq: angka(infaq._sum.jumlah) - keluarDariInfaq,
+    infaqMasuk,
+    infaqKeluar: keluarDariInfaq,
+    saldoInfaq: infaqMasuk - keluarDariInfaq,
     keluarDariKas,
     qurbanTotal: angka(qurban._sum.saldoTerkumpul),
   };

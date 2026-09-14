@@ -5,21 +5,31 @@ import { CAN_BUAT_LAPORAN, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
 import { angkaTenant, saldoBerjalanArisan } from "@/lib/ringkasan";
 import { angkaPlerek, kilogram } from "@/lib/plerek";
-import { Card, PageTitle, rupiah, tanggal } from "@/components/ui";
+import { Card, PageTitle, inputClass, rupiah, tanggal } from "@/components/ui";
 import { LaporanTabs, type TabData } from "./laporan-client";
 
-export default async function LaporanPage({ params }: { params: Promise<{ tenantId: string }> }) {
+export default async function LaporanPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ tenantId: string }>;
+  searchParams: Promise<{ dari?: string; sampai?: string }>;
+}) {
   const { tenantId } = await params;
+  const { dari, sampai } = await searchParams;
   const user = await requireUser();
   const { roles } = await effectiveRoles(user, tenantId);
+
+  const rentang = (kolom: "tanggal" | "tanggalPertemuan") =>
+    dari || sampai ? { [kolom]: { ...(dari ? { gte: new Date(dari) } : {}), ...(sampai ? { lte: new Date(sampai) } : {}) } } : {};
 
   const [tenant, r, kas, tabunganTipe, qurbanGroups, arisanList, infaq, laporanList, anggota, plerek, plerekPutaran] = await Promise.all([
     prisma.tenantProfile.findUniqueOrThrow({ where: { tenantId } }),
     angkaTenant(tenantId),
-    // ponytail: laporan memang butuh semua baris untuk isi tabel/PDF-nya. Dibatasi
-    // 2000 baris per kategori supaya satu tenant tua tidak menghabiskan memori Worker;
-    // kalau ada yang mentok, ganti ke laporan per rentang tanggal.
-    prisma.kasTransaksi.findMany({ where: { tenantId }, select: { tanggal: true, tipe: true, jumlah: true, keterangan: true }, orderBy: { tanggal: "desc" }, take: 2000 }),
+    // Laporan butuh semua baris di rentang yang diminta untuk isi tabel/PDF-nya.
+    // Tanpa filter tanggal, dibatasi 2000 baris per kategori sebagai jaga-jaga
+    // memori Worker untuk tenant tua — pakai filter tanggal di atas kalau mentok.
+    prisma.kasTransaksi.findMany({ where: { tenantId, ...rentang("tanggal") }, select: { tanggal: true, tipe: true, jumlah: true, keterangan: true }, orderBy: { tanggal: "desc" }, take: 2000 }),
     prisma.tabunganTipe.findMany({ where: { tenantId }, select: { nama: true, mode: true, saldo: { select: { userId: true, jumlah: true } } } }),
     prisma.qurbanGroup.findMany({ where: { tenantId }, select: { jenisHewan: true, slots: { select: { status: true, saldoTerkumpul: true, user: { select: { name: true } } } } } }),
     prisma.arisan.findMany({
@@ -32,12 +42,17 @@ export default async function LaporanPage({ params }: { params: Promise<{ tenant
         pembayaran: { select: { userId: true, putaran: true } },
       },
     }),
-    prisma.infaqShodaqoh.findMany({ where: { tenantId }, select: { tanggalPertemuan: true, jumlah: true, keterangan: true }, orderBy: { tanggalPertemuan: "desc" }, take: 2000 }),
+    prisma.infaqShodaqoh.findMany({
+      where: { tenantId, ...rentang("tanggalPertemuan") },
+      select: { tanggalPertemuan: true, jumlah: true, keterangan: true },
+      orderBy: { tanggalPertemuan: "desc" },
+      take: 2000,
+    }),
     prisma.laporan.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 10 }),
     prisma.membership.findMany({ where: { tenantId, status: "active" }, select: { userId: true, user: { select: { name: true } } } }),
     angkaPlerek(tenantId),
     prisma.plerekPutaran.findMany({
-      where: { tenantId },
+      where: { tenantId, ...rentang("tanggal") },
       select: { tanggal: true, petugas: true, jumlahUang: true, berasKg: true },
       orderBy: { tanggal: "desc" },
       take: 2000,
@@ -123,6 +138,18 @@ export default async function LaporanPage({ params }: { params: Promise<{ tenant
   return (
     <div className="space-y-5">
       <PageTitle title="Laporan" desc="Rekap keuangan tenant per kategori" />
+
+      <form className="flex flex-wrap items-center gap-1 text-xs">
+        <span className="text-muted">Rentang tanggal (kas, infaq, plerek):</span>
+        <input type="date" name="dari" defaultValue={dari} className={`${inputClass} px-2 py-1`} aria-label="Dari tanggal" />
+        <input type="date" name="sampai" defaultValue={sampai} className={`${inputClass} px-2 py-1`} aria-label="Sampai tanggal" />
+        <button className="rounded-lg border border-border px-2 py-1">Filter</button>
+        {(dari || sampai) && (
+          <Link href={`/t/${tenantId}/laporan`} className="text-primary underline">
+            Reset
+          </Link>
+        )}
+      </form>
 
       <LaporanTabs tenantId={tenantId} tenantNama={tenant.nama} tabs={tabs} canGenerate={canGenerate} baseUrl={base} />
 

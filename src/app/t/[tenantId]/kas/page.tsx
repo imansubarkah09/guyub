@@ -3,7 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
+import Link from "next/link";
 import { angkaTenant } from "@/lib/ringkasan";
+import { ambilDari } from "@/lib/paging";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, inputClass, rupiah, tanggal } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
 import { createKasTransaksiAction } from "./actions";
@@ -13,10 +15,11 @@ export default async function KasPage({
   searchParams,
 }: {
   params: Promise<{ tenantId: string }>;
-  searchParams: Promise<{ dari?: string; sampai?: string }>;
+  searchParams: Promise<{ dari?: string; sampai?: string; ambil?: string }>;
 }) {
   const { tenantId } = await params;
-  const { dari, sampai } = await searchParams;
+  const { dari, sampai, ambil: ambilParam } = await searchParams;
+  const ambil = ambilDari(ambilParam, 200, 2000);
   const user = await requireUser();
   const { roles } = await effectiveRoles(user, tenantId);
 
@@ -27,14 +30,11 @@ export default async function KasPage({
       : {}),
   };
   const [transaksi, r] = await Promise.all([
-    // ponytail: dibatasi 200 baris terbaru — riwayat lebih lama dicari lewat filter
-    // tanggal di atas. Ganti ke paging kalau ada tenant yang benar-benar perlu
-    // menggulir ribuan baris sekaligus.
     prisma.kasTransaksi.findMany({
       where,
       select: { id: true, tanggal: true, jumlah: true, tipe: true, keterangan: true, buktiUrl: true, dicatatOleh: { select: { name: true } } },
       orderBy: { tanggal: "desc" },
-      take: 200,
+      take: ambil,
     }),
     angkaTenant(tenantId),
   ]);
@@ -128,6 +128,16 @@ export default async function KasPage({
               </li>
             ))}
           </ul>
+        )}
+        {transaksi.length === ambil && (
+          <p className="mt-2 text-center">
+            <Link
+              href={`?${new URLSearchParams({ ...(dari ? { dari } : {}), ...(sampai ? { sampai } : {}), ambil: String(ambil + 200) })}`}
+              className="text-xs text-primary underline"
+            >
+              Muat 200 lagi
+            </Link>
+          </p>
         )}
         {r.keluarDariKas > 0 && (
           <p className="mt-2 text-xs text-muted">

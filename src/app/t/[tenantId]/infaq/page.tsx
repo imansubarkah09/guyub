@@ -1,33 +1,41 @@
+import Link from "next/link";
 import { HeartHandshake } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
 import { angkaTenant } from "@/lib/ringkasan";
+import { ambilDari } from "@/lib/paging";
 import { Card, PageTitle, EmptyState, btnPrimary, btnGhost, inputClass, rupiah, tanggal } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
 import { catatInfaqAction, hapusInfaqAction } from "./actions";
 
-export default async function InfaqPage({ params }: { params: Promise<{ tenantId: string }> }) {
+export default async function InfaqPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ tenantId: string }>;
+  searchParams: Promise<{ ambil?: string }>;
+}) {
   const { tenantId } = await params;
+  const { ambil: ambilParam } = await searchParams;
+  const ambil = ambilDari(ambilParam, 200, 2000);
   const user = await requireUser();
   const { roles } = await effectiveRoles(user, tenantId);
 
   const [riwayat, r] = await Promise.all([
-    // ponytail: 200 pertemuan terakhir; saldo di kartu atas tetap dihitung penuh di SQL.
-    // ganti ke paging kalau ada tenant dengan >200 pertemuan infaq.
+    // Saldo di kartu atas dihitung penuh di SQL lewat angkaTenant(), jadi `ambil`
+    // di bawah cuma membatasi daftar riwayatnya, bukan angkanya.
     prisma.infaqShodaqoh.findMany({
       where: { tenantId },
       select: { id: true, tanggalPertemuan: true, jumlah: true, keterangan: true, dicatatOleh: { select: { name: true } } },
       orderBy: { tanggalPertemuan: "desc" },
-      take: 200,
+      take: ambil,
     }),
     angkaTenant(tenantId),
   ]);
 
   const canCatat = has(roles, CAN_CATAT_UANG);
-  const terkumpul = riwayat.reduce((a, i) => a + Number(i.jumlah), 0);
-  const terpakai = terkumpul - r.saldoInfaq;
 
   return (
     <div className="space-y-5">
@@ -39,7 +47,7 @@ export default async function InfaqPage({ params }: { params: Promise<{ tenantId
         </p>
         <p className="mt-1 text-3xl font-semibold tabular-nums">{rupiah.format(r.saldoInfaq)}</p>
         <p className="mt-1 text-xs text-muted">
-          Terkumpul {rupiah.format(terkumpul)} · terpakai untuk kegiatan {rupiah.format(terpakai)}
+          Terkumpul {rupiah.format(r.infaqMasuk)} · terpakai untuk kegiatan {rupiah.format(r.infaqKeluar)}
         </p>
       </Card>
 
@@ -91,6 +99,13 @@ export default async function InfaqPage({ params }: { params: Promise<{ tenantId
               </li>
             ))}
           </ul>
+        )}
+        {riwayat.length === ambil && (
+          <p className="mt-2 text-center">
+            <Link href={`?ambil=${ambil + 200}`} className="text-xs text-primary underline">
+              Muat 200 lagi
+            </Link>
+          </p>
         )}
       </section>
     </div>

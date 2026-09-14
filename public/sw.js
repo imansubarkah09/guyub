@@ -1,5 +1,9 @@
-// ponytail: service worker ini cuma untuk syarat installable PWA, bukan offline
-// beneran. Tambahkan Workbox/background-sync kalau nanti perlu pakai offline.
+// Sengaja BUKAN offline transaksional (background-sync kas/infaq/dll saat
+// offline): data tenant privat, dan menyimpannya di cache PWA di HP yang bisa
+// dipakai bergantian melanggar alasan yang sama kenapa halaman selain "/" di
+// bawah tidak pernah di-cache. Ini keputusan tetap, bukan yang ditunda — kalau
+// nanti benar-benar perlu, itu fitur besar terpisah (idempotensi, resolusi
+// konflik saldo), bukan upgrade satu file ini.
 //
 // JANGAN kembali ke cache-first untuk HTML (ketemu 13 Sep 2026): nama file chunk
 // berubah tiap deploy, jadi shell lama yang tersimpan terus meminta chunk yang
