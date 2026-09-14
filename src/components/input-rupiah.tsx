@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const ribuan = new Intl.NumberFormat("id-ID");
 const bersihkan = (teks: string) => teks.replace(/\D/g, "");
@@ -40,6 +40,7 @@ export function InputRupiah({
   const awal = defaultValue === null || defaultValue === undefined ? "" : bersihkan(String(defaultValue));
   const [angka, setAngka] = useState(awal);
   const acuan = useRef<HTMLInputElement>(null);
+  const digitSebelumKursor = useRef<number | null>(null);
 
   useEffect(() => {
     const form = acuan.current?.form;
@@ -48,6 +49,24 @@ export function InputRupiah({
     form.addEventListener("reset", kembalikan);
     return () => form.removeEventListener("reset", kembalikan);
   }, [awal]);
+
+  // Controlled input yang memformat ulang tiap ketikan bikin kursor lompat ke
+  // ujung. Hitung berapa digit di kiri kursor sebelum reformat, lalu taruh
+  // kursor setelah jumlah digit yang sama di string yang sudah diformat.
+  useLayoutEffect(() => {
+    if (digitSebelumKursor.current === null) return;
+    const input = acuan.current;
+    if (!input) return;
+    const teks = input.value;
+    let sisa = digitSebelumKursor.current;
+    let pos = 0;
+    while (pos < teks.length && sisa > 0) {
+      if (/\d/.test(teks[pos])) sisa--;
+      pos++;
+    }
+    input.setSelectionRange(pos, pos);
+    digitSebelumKursor.current = null;
+  }, [angka]);
 
   return (
     <>
@@ -60,9 +79,11 @@ export function InputRupiah({
         placeholder={placeholder}
         className={className}
         value={angka ? ribuan.format(Number(angka)) : ""}
-        // ponytail: kursor selalu pindah ke ujung kalau menyunting di tengah
-        // angka. Ganti dengan perhitungan posisi kursor kalau ada yang mengeluh.
-        onChange={(e) => setAngka(bersihkan(e.target.value))}
+        onChange={(e) => {
+          const posisi = e.target.selectionStart ?? e.target.value.length;
+          digitSebelumKursor.current = bersihkan(e.target.value.slice(0, posisi)).length;
+          setAngka(bersihkan(e.target.value));
+        }}
       />
       <input type="hidden" name={name} value={angka} />
     </>
