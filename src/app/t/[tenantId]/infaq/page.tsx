@@ -15,6 +15,7 @@ export default async function InfaqPage({ params }: { params: Promise<{ tenantId
 
   const [riwayat, r] = await Promise.all([
     // ponytail: 200 pertemuan terakhir; saldo di kartu atas tetap dihitung penuh di SQL.
+    // ganti ke paging kalau ada tenant dengan >200 pertemuan infaq.
     prisma.infaqShodaqoh.findMany({
       where: { tenantId },
       select: { id: true, tanggalPertemuan: true, jumlah: true, keterangan: true, dicatatOleh: { select: { name: true } } },

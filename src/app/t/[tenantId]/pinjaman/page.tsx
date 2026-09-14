@@ -64,6 +64,7 @@ export default async function PinjamanPage({ params }: { params: Promise<{ tenan
       },
       orderBy: { diajukanPada: "desc" },
       // ponytail: dibatasi 50 pinjaman terbaru milik viewer — cukup untuk riwayat pribadi, bukan ledger tenant.
+      // ganti ke paging kalau ada viewer dengan >50 pinjaman aktif.
       take: 50,
     }),
   ]);

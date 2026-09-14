@@ -17,6 +17,7 @@ export default async function PlerekPage({ params }: { params: Promise<{ tenantI
 
   // ponytail: 200 baris terbaru per jenis. Saldo di kartu atas tetap dihitung
   // penuh di SQL lewat angkaPlerek(), jadi batas ini tidak membuat angkanya salah.
+  // ganti ke paging kalau riwayat per jenis rutin tembus 200 baris.
   const [angka, putaran, berasKeluar, setoran] = await Promise.all([
     angkaPlerek(tenantId),
     prisma.plerekPutaran.findMany({
