@@ -159,8 +159,20 @@ memanggil `prisma.*` langsung untuk data yang sama.
 server dengan `PRISMA_LOG=1` lalu hitung baris `prisma:query` di antara dua
 request, itu yang dipakai audit ini. Untuk workerd: `pnpm cf:build`, taruh
 `PRISMA_LOG=1` di `.dev.vars`, `npx wrangler dev --port 8787`, hitung dari
-lognya. Patokan sesudah audit: Dashboard 20 query, Kas 11, Arisan 9, Laporan 21,
-sisanya 9-13. Kalau angka ini naik banyak, ada `include` baru yang kebablasan.
+lognya. Patokan sesudah audit: Dashboard 17 query, Kas 10, Infaq 10, Kegiatan 12,
+Laporan 17, Arisan 7, Anggota 8, Tabungan 8, Silsilah 7, Qurban 6. Kalau angka ini
+naik banyak, ada `include` baru yang kebablasan.
+
+**`relationJoins` menyala, dan itu fitur PREVIEW Prisma.** Dengan flag ini
+Postgres memakai LATERAL JOIN, jadi satu `include` bersarang tidak lagi pecah jadi
+satu query per relasi (Dashboard 20 → 17, Silsilah 11 → 7, Qurban 9 → 6). Perlu
+diingat dua hal: flag ini ada di KEDUA generator di `prisma/schema.prisma` (yang
+Node dan yang workerd), dan karena statusnya preview, `take`/`orderBy` di relasi
+bersarang wajib diuji ulang kalau versi Prisma naik. Alat ujinya sudah ada:
+`scripts/db-ops-cek-relationjoins.mjs` (gitignored) menjalankan bentuk query yang
+dipakai aplikasi dua kali, strategi `join` dan `query`, lalu membandingkan
+hasilnya baris demi baris di atas data yang sengaja diisi dulu. Jangan
+membandingkan di tabel kosong, itu selalu lulus dan tidak membuktikan apa-apa.
 
 **`pnpm lint` tanpa argumen kehabisan heap sesudah `pnpm cf:build`.** Bundel 41 MB
 di `.open-next/` membuat eslint mati dengan exit 134, padahal `globalIgnores`
