@@ -180,6 +180,28 @@ sudah memuatnya. Karena itu script `lint` di `package.json` menyebut petaknya
 secara eksplisit (`src scripts next.config.ts ...`), jangan dikembalikan jadi
 `eslint` polos.
 
+**Cookie cache sesi menyala 60 detik, dan JANGAN dicoba disegarkan lewat
+middleware/proxy** (diuji 14 Sep 2026). `session.cookieCache` di `src/lib/auth.ts`
+menyalin sesi ke cookie bertanda tangan supaya tidak tiap request menembak SELECT
+Session + SELECT User. Terukur memang hemat (17 query jadi 15 di Dashboard) TAPI
+hanya selama cookie itu ada, dan yang boleh menulis cookie cuma route handler dan
+server action — bukan render Server Component. Karena seluruh pembacaan sesi
+aplikasi ini terjadi di Server Component, cookie itu cuma disetel sekali waktu
+login lalu habis 60 detik kemudian dan tidak pernah disetel ulang.
+
+Jalan keluar yang wajar adalah `src/proxy.ts` (di Next 16 `middleware.js` sudah
+diganti `proxy.js`), dan itu SUDAH DICOBA lalu DIBATALKAN: `pnpm cf:build`
+memperingatkan "Node.js middleware support is experimental in cloudflare, and not
+officially maintained by OpenNext maintainers", dan hasilnya di workerd setiap
+request mati 500 dengan `TypeError: Method Promise.prototype.then called on
+incompatible receiver` di routingHandler. Dibuktikan dua arah: dengan proxy semua
+500, tanpa proxy semua 200 pada build yang sama.
+
+Jadi 60 detik itu dipilih justru karena cookie-nya membawa `isPlatformOwner`:
+pencabutan hak platform owner tertunda paling lama satu menit. Jangan dinaikkan.
+Kalau suatu saat OpenNext mendukung Node middleware dengan stabil, barulah proxy
+penyegar itu masuk akal dipasang lagi.
+
 Cara membaca lognya: `observability` sudah aktif di `wrangler.jsonc`, dan
 `npx wrangler tail --format json` menampilkan `cpuTime`, `outcome`, serta
 exception per request.

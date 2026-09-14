@@ -20,6 +20,14 @@ export const auth = betterAuth({
     "http://127.0.0.1:3000",
     "http://localhost:3000",
   ],
+  // Sesi disalin ke cookie bertanda tangan selama 60 detik, jadi tidak setiap
+  // request menembak SELECT Session + SELECT User ke Neon (audit 14 Sep 2026).
+  // 60 detik, bukan 5 menit bawaan: cookie ini ikut membawa isPlatformOwner, dan
+  // pencabutan hak platform owner baru berlaku sesudah cache habis. Satu menit
+  // adalah jendela yang kami terima; jangan dinaikkan tanpa memikirkan itu.
+  // Perubahan profil sendiri tidak menunggu 60 detik — updateAccountAction
+  // membuang cookie ini begitu datanya disimpan.
+  session: { cookieCache: { enabled: true, maxAge: 60 } },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",

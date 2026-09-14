@@ -21,7 +21,18 @@ export async function updateAccountAction(formData: FormData) {
   }
 
   await prisma.user.update({ where: { id: user.id }, data: { name, phone, ...(image ? { image } : {}) } });
+  await buangCacheSesi();
   revalidatePath("/", "layout");
+}
+
+/**
+ * Cache sesi di cookie (lihat src/lib/auth.ts) ikut menyimpan nama, foto, dan
+ * nomor telepon. Tanpa dibuang di sini, header dan checklist Dashboard masih
+ * menampilkan data lama sampai cache habis, dan pengguna mengira simpanannya gagal.
+ */
+async function buangCacheSesi() {
+  const jar = await cookies();
+  for (const c of jar.getAll()) if (c.name.includes("session_data")) jar.delete(c.name);
 }
 
 export async function markNotifReadAction() {
