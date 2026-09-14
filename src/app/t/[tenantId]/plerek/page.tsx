@@ -5,6 +5,7 @@ import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
 import { angkaPlerek, kilogram } from "@/lib/plerek";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, inputClass, rupiah, tanggal } from "@/components/ui";
+import { InputRupiah } from "@/components/input-rupiah";
 import { catatPutaranAction, catatBerasKeluarAction, setorKeKasAction } from "./actions";
 
 const hariIni = () => new Date().toISOString().slice(0, 10);
@@ -106,14 +107,14 @@ export default async function PlerekPage({ params }: { params: Promise<{ tenantI
           <Card>
             <h2 className="mb-3 text-sm font-semibold">Catat Hasil Keliling</h2>
             <p className="mb-3 text-xs text-muted">Isi totalnya satu putaran, bukan per rumah. Boleh uang saja, beras saja, atau dua-duanya.</p>
-            {/* key ikut jumlah baris: begitu satu putaran tersimpan, React memasang
-                form baru sehingga isiannya kosong lagi. Tanpa ini isian lama tetap
-                menempel, dan putaran berikutnya diam-diam membawa jumlah beras yang
-                sama untuk kedua kalinya — ketahuan waktu menguji modul ini. */}
-            <form key={putaran.length} action={catatPutaranAction} className="space-y-2">
+            {/* Tidak perlu key untuk mengosongkan isian: React 19 mereset form
+                sendiri sesudah server action selesai (sudah diukur di form Kas yang
+                tidak pernah disentuh). Resetnya menyusul SESUDAH aksi selesai,
+                bukan saat tombol ditekan — itu yang dulu terlihat seperti bug. */}
+            <form action={catatPutaranAction} className="space-y-2">
               <input type="hidden" name="tenantId" value={tenantId} />
               <input type="date" name="tanggal" required defaultValue={hariIni()} className={inputClass} />
-              <input type="number" name="jumlahUang" min="0" step="1" placeholder="Total uang (Rp)" className={inputClass} />
+              <InputRupiah name="jumlahUang" placeholder="Total uang (Rp)" className={inputClass} />
               <input type="number" name="berasKg" min="0" step="0.01" placeholder="Total beras (kg)" className={inputClass} />
               <input name="petugas" placeholder="Nama petugas keliling (opsional)" className={inputClass} />
               <input name="keterangan" placeholder="Keterangan (opsional)" className={inputClass} />
@@ -125,7 +126,7 @@ export default async function PlerekPage({ params }: { params: Promise<{ tenantI
 
           <Card>
             <h2 className="mb-3 text-sm font-semibold">Beras Keluar</h2>
-            <form key={berasKeluar.length} action={catatBerasKeluarAction} className="space-y-2">
+            <form action={catatBerasKeluarAction} className="space-y-2">
               <input type="hidden" name="tenantId" value={tenantId} />
               <input type="date" name="tanggal" required defaultValue={hariIni()} className={inputClass} />
               <input type="number" name="berasKg" min="0.01" step="0.01" required placeholder="Beras keluar (kg)" className={inputClass} />
@@ -135,7 +136,7 @@ export default async function PlerekPage({ params }: { params: Promise<{ tenantI
                 <option value="tidak">Dibagikan / dipakai (tidak jadi uang)</option>
                 <option value="ya">Dijual</option>
               </select>
-              <input type="number" name="hasilPenjualan" min="0" step="1" placeholder="Hasil penjualan (Rp) — isi kalau dijual" className={inputClass} />
+              <InputRupiah name="hasilPenjualan" placeholder="Hasil penjualan (Rp) — isi kalau dijual" className={inputClass} />
               <input name="keterangan" placeholder="Keterangan (opsional)" className={inputClass} />
               <button type="submit" className={`${btnPrimary} w-full`}>
                 Catat Beras Keluar
@@ -149,10 +150,10 @@ export default async function PlerekPage({ params }: { params: Promise<{ tenantI
               Memindahkan uang plerek ke Kas tenant. Otomatis muncul sebagai pemasukan di halaman Kas. Untuk membiayai kegiatan
               langsung dari plerek, pakai menu Dana Kegiatan dan pilih sumber &quot;Plerek&quot;.
             </p>
-            <form key={setoran.length} action={setorKeKasAction} className="space-y-2">
+            <form action={setorKeKasAction} className="space-y-2">
               <input type="hidden" name="tenantId" value={tenantId} />
               <input type="date" name="tanggal" required defaultValue={hariIni()} className={inputClass} />
-              <input type="number" name="jumlah" min="1" step="1" required placeholder="Jumlah disetor (Rp)" className={inputClass} />
+              <InputRupiah name="jumlah" placeholder="Jumlah disetor (Rp)" className={inputClass} required />
               <input name="keterangan" placeholder="Keterangan (opsional)" className={inputClass} />
               <button type="submit" className={`${btnPrimary} w-full`}>
                 Setor ke Kas

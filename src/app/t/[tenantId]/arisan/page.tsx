@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/session";
 import { CAN_ATUR_ARISAN, CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
 import { Card, PageTitle, StatCard, EmptyState, Badge, btnPrimary, btnGhost, inputClass, rupiah } from "@/components/ui";
+import { InputRupiah } from "@/components/input-rupiah";
 import { SpinWheel } from "./spin-wheel";
 import {
   createArisanAction,
@@ -59,7 +60,7 @@ export default async function ArisanPage({ params }: { params: Promise<{ tenantI
             <input type="hidden" name="tenantId" value={tenantId} />
             <input name="periode" required placeholder="Periode, misal: Bulanan 2026" className={inputClass} />
             <div className="flex gap-2">
-              <input type="number" name="jumlahSetoran" min="0" step="1" required placeholder="Setoran per slot (Rp)" className={inputClass} />
+              <InputRupiah name="jumlahSetoran" placeholder="Setoran per slot (Rp)" className={inputClass} required />
               <input type="number" name="pemenangPerPutaran" min="1" max="10" defaultValue={1} title="Berapa nama keluar sekali kocok" className={inputClass} />
             </div>
             <div className="flex gap-2">

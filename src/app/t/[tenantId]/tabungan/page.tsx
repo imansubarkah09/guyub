@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/session";
 import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
 import { Card, PageTitle, EmptyState, Badge, Progress, btnPrimary, btnGhost, inputClass, rupiah } from "@/components/ui";
+import { InputRupiah } from "@/components/input-rupiah";
 import { createTabunganTipeAction, setorAction, submitSetoranBuktiAction, submitSetoranXenditAction, validasiSetoranAction } from "./actions";
 
 const XENDIT_READY = Boolean(process.env.XENDIT_API_KEY) && process.env.XENDIT_API_KEY !== "your_xendit_api_key_here";
@@ -153,7 +154,7 @@ export default async function TabunganPage({ params }: { params: Promise<{ tenan
                         ))}
                       </select>
                     )}
-                    <input type="number" name="jumlah" min="1" step="1" required placeholder="Setoran tunai (Rp)" className={inputClass} />
+                    <InputRupiah name="jumlah" placeholder="Setoran tunai (Rp)" className={inputClass} required />
                     <button className={btnGhost}>Catat</button>
                   </form>
                 )}
@@ -164,7 +165,7 @@ export default async function TabunganPage({ params }: { params: Promise<{ tenan
                     <form action={submitSetoranBuktiAction} className="flex flex-col gap-2 min-[420px]:flex-row" encType="multipart/form-data">
                       <input type="hidden" name="tenantId" value={tenantId} />
                       <input type="hidden" name="tabunganTipeId" value={tipe.id} />
-                      <input type="number" name="jumlah" min="1" step="1" required placeholder="Jumlah (Rp)" className={inputClass} />
+                      <InputRupiah name="jumlah" placeholder="Jumlah (Rp)" className={inputClass} required />
                       <input type="file" name="bukti" accept="image/*" required className="flex-1 text-xs" />
                       <button className={btnGhost}>Ajukan</button>
                     </form>
@@ -172,7 +173,7 @@ export default async function TabunganPage({ params }: { params: Promise<{ tenan
                       <form action={submitSetoranXenditAction} className="flex flex-col gap-2 min-[420px]:flex-row">
                         <input type="hidden" name="tenantId" value={tenantId} />
                         <input type="hidden" name="tabunganTipeId" value={tipe.id} />
-                        <input type="number" name="jumlah" min="1" step="1" required placeholder="Bayar langsung (Rp)" className={inputClass} />
+                        <InputRupiah name="jumlah" placeholder="Bayar langsung (Rp)" className={inputClass} required />
                         <button className={btnPrimary}>Bayar via Xendit</button>
                       </form>
                     )}

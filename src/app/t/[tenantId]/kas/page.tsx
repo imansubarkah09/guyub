@@ -5,6 +5,7 @@ import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
 import { angkaTenant } from "@/lib/ringkasan";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, inputClass, rupiah, tanggal } from "@/components/ui";
+import { InputRupiah } from "@/components/input-rupiah";
 import { createKasTransaksiAction } from "./actions";
 
 export default async function KasPage({
@@ -66,7 +67,7 @@ export default async function KasPage({
                 <option value="keluar">Keluar</option>
               </select>
             </div>
-            <input type="number" name="jumlah" min="0" step="1" required placeholder="Jumlah (Rp)" className={inputClass} />
+            <InputRupiah name="jumlah" placeholder="Jumlah (Rp)" className={inputClass} required />
             <input name="keterangan" placeholder="Keterangan" className={inputClass} />
             <div>
               <label className="mb-1 block text-xs font-medium text-muted">Bukti transfer (opsional)</label>

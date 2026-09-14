@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { updateQurbanGroupAction, updateQurbanSlotAction } from "./actions";
+import { InputRupiah } from "@/components/input-rupiah";
 
 export function EditGroupButton({
   tenantId,
@@ -32,7 +33,7 @@ export function EditGroupButton({
         <option value="sapi">Sapi (7 jiwa)</option>
         <option value="kambing">Kambing (1 jiwa)</option>
       </select>
-      <input type="number" name="targetPerJiwa" min="0" step="1" defaultValue={group.targetPerJiwa} required className="w-32 rounded border border-primary/30 p-1 text-xs" />
+      <InputRupiah name="targetPerJiwa" className="w-32 rounded border border-primary/30 p-1 text-xs" defaultValue={group.targetPerJiwa} required />
       <button className="rounded border border-primary/30 px-2 py-1 text-xs">Simpan</button>
       <button type="button" onClick={() => setEditing(false)} className="text-xs text-foreground/50">
         Batal
@@ -60,7 +61,7 @@ export function EditSlotButton({ tenantId, slotId, saldoTerkumpul }: { tenantId:
     >
       <input type="hidden" name="tenantId" value={tenantId} />
       <input type="hidden" name="slotId" value={slotId} />
-      <input type="number" name="saldoTerkumpul" min="0" step="1" defaultValue={saldoTerkumpul} required className="w-24 rounded border border-primary/30 p-1 text-xs" />
+      <InputRupiah name="saldoTerkumpul" className="w-24 rounded border border-primary/30 p-1 text-xs" defaultValue={saldoTerkumpul} required />
       <button className="rounded border border-primary/30 px-2 py-1 text-xs">Simpan</button>
       <button type="button" onClick={() => setEditing(false)} className="text-xs text-foreground/50">
         Batal

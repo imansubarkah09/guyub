@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { inputClass, btnGhost, rupiah } from "@/components/ui";
+import { InputRupiah } from "@/components/input-rupiah";
 
 export type Pool = { value: string; label: string; saldo: number };
 
@@ -27,7 +28,7 @@ export function SumberFields({ pools }: { pools: Pool[] }) {
               </option>
             ))}
           </select>
-          <input type="number" name="jumlahSumber" min="0" step="1" required placeholder="Jumlah (Rp)" className={inputClass} />
+          <InputRupiah name="jumlahSumber" placeholder="Jumlah (Rp)" className={inputClass} required />
           {baris.length > 1 && (
             <button type="button" onClick={() => setBaris(baris.filter((x) => x.id !== b.id))} aria-label={`Hapus sumber ${i + 1}`} className="rounded-lg border border-border px-2">
               <X className="h-4 w-4" />

@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/session";
 import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, btnGhost, inputClass, rupiah, tanggal } from "@/components/ui";
+import { InputRupiah } from "@/components/input-rupiah";
 import { ajukanPinjamanAction, putuskanPinjamanAction, catatCicilanAction } from "./actions";
 
 const STATUS_TONE = {
@@ -90,7 +91,7 @@ export default async function PinjamanPage({ params }: { params: Promise<{ tenan
         <h2 className="mb-3 text-sm font-semibold">Ajukan Pinjaman</h2>
         <form action={ajukanPinjamanAction} className="space-y-2">
           <input type="hidden" name="tenantId" value={tenantId} />
-          <input type="number" name="jumlahPokok" min="0" step="1" required placeholder="Jumlah pinjaman (Rp)" className={inputClass} />
+          <InputRupiah name="jumlahPokok" placeholder="Jumlah pinjaman (Rp)" className={inputClass} required />
           <select name="bungaMode" required defaultValue="tanpa" className={inputClass}>
             <option value="tanpa">Tanpa bunga</option>
             <option value="persen">Bunga persen (dihitung dari sisa pokok tiap cicilan)</option>
@@ -167,9 +168,9 @@ export default async function PinjamanPage({ params }: { params: Promise<{ tenan
                       <form action={catatCicilanAction} className="flex flex-wrap gap-2">
                         <input type="hidden" name="tenantId" value={tenantId} />
                         <input type="hidden" name="pinjamanId" value={p.id} />
-                        <input type="number" name="jumlahPokok" min="0" max={sisaPokok} step="1" required defaultValue={sisaPokok} placeholder="Pokok dibayar" className={`${inputClass} w-32`} />
+                        <InputRupiah name="jumlahPokok" placeholder="Pokok dibayar" className={`${inputClass} w-32`} defaultValue={sisaPokok} required />
                         {p.bungaMode !== "tanpa" && (
-                          <input type="number" name="jumlahBunga" min="0" step="1" defaultValue={saranBunga} placeholder="Bunga" className={`${inputClass} w-28`} />
+                          <InputRupiah name="jumlahBunga" placeholder="Bunga" className={`${inputClass} w-28`} defaultValue={saranBunga} />
                         )}
                         <button type="submit" className={btnPrimary}>
                           Catat Cicilan

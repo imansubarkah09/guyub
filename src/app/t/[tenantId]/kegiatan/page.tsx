@@ -5,6 +5,7 @@ import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
 import { daftarPool } from "@/lib/dana";
 import { Card, PageTitle, EmptyState, Badge, Progress, btnPrimary, btnGhost, inputClass, rupiah, tanggal } from "@/components/ui";
+import { InputRupiah } from "@/components/input-rupiah";
 import { catatKegiatanAction, catatDonasiAction } from "./actions";
 import { SumberFields } from "./sumber-fields";
 
@@ -65,7 +66,7 @@ export default async function KegiatanPage({ params }: { params: Promise<{ tenan
             <input type="hidden" name="tenantId" value={tenantId} />
             <input name="namaKegiatan" required placeholder="Nama kegiatan, misal: Santunan Anak Yatim 2026" className={inputClass} />
             <div className="flex gap-2">
-              <input type="number" name="targetDana" min="0" step="1" placeholder="Target dana (Rp, opsional)" className={inputClass} />
+              <InputRupiah name="targetDana" placeholder="Target dana (Rp, opsional)" className={inputClass} />
               <input type="date" name="tanggal" required defaultValue={new Date().toISOString().slice(0, 10)} className={inputClass} />
             </div>
             <SumberFields pools={pools} />
@@ -160,7 +161,7 @@ export default async function KegiatanPage({ params }: { params: Promise<{ tenan
                           <input type="hidden" name="tenantId" value={tenantId} />
                           <input type="hidden" name="kegiatanId" value={k.id} />
                           <input name="namaDonatur" required placeholder="Nama donatur" className={`${inputClass} text-xs`} />
-                          <input type="number" name="jumlah" min="1" step="1" required placeholder="Jumlah (Rp)" className={`${inputClass} text-xs`} />
+                          <InputRupiah name="jumlah" placeholder="Jumlah (Rp)" className={`${inputClass} text-xs`} required />
                           <button className={`${btnGhost} text-xs`}>Catat Donasi</button>
                         </form>
                       )}

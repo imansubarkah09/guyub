@@ -6,6 +6,7 @@ import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
 import { pesanGamifiedQurban } from "@/lib/ringkasan";
 import { Card, PageTitle, StatCard, EmptyState, Badge, Progress, btnPrimary, btnGhost, inputClass, rupiah } from "@/components/ui";
+import { InputRupiah } from "@/components/input-rupiah";
 import { createQurbanGroupAction, joinQurbanSlotAction, setorQurbanAction } from "./actions";
 import { EditGroupButton, EditSlotButton } from "./edit-controls";
 
@@ -71,7 +72,7 @@ export default async function QurbanPage({ params }: { params: Promise<{ tenantI
               <option value="sapi">Sapi (7 jiwa)</option>
               <option value="kambing">Kambing (1 jiwa)</option>
             </select>
-            <input type="number" name="targetPerJiwa" min="0" step="1" required placeholder="Target per jiwa (Rp)" className={inputClass} />
+            <InputRupiah name="targetPerJiwa" placeholder="Target per jiwa (Rp)" className={inputClass} required />
             <button type="submit" className={`${btnPrimary} w-full`}>
               Buka Joinan
             </button>
@@ -134,7 +135,7 @@ export default async function QurbanPage({ params }: { params: Promise<{ tenantI
                           <form action={setorQurbanAction} className="mt-1.5 flex gap-2">
                             <input type="hidden" name="tenantId" value={tenantId} />
                             <input type="hidden" name="slotId" value={s.id} />
-                            <input type="number" name="jumlah" min="1" step="1" required placeholder="Setoran (Rp)" className={`${inputClass} py-1 text-xs`} />
+                            <InputRupiah name="jumlah" placeholder="Setoran (Rp)" className={`${inputClass} py-1 text-xs`} required />
                             <button className={`${btnGhost} px-2 py-1 text-xs`}>Catat</button>
                           </form>
                         )}

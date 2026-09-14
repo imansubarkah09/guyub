@@ -5,6 +5,7 @@ import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
 import { angkaTenant } from "@/lib/ringkasan";
 import { Card, PageTitle, EmptyState, btnPrimary, btnGhost, inputClass, rupiah, tanggal } from "@/components/ui";
+import { InputRupiah } from "@/components/input-rupiah";
 import { catatInfaqAction, hapusInfaqAction } from "./actions";
 
 export default async function InfaqPage({ params }: { params: Promise<{ tenantId: string }> }) {
@@ -47,7 +48,7 @@ export default async function InfaqPage({ params }: { params: Promise<{ tenantId
           <form action={catatInfaqAction} className="space-y-2">
             <input type="hidden" name="tenantId" value={tenantId} />
             <input type="date" name="tanggalPertemuan" required defaultValue={new Date().toISOString().slice(0, 10)} className={inputClass} />
-            <input type="number" name="jumlah" min="1" step="1" required placeholder="Jumlah terkumpul (Rp)" className={inputClass} />
+            <InputRupiah name="jumlah" placeholder="Jumlah terkumpul (Rp)" className={inputClass} required />
             <input name="keterangan" placeholder="Keterangan (opsional)" className={inputClass} />
             <button type="submit" className={`${btnPrimary} w-full`}>
               Catat
