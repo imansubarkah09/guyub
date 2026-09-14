@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
-import { ringkasanTenant } from "@/lib/ringkasan";
+import { angkaTenant } from "@/lib/ringkasan";
 import { Card, PageTitle, EmptyState, btnPrimary, btnGhost, inputClass, rupiah, tanggal } from "@/components/ui";
 import { catatInfaqAction, hapusInfaqAction } from "./actions";
 
@@ -13,8 +13,14 @@ export default async function InfaqPage({ params }: { params: Promise<{ tenantId
   const { roles } = await effectiveRoles(user, tenantId);
 
   const [riwayat, r] = await Promise.all([
-    prisma.infaqShodaqoh.findMany({ where: { tenantId }, include: { dicatatOleh: true }, orderBy: { tanggalPertemuan: "desc" } }),
-    ringkasanTenant(tenantId),
+    // ponytail: 200 pertemuan terakhir; saldo di kartu atas tetap dihitung penuh di SQL.
+    prisma.infaqShodaqoh.findMany({
+      where: { tenantId },
+      select: { id: true, tanggalPertemuan: true, jumlah: true, keterangan: true, dicatatOleh: { select: { name: true } } },
+      orderBy: { tanggalPertemuan: "desc" },
+      take: 200,
+    }),
+    angkaTenant(tenantId),
   ]);
 
   const canCatat = has(roles, CAN_CATAT_UANG);

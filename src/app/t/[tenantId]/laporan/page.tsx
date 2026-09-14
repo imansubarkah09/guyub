@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_BUAT_LAPORAN, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
-import { ringkasanTenant } from "@/lib/ringkasan";
+import { angkaTenant, saldoBerjalanArisan } from "@/lib/ringkasan";
 import { Card, PageTitle, rupiah, tanggal } from "@/components/ui";
 import { LaporanTabs, type TabData } from "./laporan-client";
 
@@ -14,14 +14,26 @@ export default async function LaporanPage({ params }: { params: Promise<{ tenant
 
   const [tenant, r, kas, tabunganTipe, qurbanGroups, arisanList, infaq, laporanList, anggota] = await Promise.all([
     prisma.tenantProfile.findUniqueOrThrow({ where: { tenantId } }),
-    ringkasanTenant(tenantId),
-    prisma.kasTransaksi.findMany({ where: { tenantId }, include: { dicatatOleh: true }, orderBy: { tanggal: "desc" } }),
-    prisma.tabunganTipe.findMany({ where: { tenantId }, include: { saldo: { include: { user: true } } } }),
-    prisma.qurbanGroup.findMany({ where: { tenantId }, include: { slots: { include: { user: true } } } }),
-    prisma.arisan.findMany({ where: { tenantId }, include: { peserta: { include: { user: true }, orderBy: { urutan: "asc" } }, pembayaran: true } }),
-    prisma.infaqShodaqoh.findMany({ where: { tenantId }, orderBy: { tanggalPertemuan: "desc" } }),
+    angkaTenant(tenantId),
+    // ponytail: laporan memang butuh semua baris untuk isi tabel/PDF-nya. Dibatasi
+    // 2000 baris per kategori supaya satu tenant tua tidak menghabiskan memori Worker;
+    // kalau ada yang mentok, ganti ke laporan per rentang tanggal.
+    prisma.kasTransaksi.findMany({ where: { tenantId }, select: { tanggal: true, tipe: true, jumlah: true, keterangan: true }, orderBy: { tanggal: "desc" }, take: 2000 }),
+    prisma.tabunganTipe.findMany({ where: { tenantId }, select: { nama: true, mode: true, saldo: { select: { userId: true, jumlah: true } } } }),
+    prisma.qurbanGroup.findMany({ where: { tenantId }, select: { jenisHewan: true, slots: { select: { status: true, saldoTerkumpul: true, user: { select: { name: true } } } } } }),
+    prisma.arisan.findMany({
+      where: { tenantId },
+      select: {
+        periode: true,
+        putaranBerjalan: true,
+        jumlahSetoran: true,
+        peserta: { select: { userId: true, urutan: true, user: { select: { name: true } } }, orderBy: { urutan: "asc" } },
+        pembayaran: { select: { userId: true, putaran: true } },
+      },
+    }),
+    prisma.infaqShodaqoh.findMany({ where: { tenantId }, select: { tanggalPertemuan: true, jumlah: true, keterangan: true }, orderBy: { tanggalPertemuan: "desc" }, take: 2000 }),
     prisma.laporan.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 10 }),
-    prisma.membership.findMany({ where: { tenantId, status: "active" }, include: { user: true } }),
+    prisma.membership.findMany({ where: { tenantId, status: "active" }, select: { userId: true, user: { select: { name: true } } } }),
   ]);
 
   const canGenerate = has(roles, CAN_BUAT_LAPORAN);
@@ -67,7 +79,7 @@ export default async function LaporanPage({ params }: { params: Promise<{ tenant
     {
       id: "arisan",
       label: "Arisan",
-      ringkas: [{ label: "Terkumpul Putaran Berjalan", value: r.arisan.reduce((a, x) => a + x.saldoBerjalan, 0) }],
+      ringkas: [{ label: "Terkumpul Putaran Berjalan", value: arisanList.reduce((a, x) => a + saldoBerjalanArisan(x), 0) }],
       header: ["Arisan", "Peserta", "Urutan", "Status Bayar"],
       rows: arisanList.flatMap((a) =>
         a.peserta.map((p) => ({

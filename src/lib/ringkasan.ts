@@ -1,32 +1,84 @@
 import { prisma } from "@/lib/prisma";
 
 /**
- * Agregasi angka tenant dipakai bersama oleh Ringkasan (§7.3) dan Laporan (§7.11),
- * supaya angka di dua halaman itu tidak pernah beda rumus.
+ * Angka agregat tenant. Dijumlah di SQL, BUKAN dengan menarik semua baris lalu
+ * reduce() di JavaScript (versi lama begitu, dan itu penyebab CPU/memori Worker
+ * membengkak: satu kali buka halaman menarik seluruh riwayat kas, infaq, qurban,
+ * dan donasi kegiatan tenant — biayanya naik terus seiring umur tenant).
+ *
+ * Dipisah dari ringkasanTenant() karena lima dari enam pemanggil cuma butuh
+ * angkanya, tidak butuh barisnya. Rumusnya tetap satu tempat, jadi angka di
+ * Dashboard, Kas, Infaq, Laporan, dan Dana Kegiatan tidak mungkin beda.
  */
-export async function ringkasanTenant(tenantId: string) {
-  const [kas, tabunganTipe, qurbanGroups, arisanList, infaq, kegiatan] = await Promise.all([
-    prisma.kasTransaksi.findMany({ where: { tenantId } }),
-    prisma.tabunganTipe.findMany({ where: { tenantId }, include: { saldo: true } }),
-    prisma.qurbanGroup.findMany({ where: { tenantId }, include: { slots: { include: { user: true } } } }),
-    prisma.arisan.findMany({
-      where: { tenantId, status: "berjalan" },
-      include: { peserta: { include: { user: true }, orderBy: { urutan: "asc" } }, pembayaran: true },
-    }),
-    prisma.infaqShodaqoh.findMany({ where: { tenantId } }),
-    prisma.danaKegiatan.findMany({ where: { tenantId }, include: { sumber: true, donasi: true } }),
+export async function angkaTenant(tenantId: string) {
+  const [kas, infaq, sumber, qurban] = await Promise.all([
+    prisma.kasTransaksi.groupBy({ by: ["tipe"], where: { tenantId }, _sum: { jumlah: true } }),
+    prisma.infaqShodaqoh.aggregate({ where: { tenantId }, _sum: { jumlah: true } }),
+    // Satu kegiatan bisa menarik dari beberapa pool sekaligus, jadi dijumlah per baris sumber.
+    prisma.danaKegiatanSumber.groupBy({ by: ["sumberDana"], where: { kegiatan: { tenantId } }, _sum: { jumlah: true } }),
+    prisma.qurbanSlot.aggregate({ where: { qurbanGroup: { tenantId } }, _sum: { saldoTerkumpul: true } }),
   ]);
 
-  const kasMasuk = kas.filter((k) => k.tipe === "masuk").reduce((a, k) => a + Number(k.jumlah), 0);
-  const kasKeluar = kas.filter((k) => k.tipe === "keluar").reduce((a, k) => a + Number(k.jumlah), 0);
-  // Satu kegiatan bisa menarik dari beberapa pool sekaligus, jadi dijumlah per baris sumber.
-  const semuaSumber = kegiatan.flatMap((k) => k.sumber);
-  const keluarDariKas = semuaSumber.filter((s) => s.sumberDana === "kas").reduce((a, s) => a + Number(s.jumlah), 0);
-  const keluarDariInfaq = semuaSumber.filter((s) => s.sumberDana === "infaq").reduce((a, s) => a + Number(s.jumlah), 0);
+  const angka = (v: unknown) => Number(v ?? 0);
+  const kasMasuk = angka(kas.find((k) => k.tipe === "masuk")?._sum.jumlah);
+  const kasKeluar = angka(kas.find((k) => k.tipe === "keluar")?._sum.jumlah);
+  const keluarDariKas = angka(sumber.find((s) => s.sumberDana === "kas")?._sum.jumlah);
+  const keluarDariInfaq = angka(sumber.find((s) => s.sumberDana === "infaq")?._sum.jumlah);
 
-  const saldoKas = kasMasuk - kasKeluar - keluarDariKas;
-  const infaqTotal = infaq.reduce((a, i) => a + Number(i.jumlah), 0);
-  const saldoInfaq = infaqTotal - keluarDariInfaq;
+  return {
+    kasMasuk,
+    kasKeluar: kasKeluar + keluarDariKas + keluarDariInfaq,
+    saldoKas: kasMasuk - kasKeluar - keluarDariKas,
+    saldoInfaq: angka(infaq._sum.jumlah) - keluarDariInfaq,
+    keluarDariKas,
+    qurbanTotal: angka(qurban._sum.saldoTerkumpul),
+  };
+}
+
+/** Uang yang sudah masuk di putaran yang sedang berjalan — dipakai Dashboard & Laporan. */
+export function saldoBerjalanArisan(a: { putaranBerjalan: number; jumlahSetoran: unknown; pembayaran: { putaran: number }[] }) {
+  return a.pembayaran.filter((p) => p.putaran === a.putaranBerjalan).length * Number(a.jumlahSetoran);
+}
+
+/**
+ * Angka + baris yang hanya dibutuhkan Dashboard (§7.3). Baris yang diambil di sini
+ * dibatasi jumlah anggota/kelompok (puluhan), bukan jumlah transaksi (ribuan):
+ * pembayaran arisan sengaja diambil hanya untuk putaran yang sedang berjalan,
+ * dan kolom User dipangkas ke nama saja.
+ */
+export async function ringkasanTenant(tenantId: string) {
+  const [angka, tabunganTipe, qurbanGroups, arisanList] = await Promise.all([
+    angkaTenant(tenantId),
+    prisma.tabunganTipe.findMany({
+      where: { tenantId },
+      select: { id: true, nama: true, mode: true, saldo: { select: { userId: true, jumlah: true } } },
+    }),
+    prisma.qurbanGroup.findMany({
+      where: { tenantId },
+      select: { id: true, jenisHewan: true, slots: { select: { status: true, saldoTerkumpul: true, user: { select: { name: true } } } } },
+    }),
+    prisma.arisan.findMany({
+      where: { tenantId, status: "berjalan" },
+      select: {
+        id: true,
+        periode: true,
+        putaranBerjalan: true,
+        jumlahSetoran: true,
+        jadwalTanggal: true,
+        jadwalTempat: true,
+        peserta: { select: { userId: true, statusDapat: true, user: { select: { name: true } } }, orderBy: { urutan: "asc" } },
+      },
+    }),
+  ]);
+
+  // Pembayaran diambil terpisah supaya bisa disaring ke putaran berjalan saja:
+  // include bersarang tidak bisa menyaring pakai nilai kolom baris induknya.
+  const pembayaran = arisanList.length
+    ? await prisma.arisanPembayaran.findMany({
+        where: { OR: arisanList.map((a) => ({ arisanId: a.id, putaran: a.putaranBerjalan })) },
+        select: { arisanId: true, userId: true, putaran: true },
+      })
+    : [];
 
   const qurban = qurbanGroups.map((g) => {
     const max = g.jenisHewan === "sapi" ? 7 : 1;
@@ -43,7 +95,7 @@ export async function ringkasanTenant(tenantId: string) {
   });
 
   const arisan = arisanList.map((a) => {
-    const bayarPutaran = a.pembayaran.filter((p) => p.putaran === a.putaranBerjalan);
+    const bayarPutaran = pembayaran.filter((p) => p.arisanId === a.id);
     const berikutnya = a.peserta.find((p) => !p.statusDapat);
     return {
       id: a.id,
@@ -52,7 +104,7 @@ export async function ringkasanTenant(tenantId: string) {
       jumlahSetoran: Number(a.jumlahSetoran),
       sudahBayar: bayarPutaran.length,
       totalPeserta: a.peserta.length,
-      saldoBerjalan: bayarPutaran.length * Number(a.jumlahSetoran),
+      saldoBerjalan: saldoBerjalanArisan({ ...a, pembayaran: bayarPutaran }),
       penerimaBerikutnya: berikutnya?.user.name ?? null,
       jadwalTanggal: a.jadwalTanggal,
       jadwalTempat: a.jadwalTempat,
@@ -61,17 +113,7 @@ export async function ringkasanTenant(tenantId: string) {
     };
   });
 
-  return {
-    saldoKas,
-    kasMasuk,
-    kasKeluar: kasKeluar + keluarDariKas + keluarDariInfaq,
-    saldoInfaq,
-    tabunganTipe,
-    qurban,
-    qurbanTotal: qurban.reduce((a, q) => a + q.terkumpul, 0),
-    arisan,
-    kegiatan,
-  };
+  return { ...angka, tabunganTipe, qurban, arisan };
 }
 
 /** "Widodo & Arif sudah lunas, masih menunggu 5 orang lagi untuk qurban sapi" (§7.3). */

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requireWrite, CAN_BUAT_LAPORAN } from "@/lib/authz";
-import { ringkasanTenant } from "@/lib/ringkasan";
+import { angkaTenant } from "@/lib/ringkasan";
 import { cloudinary } from "@/lib/cloudinary";
 
 /**
@@ -16,7 +16,7 @@ export async function createLaporanAction(tenantId: string, periode: string, pdf
   await requireWrite(user, tenantId, CAN_BUAT_LAPORAN);
   if (!periode.trim()) throw new Error("Periode wajib diisi");
 
-  const r = await ringkasanTenant(tenantId);
+  const r = await angkaTenant(tenantId);
   const totalMasuk = r.kasMasuk + r.saldoInfaq + r.qurbanTotal;
   const totalKeluar = r.kasKeluar;
 

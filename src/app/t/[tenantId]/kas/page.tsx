@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
-import { ringkasanTenant } from "@/lib/ringkasan";
+import { angkaTenant } from "@/lib/ringkasan";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, inputClass, rupiah, tanggal } from "@/components/ui";
 import { createKasTransaksiAction } from "./actions";
 
@@ -26,8 +26,16 @@ export default async function KasPage({
       : {}),
   };
   const [transaksi, r] = await Promise.all([
-    prisma.kasTransaksi.findMany({ where, include: { dicatatOleh: true }, orderBy: { tanggal: "desc" } }),
-    ringkasanTenant(tenantId),
+    // ponytail: dibatasi 200 baris terbaru — riwayat lebih lama dicari lewat filter
+    // tanggal di atas. Ganti ke paging kalau ada tenant yang benar-benar perlu
+    // menggulir ribuan baris sekaligus.
+    prisma.kasTransaksi.findMany({
+      where,
+      select: { id: true, tanggal: true, jumlah: true, tipe: true, keterangan: true, buktiUrl: true, dicatatOleh: { select: { name: true } } },
+      orderBy: { tanggal: "desc" },
+      take: 200,
+    }),
+    angkaTenant(tenantId),
   ]);
 
   const canCatat = has(roles, CAN_CATAT_UANG);
@@ -120,7 +128,7 @@ export default async function KasPage({
             ))}
           </ul>
         )}
-        {r.kegiatan.some((k) => k.sumber.some((s) => s.sumberDana === "kas")) && (
+        {r.keluarDariKas > 0 && (
           <p className="mt-2 text-xs text-muted">
             <Badge tone="muted">Catatan</Badge> Saldo di atas sudah dikurangi pengeluaran Dana Kegiatan yang mengambil dari kas.
           </p>

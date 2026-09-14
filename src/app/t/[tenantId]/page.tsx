@@ -1,13 +1,18 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Wallet, HandCoins, CircleDollarSign, HeartHandshake, PiggyBank, CalendarDays, CheckCircle2, ListTodo } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { ringkasanTenant, pesanGamifiedQurban } from "@/lib/ringkasan";
+import { tenantDenganProfil } from "@/lib/tenant";
 import { Card, StatCard, PageTitle, Badge, Progress, EmptyState, rupiah, tanggal } from "@/components/ui";
 import { HewanIcon } from "@/components/hewan";
 import { NyawaBar, DonaturList } from "@/components/nyawa";
 import { TrakteerModal } from "@/components/trakteer-modal";
 import { TRAKTEER_MODAL_URL, sisaHari } from "@/lib/trakteer";
+
+/** Kolom yang benar-benar dipakai kartu donatur — sisanya (orderId, pesan) tidak perlu ikut terbawa. */
+const KOLOM_DONATUR = { id: true, namaDonatur: true, jumlah: true, hariNyawa: true, createdAt: true } as const;
 
 export default async function RingkasanPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
@@ -16,12 +21,15 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
   const base = `/t/${tenantId}`;
 
   const [nodeSaya, anggotaAktif, tenant, donaturTerbaru, donaturTerbesar] = await Promise.all([
-    prisma.familyNode.findFirst({ where: { tenantId, userId: user.id } }),
+    prisma.familyNode.findFirst({ where: { tenantId, userId: user.id }, select: { id: true } }),
     prisma.membership.count({ where: { tenantId, status: "active" } }),
-    prisma.tenant.findUniqueOrThrow({ where: { id: tenantId }, include: { profile: true } }),
-    prisma.trakteerDonasi.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 50 }),
-    prisma.trakteerDonasi.findMany({ where: { tenantId }, orderBy: { jumlah: "desc" }, take: 50 }),
+    tenantDenganProfil(tenantId),
+    prisma.trakteerDonasi.findMany({ where: { tenantId }, select: KOLOM_DONATUR, orderBy: { createdAt: "desc" }, take: 50 }),
+    prisma.trakteerDonasi.findMany({ where: { tenantId }, select: KOLOM_DONATUR, orderBy: { jumlah: "desc" }, take: 50 }),
   ]);
+
+  // Layout tenant sudah menolak tenant yang tidak ada; ini cuma supaya tipenya menyempit.
+  if (!tenant) notFound();
 
   const keDonatur = (d: (typeof donaturTerbaru)[number]) => ({
     id: d.id,

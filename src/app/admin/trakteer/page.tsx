@@ -11,16 +11,32 @@ export default async function AdminTrakteerPage() {
   const user = await requireUser();
   requirePlatformOwner(user);
 
-  const [tenants, donasi, belumTertaut] = await Promise.all([
+  // `trakteer: true` dulu menarik SELURUH baris donasi milik SETIAP tenant hanya
+  // untuk menampilkan jumlah dan totalnya — satu groupBy menggantikan semuanya.
+  // "Total Donasi Tercatat" juga dulu dijumlah dari 50 baris terakhir saja, jadi
+  // angkanya salah begitu donasi lewat 50; sekarang dijumlah di SQL.
+  const [tenants, rekap, donasi, belumTertaut] = await Promise.all([
     prisma.tenant.findMany({
-      include: { profile: true, trakteer: true, _count: { select: { memberships: true } } },
+      select: { id: true, kodeDonasi: true, nyawaSampai: true, profile: { select: { nama: true } }, _count: { select: { memberships: true } } },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.trakteerDonasi.findMany({ include: { tenant: { include: { profile: true } } }, orderBy: { createdAt: "desc" }, take: 50 }),
-    prisma.trakteerDonasi.findMany({ where: { tenantId: null }, orderBy: { createdAt: "desc" } }),
+    prisma.trakteerDonasi.groupBy({ by: ["tenantId"], _sum: { jumlah: true }, _count: { _all: true } }),
+    prisma.trakteerDonasi.findMany({
+      select: { id: true, orderId: true, namaDonatur: true, jumlah: true, hariNyawa: true, pesan: true, createdAt: true, tenant: { select: { profile: { select: { nama: true } } } } },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
+    prisma.trakteerDonasi.findMany({
+      where: { tenantId: null },
+      select: { id: true, namaDonatur: true, jumlah: true, hariNyawa: true, pesan: true },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
   ]);
 
-  const totalMasuk = donasi.reduce((a, d) => a + Number(d.jumlah), 0);
+  const rekapTenant = new Map(rekap.map((r) => [r.tenantId, { total: Number(r._sum.jumlah ?? 0), jumlahDonasi: r._count._all }]));
+  const totalMasuk = rekap.reduce((a, r) => a + Number(r._sum.jumlah ?? 0), 0);
+  const jumlahBelumTertaut = rekapTenant.get(null)?.jumlahDonasi ?? 0;
 
   return (
     <main className="mx-auto max-w-3xl space-y-5 p-4 pb-16">
@@ -41,7 +57,7 @@ export default async function AdminTrakteerPage() {
 
       <section className="grid grid-cols-2 gap-3">
         <StatCard label="Total Donasi Tercatat" value={rupiah.format(totalMasuk)} icon={Heart} />
-        <StatCard label="Belum Tertaut Tenant" value={String(belumTertaut.length)} icon={Link2} tone="accent" sub="Perlu ditautkan manual" />
+        <StatCard label="Belum Tertaut Tenant" value={String(jumlahBelumTertaut)} icon={Link2} tone="accent" sub="Perlu ditautkan manual" />
       </section>
 
       {belumTertaut.length > 0 && (
@@ -78,14 +94,14 @@ export default async function AdminTrakteerPage() {
         <ul className="space-y-2">
           {tenants.map((t) => {
             const sisa = sisaHari(t.nyawaSampai);
-            const total = t.trakteer.reduce((a, d) => a + Number(d.jumlah), 0);
+            const { total, jumlahDonasi } = rekapTenant.get(t.id) ?? { total: 0, jumlahDonasi: 0 };
             return (
               <li key={t.id}>
                 <Card className="flex flex-wrap items-center justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate font-medium">{t.profile?.nama ?? "(tanpa nama)"}</p>
                     <p className="text-xs text-muted">
-                      Kode <code className="font-mono">{t.kodeDonasi}</code> · {t._count.memberships} anggota · {t.trakteer.length} donasi ·{" "}
+                      Kode <code className="font-mono">{t.kodeDonasi}</code> · {t._count.memberships} anggota · {jumlahDonasi} donasi ·{" "}
                       {rupiah.format(total)}
                     </p>
                   </div>

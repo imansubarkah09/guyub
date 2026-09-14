@@ -15,14 +15,26 @@ export default async function KegiatanPage({ params }: { params: Promise<{ tenan
   const user = await requireUser();
   const { roles } = await effectiveRoles(user, tenantId);
 
-  const [riwayat, pools] = await Promise.all([
+  // Donasi per kegiatan dulu ditarik SEMUA baris padahal yang tampil cuma 5 teratas
+  // dan totalnya. Sekarang: 5 baris untuk tampilan, total & jumlahnya dari SQL.
+  // ponytail: riwayat kegiatan dibatasi 100 terbaru, ganti ke paging kalau ada yang mentok.
+  const [riwayat, donasiRekap, pools] = await Promise.all([
     prisma.danaKegiatan.findMany({
       where: { tenantId },
-      include: { dicatatOleh: true, sumber: { include: { sumberTabunganTipe: true } }, donasi: { orderBy: { createdAt: "desc" } } },
+      include: {
+        dicatatOleh: { select: { name: true } },
+        sumber: { include: { sumberTabunganTipe: { select: { nama: true } } } },
+        donasi: { orderBy: { createdAt: "desc" }, take: 5, select: { id: true, namaDonatur: true, jumlah: true } },
+        _count: { select: { donasi: true } },
+      },
       orderBy: { tanggal: "desc" },
+      take: 100,
     }),
+    prisma.danaKegiatanDonasi.groupBy({ by: ["kegiatanId"], where: { kegiatan: { tenantId } }, _sum: { jumlah: true } }),
     daftarPool(tenantId),
   ]);
+
+  const totalDonasi = new Map(donasiRekap.map((d) => [d.kegiatanId, Number(d._sum.jumlah ?? 0)]));
 
   const canCatat = has(roles, CAN_CATAT_UANG);
   const totalKeluar = riwayat.reduce((a, k) => a + k.sumber.reduce((b, s) => b + Number(s.jumlah), 0), 0);
@@ -82,7 +94,7 @@ export default async function KegiatanPage({ params }: { params: Promise<{ tenan
             {riwayat.map((k) => {
               const dariPool = k.sumber.filter((s) => s.sumberDana !== "donasi").reduce((a, s) => a + Number(s.jumlah), 0);
               const targetDonasi = k.sumber.filter((s) => s.sumberDana === "donasi").reduce((a, s) => a + Number(s.jumlah), 0);
-              const dariDonasi = k.donasi.reduce((a, d) => a + Number(d.jumlah), 0);
+              const dariDonasi = totalDonasi.get(k.id) ?? 0;
               const target = Number(k.targetDana ?? 0);
               const terkumpul = dariPool + dariDonasi;
 
@@ -133,9 +145,9 @@ export default async function KegiatanPage({ params }: { params: Promise<{ tenan
                         <HandHeart className="h-3.5 w-3.5 text-accent" />
                         Donasi terkumpul {rupiah.format(dariDonasi)} dari target {rupiah.format(targetDonasi)}
                       </p>
-                      {k.donasi.length > 0 && (
+                      {k._count.donasi > 0 && (
                         <ul className="mb-2 space-y-0.5 text-xs text-muted">
-                          {k.donasi.slice(0, 5).map((d) => (
+                          {k.donasi.map((d) => (
                             <li key={d.id} className="flex justify-between">
                               <span className="truncate">{d.namaDonatur}</span>
                               <span className="tabular-nums">{rupiah.format(Number(d.jumlah))}</span>

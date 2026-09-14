@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { getPreview } from "@/lib/preview";
 import { KETUA } from "@/lib/authz";
+import { membershipSaya } from "@/lib/effective-roles";
+import { tenantDenganProfil } from "@/lib/tenant";
 import { Card } from "@/components/ui";
 import { TenantShell } from "./tenant-shell";
 
@@ -18,15 +20,12 @@ export default async function TenantLayout({
   const user = await requireUser();
   const preview = await getPreview(user);
 
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: tenantId },
-    include: { profile: true, approvalRequest: true },
-  });
+  const tenant = await tenantDenganProfil(tenantId);
   if (!tenant) notFound();
 
   // Platform owner dalam mode preview tenant ini boleh melihat tanpa jadi anggota (§7.2).
   const previewingThis = preview?.tenantId === tenantId;
-  const membership = await prisma.membership.findUnique({ where: { userId_tenantId: { userId: user.id, tenantId } } });
+  const membership = await membershipSaya(user.id, tenantId);
 
   if (!previewingThis) {
     if (!membership) notFound();
@@ -40,10 +39,12 @@ export default async function TenantLayout({
       );
     }
     if (tenant.status !== "approved") {
+      // Baru dibaca di sini: tenant yang sudah approved (hampir semua request) tidak perlu bayar query ini.
+      const approval = await prisma.tenantApprovalRequest.findUnique({ where: { tenantId } });
       return (
         <Shell>
-          {tenant.approvalRequest?.status === "rejected"
-            ? `Pendaftaran tenant ini ditolak Platform Owner.${tenant.approvalRequest.catatanOwner ? ` Catatan: ${tenant.approvalRequest.catatanOwner}` : ""}`
+          {approval?.status === "rejected"
+            ? `Pendaftaran tenant ini ditolak Platform Owner.${approval.catatanOwner ? ` Catatan: ${approval.catatanOwner}` : ""}`
             : "Menunggu persetujuan Platform Owner sebelum tenant ini bisa dipakai."}
         </Shell>
       );

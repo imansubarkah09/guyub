@@ -129,6 +129,45 @@ Dua catatan yang menyertainya:
   route yang belum terkompilasi tetap memicu muat dokumen penuh, jadi tes di dev
   akan bilang perbaikannya gagal padahal tidak.
 
+**Jangan menjumlah uang dengan menarik semua barisnya** (audit 14 Sep 2026, ini
+sebab paling besar CPU/memori Worker membengkak). `src/lib/ringkasan.ts` dulu
+menarik SELURUH `KasTransaksi`, `InfaqShodaqoh`, donasi kegiatan, dan slot qurban
+satu tenant lalu menjumlahkannya dengan `reduce()` di JavaScript, dan fungsi itu
+dipanggil enam halaman (Dashboard, Kas, Infaq, Laporan, Dana Kegiatan lewat
+`daftarPool`). Terukur pada tenant berisi 5.000 transaksi kas: cara lama menarik
+**8.003 baris dalam 347 ms**, agregat SQL (`groupBy`/`aggregate`) menghasilkan
+**angka yang sama persis dari 7 baris dalam 24 ms**. Halaman Kas bahkan membayar
+dua kali karena ia memuat daftarnya sendiri DAN memanggil ringkasan.
+
+Aturannya sekarang: angka pakai `angkaTenant()` (agregat SQL), baris cuma diambil
+kalau memang ditampilkan, dan yang ditampilkan selalu punya `take`. `include`
+relasi yang tumbuh tanpa batas (`trakteer: true` di semua tenant, `donasi: true`
+di semua kegiatan, `memberships` di semua tenant) diganti `groupBy` + `_count`.
+
+**`cache()` React TERBUKTI bekerja di workerd untuk dedup fungsi.** Ini tidak
+bertentangan dengan catatan cakupan Prisma client di atas: yang dulu gagal adalah
+memakai `cache()` untuk memegang INSTANS client, sedangkan untuk menyatukan
+pembacaan yang sama dalam satu request ia berfungsi. Diukur berpasangan (Node
+`next dev` vs `wrangler dev`), jumlah query per halaman identik: tanpa `cache()`
+tiap halaman tenant menembakkan 3x SELECT User dan 2-3x SELECT Membership yang
+isinya sama. Pemakai: `getSessionUser()` di `src/lib/session.ts`,
+`membershipSaya()` di `src/lib/effective-roles.ts`, `tenantDenganProfil()` di
+`src/lib/tenant.ts`. Layout tenant dan halamannya WAJIB lewat helper itu, jangan
+memanggil `prisma.*` langsung untuk data yang sama.
+
+**Cara mengukur ulang** (jangan menebak, angkanya gampang didapat): jalankan dev
+server dengan `PRISMA_LOG=1` lalu hitung baris `prisma:query` di antara dua
+request, itu yang dipakai audit ini. Untuk workerd: `pnpm cf:build`, taruh
+`PRISMA_LOG=1` di `.dev.vars`, `npx wrangler dev --port 8787`, hitung dari
+lognya. Patokan sesudah audit: Dashboard 20 query, Kas 11, Arisan 9, Laporan 21,
+sisanya 9-13. Kalau angka ini naik banyak, ada `include` baru yang kebablasan.
+
+**`pnpm lint` tanpa argumen kehabisan heap sesudah `pnpm cf:build`.** Bundel 41 MB
+di `.open-next/` membuat eslint mati dengan exit 134, padahal `globalIgnores`
+sudah memuatnya. Karena itu script `lint` di `package.json` menyebut petaknya
+secara eksplisit (`src scripts next.config.ts ...`), jangan dikembalikan jadi
+`eslint` polos.
+
 Cara membaca lognya: `observability` sudah aktif di `wrangler.jsonc`, dan
 `npx wrangler tail --format json` menampilkan `cpuTime`, `outcome`, serta
 exception per request.

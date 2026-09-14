@@ -20,7 +20,10 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     include: {
       profile: true,
       approvalRequest: true,
-      memberships: { where: { status: "active" }, include: { user: true } },
+      // Dulu: SELURUH anggota aktif SETIAP tenant ditarik lengkap dengan baris User-nya,
+      // padahal yang dipakai cuma nama ketua dan jumlah anggotanya.
+      memberships: { where: { status: "active", roles: { has: "ketua" } }, take: 1, select: { user: { select: { name: true, email: true } } } },
+      _count: { select: { memberships: { where: { status: "active" } } } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -44,7 +47,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <h2 className="mb-2 text-sm font-semibold">Menunggu Persetujuan ({pending.length})</h2>
           <div className="space-y-2">
             {pending.map((t) => {
-              const ketua = t.memberships.find((m) => m.roles.includes("ketua"));
+              const ketua = t.memberships[0];
               return (
                 <Card key={t.id} className="border-warning/30 bg-warning/5">
                   <p className="font-medium">{t.profile?.nama}</p>
@@ -91,7 +94,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                   <div className="min-w-0">
                     <p className="truncate font-medium">{t.profile?.nama ?? "(tanpa nama)"}</p>
                     <p className="text-xs text-muted">
-                      {JENIS_LABEL[t.jenis]} · {t.memberships.length} anggota · daftar {tanggal.format(t.createdAt)}
+                      {JENIS_LABEL[t.jenis]} · {t._count.memberships} anggota · daftar {tanggal.format(t.createdAt)}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">

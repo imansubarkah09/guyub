@@ -26,7 +26,7 @@ import { PrismaNeon } from "@prisma/adapter-neon";
  *   seperti aplikasi Node biasa. Di Node tidak ada larangan lintas request.
  */
 function buatClient() {
-  return new PrismaClient({ adapter: new PrismaNeon({ connectionString: process.env.DATABASE_URL }) });
+  return new PrismaClient({ adapter: new PrismaNeon({ connectionString: process.env.DATABASE_URL }), log: process.env.PRISMA_LOG ? ["query"] : [] });
 }
 
 const diWorkers = () => typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers";
