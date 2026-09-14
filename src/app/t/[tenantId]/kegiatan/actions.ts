@@ -42,7 +42,8 @@ export async function catatKegiatanAction(formData: FormData) {
     const { sumberDana, sumberTabunganTipeId } = uraikanSumber(raw);
     const tersedia = await saldoPool(tenantId, sumberDana, sumberTabunganTipeId);
     if (jumlah > tersedia) {
-      throw new Error(`Jumlah dari ${raw === "kas" ? "Kas" : raw === "infaq" ? "Infaq & Shodaqoh" : "tabungan"} melebihi saldo (tersedia Rp${tersedia.toLocaleString("id-ID")})`);
+      const nama = { kas: "Kas", infaq: "Infaq & Shodaqoh", plerek: "Plerek" }[raw] ?? "tabungan";
+      throw new Error(`Jumlah dari ${nama} melebihi saldo (tersedia Rp${tersedia.toLocaleString("id-ID")})`);
     }
   }
 

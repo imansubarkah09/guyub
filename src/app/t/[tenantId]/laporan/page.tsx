@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/session";
 import { CAN_BUAT_LAPORAN, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
 import { angkaTenant, saldoBerjalanArisan } from "@/lib/ringkasan";
+import { angkaPlerek, kilogram } from "@/lib/plerek";
 import { Card, PageTitle, rupiah, tanggal } from "@/components/ui";
 import { LaporanTabs, type TabData } from "./laporan-client";
 
@@ -12,7 +13,7 @@ export default async function LaporanPage({ params }: { params: Promise<{ tenant
   const user = await requireUser();
   const { roles } = await effectiveRoles(user, tenantId);
 
-  const [tenant, r, kas, tabunganTipe, qurbanGroups, arisanList, infaq, laporanList, anggota] = await Promise.all([
+  const [tenant, r, kas, tabunganTipe, qurbanGroups, arisanList, infaq, laporanList, anggota, plerek, plerekPutaran] = await Promise.all([
     prisma.tenantProfile.findUniqueOrThrow({ where: { tenantId } }),
     angkaTenant(tenantId),
     // ponytail: laporan memang butuh semua baris untuk isi tabel/PDF-nya. Dibatasi
@@ -34,6 +35,13 @@ export default async function LaporanPage({ params }: { params: Promise<{ tenant
     prisma.infaqShodaqoh.findMany({ where: { tenantId }, select: { tanggalPertemuan: true, jumlah: true, keterangan: true }, orderBy: { tanggalPertemuan: "desc" }, take: 2000 }),
     prisma.laporan.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 10 }),
     prisma.membership.findMany({ where: { tenantId, status: "active" }, select: { userId: true, user: { select: { name: true } } } }),
+    angkaPlerek(tenantId),
+    prisma.plerekPutaran.findMany({
+      where: { tenantId },
+      select: { tanggal: true, petugas: true, jumlahUang: true, berasKg: true },
+      orderBy: { tanggal: "desc" },
+      take: 2000,
+    }),
   ]);
 
   const canGenerate = has(roles, CAN_BUAT_LAPORAN);
@@ -91,6 +99,17 @@ export default async function LaporanPage({ params }: { params: Promise<{ tenant
           ],
         })),
       ),
+    },
+    {
+      id: "plerek",
+      label: "Plerek",
+      // Stok beras satuannya kilogram, jadi tidak boleh masuk `ringkas` yang
+      // selalu diformat sebagai Rupiah — ditaruh di kolom tabel.
+      ringkas: [{ label: "Saldo Uang Plerek", value: plerek.saldoUang }],
+      header: ["Tanggal", "Petugas", "Uang", "Beras (kg)"],
+      rows: plerekPutaran.map((p) => ({
+        kolom: [tanggal.format(p.tanggal), p.petugas ?? "-", rupiah.format(Number(p.jumlahUang)), kilogram.format(Number(p.berasKg))],
+      })),
     },
     {
       id: "infaq",

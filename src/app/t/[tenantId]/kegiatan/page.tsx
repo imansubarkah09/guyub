@@ -8,7 +8,7 @@ import { Card, PageTitle, EmptyState, Badge, Progress, btnPrimary, btnGhost, inp
 import { catatKegiatanAction, catatDonasiAction } from "./actions";
 import { SumberFields } from "./sumber-fields";
 
-const LABEL_SUMBER = { kas: "Kas", infaq: "Infaq & Shodaqoh", donasi: "Donasi terbuka", tabungan: "Tabungan" } as const;
+const LABEL_SUMBER = { kas: "Kas", infaq: "Infaq & Shodaqoh", donasi: "Donasi terbuka", tabungan: "Tabungan", plerek: "Plerek" } as const;
 
 export default async function KegiatanPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
