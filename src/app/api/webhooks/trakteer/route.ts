@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { catatDonasi } from "@/lib/trakteer";
+import { tokenCocok } from "@/lib/webhook-auth";
 
 /**
  * Callback Trakteer. Daftarkan URL ini di dashboard Trakteer dan samakan
@@ -11,7 +12,7 @@ import { catatDonasi } from "@/lib/trakteer";
  */
 export async function POST(req: Request) {
   const token = req.headers.get("x-webhook-token");
-  if (!process.env.TRAKTEER_WEBHOOK_TOKEN || token !== process.env.TRAKTEER_WEBHOOK_TOKEN) {
+  if (!tokenCocok(token, process.env.TRAKTEER_WEBHOOK_TOKEN)) {
     return NextResponse.json({ error: "invalid webhook token" }, { status: 401 });
   }
 

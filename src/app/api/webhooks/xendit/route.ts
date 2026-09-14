@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { creditSaldo } from "@/lib/tabungan";
+import { tokenCocok } from "@/lib/webhook-auth";
 
 /**
  * Xendit invoice callback. Configure this URL as the Invoice Callback in the
@@ -11,7 +12,7 @@ import { creditSaldo } from "@/lib/tabungan";
  */
 export async function POST(req: Request) {
   const token = req.headers.get("x-callback-token");
-  if (!token || token !== process.env.XENDIT_CALLBACK_TOKEN) {
+  if (!tokenCocok(token, process.env.XENDIT_CALLBACK_TOKEN)) {
     return NextResponse.json({ error: "invalid callback token" }, { status: 401 });
   }
 
