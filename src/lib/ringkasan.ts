@@ -121,9 +121,17 @@ export async function ringkasanTenant(tenantId: string) {
 
 /** "Widodo & Arif sudah lunas, masih menunggu 5 orang lagi untuk qurban sapi" (§7.3). */
 export function pesanGamifiedQurban(q: { jenisHewan: string; max: number; terisi: number; lunasNama: string[] }) {
-  const sisa = q.max - q.lunasNama.length;
-  if (sisa <= 0) return `Alhamdulillah, qurban ${q.jenisHewan} sudah lengkap dan lunas.`;
-  if (q.lunasNama.length === 0) return `Belum ada yang lunas, dibutuhkan ${sisa} orang lagi untuk qurban ${q.jenisHewan}.`;
+  if (q.lunasNama.length === q.max) return `Alhamdulillah, qurban ${q.jenisHewan} sudah lengkap dan lunas.`;
+
+  const sisaSlot = q.max - q.terisi;
+  if (sisaSlot <= 0) {
+    const belumLunas = q.max - q.lunasNama.length;
+    return q.lunasNama.length === 0
+      ? `Sudah ${q.max} orang join qurban ${q.jenisHewan}, belum ada yang lunas.`
+      : `${q.lunasNama.length} dari ${q.max} orang sudah lunas untuk qurban ${q.jenisHewan}, menunggu ${belumLunas} orang lagi melunasi.`;
+  }
+
+  if (q.lunasNama.length === 0) return `Belum ada yang lunas, dibutuhkan ${sisaSlot} orang lagi untuk qurban ${q.jenisHewan}.`;
   const nama = q.lunasNama.length === 1 ? q.lunasNama[0] : `${q.lunasNama.slice(0, -1).join(", ")} & ${q.lunasNama.at(-1)}`;
-  return `${nama} sudah lunas, masih menunggu ${sisa} orang lagi untuk qurban ${q.jenisHewan}.`;
+  return `${nama} sudah lunas, masih menunggu ${sisaSlot} orang lagi untuk qurban ${q.jenisHewan}.`;
 }
