@@ -69,12 +69,11 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
     <div className="space-y-5">
       <PageTitle title="Dashboard" desc={`${anggotaAktif} anggota aktif`} />
 
-      {/* Ringkasan keuangan TENANT didahulukan — sebelumnya NyawaBar & donatur
-          platform (di bawah) render duluan, jadi tenant baru disambut badge
-          merah "Masa aktif habis" sebelum sempat lihat saldo kasnya sendiri
-          (ketemu review 15 Sep 2026). */}
-      <section className="grid grid-cols-2 gap-3">
-        <h2 className="sr-only col-span-2">Ringkasan Keuangan</h2>
+      {/* Ringkasan keuangan TENANT memimpin halaman — elemen yang paling sering
+          dicari saat "cek status tenant" (ketemu review 15 Sep 2026). 4 kolom
+          di layar lebar (sm:) supaya tidak jadi 2 baris sempit begitu ada ruang. */}
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <h2 className="sr-only col-span-2 sm:col-span-4">Ringkasan Keuangan</h2>
         <StatCard label="Saldo Kas" value={rupiah.format(r.saldoKas)} icon={Wallet} tone={r.saldoKas < 0 ? "danger" : "primary"} />
         <StatCard label="Infaq & Shodaqoh" value={rupiah.format(r.saldoInfaq)} icon={HeartHandshake} tone={r.saldoInfaq < 0 ? "danger" : "accent"} />
         <StatCard
@@ -97,16 +96,33 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
         />
       </section>
 
-      <NyawaBar sisaHari={sisaHari(tenant.nyawaSampai)} sampai={tenant.nyawaSampai ? tanggal.format(tenant.nyawaSampai) : null} />
-
-      <section className="grid gap-3 min-[520px]:grid-cols-2">
-        <DonaturList judul="Pendukung Aplikasi Terbaru" items={donaturTerbaru.map(keDonatur)} urut="terbaru" />
-        <DonaturList judul="Dukungan Terbesar untuk Guyub" items={donaturTerbesar.map(keDonatur)} urut="terbesar" />
+      {/* "Tugas Anda" dipindah naik ke urutan ke-2 (setelah uang) — ini daftar
+          personal yang butuh aksi, jauh lebih relevan buat visitor yang balik
+          lagi daripada widget dukungan platform yang sebelumnya berdiri di
+          antara uang dan checklist (§layout, 15 Sep 2026). */}
+      <section>
+        <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold">
+          <ListTodo className="h-4 w-4 text-primary" />
+          Tugas Anda
+        </h2>
+        {checklist.length === 0 ? (
+          <Card className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-success" />
+            <p className="text-sm text-muted">Semua beres — tidak ada yang perlu Anda lengkapi.</p>
+          </Card>
+        ) : (
+          <ul className="space-y-2">
+            {checklist.map((c) => (
+              <li key={c.pesan}>
+                <Link href={c.href} className="flex items-start gap-2 rounded-[var(--radius)] border border-warning/30 bg-warning/5 p-3 text-sm transition hover:bg-warning/10">
+                  <span className="mt-0.5 h-2 w-2 flex-shrink-0 rounded-full bg-warning" />
+                  {c.pesan}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
-
-      {TRAKTEER_MODAL_URL && (
-        <TrakteerModal modalUrl={TRAKTEER_MODAL_URL} kodeDonasi={tenant.kodeDonasi} namaTenant={tenant.profile?.nama ?? "tenant ini"} />
-      )}
 
       {arisanAktif?.jadwalTanggal && (
         <Card className="border-accent/30 bg-accent/5">
@@ -145,30 +161,6 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
       )}
 
       <section>
-        <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-          <ListTodo className="h-4 w-4 text-primary" />
-          Tugas Anda
-        </h2>
-        {checklist.length === 0 ? (
-          <Card className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-success" />
-            <p className="text-sm text-muted">Semua beres — tidak ada yang perlu Anda lengkapi.</p>
-          </Card>
-        ) : (
-          <ul className="space-y-2">
-            {checklist.map((c) => (
-              <li key={c.pesan}>
-                <Link href={c.href} className="flex items-start gap-2 rounded-[var(--radius)] border border-warning/30 bg-warning/5 p-3 text-sm transition hover:bg-warning/10">
-                  <span className="mt-0.5 h-2 w-2 flex-shrink-0 rounded-full bg-warning" />
-                  {c.pesan}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section>
         <h2 className="mb-2 text-sm font-semibold">Tabungan Anda</h2>
         {saldoSaya.length === 0 ? (
           <EmptyState icon={PiggyBank} title="Belum ada tabungan" desc="Belum ada jenis tabungan yang dibuat bendahara di tenant ini." />
@@ -186,6 +178,24 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
               </Card>
             ))}
           </div>
+        )}
+      </section>
+
+      {/* Klaster "dukungan platform" — NyawaBar & donatur sudah self-label
+          (uppercase kecil) jadi tidak perlu heading pembungkus lagi, cukup
+          dikelompokkan rapat (space-y-2) supaya kebaca sebagai SATU topik,
+          bukan 3 blok terpisah dengan bobot sama seperti bagian tenant di
+          atas. Diletakkan paling bawah: paling kecil relevansinya untuk
+          "cek status tenant saya", yang justru jadi alasan orang buka
+          dashboard ini (§layout, 15 Sep 2026). */}
+      <section className="space-y-2">
+        <NyawaBar sisaHari={sisaHari(tenant.nyawaSampai)} sampai={tenant.nyawaSampai ? tanggal.format(tenant.nyawaSampai) : null} />
+        <div className="grid gap-2 min-[520px]:grid-cols-2">
+          <DonaturList judul="Pendukung Aplikasi Terbaru" items={donaturTerbaru.map(keDonatur)} urut="terbaru" />
+          <DonaturList judul="Dukungan Terbesar untuk Guyub" items={donaturTerbesar.map(keDonatur)} urut="terbesar" />
+        </div>
+        {TRAKTEER_MODAL_URL && (
+          <TrakteerModal modalUrl={TRAKTEER_MODAL_URL} kodeDonasi={tenant.kodeDonasi} namaTenant={tenant.profile?.nama ?? "tenant ini"} />
         )}
       </section>
     </div>

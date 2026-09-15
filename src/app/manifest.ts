@@ -15,7 +15,7 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     orientation: "portrait",
     background_color: "#FDF8F2",
-    theme_color: "#C1652D",
+    theme_color: "#A45626",
     categories: ["finance", "lifestyle"],
     // PNG statis di /public, bukan dibuat next/og saat request: rendering og
     // memakan ratusan milidetik CPU per ikon dan bikin Worker kena batas CPU

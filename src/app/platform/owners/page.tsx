@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requirePlatformOwner } from "@/lib/authz";
 import { AppHeader } from "@/components/app-header";
+import { PageTitle } from "@/components/ui";
 import { setPlatformOwnerAction } from "./actions";
 
 export default async function PlatformOwnersPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
@@ -26,7 +27,7 @@ export default async function PlatformOwnersPage({ searchParams }: { searchParam
       <AppHeader email={user.email} title="Guyub · Platform Owner" />
       <div className="mx-auto max-w-lg space-y-6 p-4">
         <section>
-          <h1 className="mb-2 text-lg font-semibold">Platform Owner Saat Ini</h1>
+          <PageTitle title="Platform Owner Saat Ini" />
           <ul className="space-y-2">
             {owners.map((o) => (
               <li key={o.id} className="flex items-center justify-between rounded-md border border-primary/15 p-3 text-sm">
@@ -39,7 +40,10 @@ export default async function PlatformOwnersPage({ searchParams }: { searchParam
                   <form action={setPlatformOwnerAction}>
                     <input type="hidden" name="userId" value={o.id} />
                     <input type="hidden" name="makeOwner" value="false" />
-                    <button className="rounded-md border border-primary/30 px-2 py-1 text-xs">Cabut</button>
+                    {/* Mencabut hak Platform Owner adalah aksi paling sensitif di
+                        seluruh app — sebelumnya bobot visualnya sama netral dengan
+                        tombol "Cari" biasa (§colorize, 15 Sep 2026). */}
+                    <button className="rounded-md border border-danger/30 px-2 py-1 text-xs text-danger">Cabut</button>
                   </form>
                 )}
               </li>

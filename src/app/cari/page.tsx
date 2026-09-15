@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
+import { Badge, PageTitle } from "@/components/ui";
 import { requestJoinAction } from "./actions";
 
 const JENIS_LABEL = { keluarga: "Keluarga", rt: "RT", paguyuban: "Paguyuban" } as const;
@@ -36,7 +37,7 @@ export default async function CariPage({ searchParams }: { searchParams: Promise
 
   return (
     <main className="mx-auto max-w-md space-y-4 p-6">
-      <h1 className="text-lg font-semibold">Cari Tenant</h1>
+      <PageTitle title="Cari Tenant" />
       <form className="flex gap-2">
         <input name="q" defaultValue={query} placeholder="Nama keluarga, RT, atau paguyuban" className="flex-1 rounded-md border border-primary/30 p-2 text-sm" />
         <button className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">Cari</button>
@@ -58,7 +59,7 @@ export default async function CariPage({ searchParams }: { searchParams: Promise
                   Buka
                 </Link>
               ) : status === "pending_confirmation" ? (
-                <span className="text-xs text-foreground/60">Menunggu konfirmasi</span>
+                <Badge tone="warning">Menunggu konfirmasi</Badge>
               ) : (
                 <form action={requestJoinAction}>
                   <input type="hidden" name="tenantId" value={r.id} />

@@ -91,7 +91,7 @@ export default async function InfaqPage({
                       <form action={hapusInfaqAction}>
                         <input type="hidden" name="tenantId" value={tenantId} />
                         <input type="hidden" name="id" value={i.id} />
-                        <button className={`${btnGhost} px-2 py-1 text-xs`}>Hapus</button>
+                        <button className={`${btnGhost} px-2 py-1 text-xs text-danger hover:bg-danger/5`}>Hapus</button>
                       </form>
                     )}
                   </div>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Wallet, HandCoins, TreePine, FileText } from "lucide-react";
+import { Wallet, HandCoins, TreePine, FileText, ShieldCheck } from "lucide-react";
 import { getSessionUser } from "@/lib/session";
 import { TRAKTEER_MODAL_URL } from "@/lib/trakteer";
 import { TrakteerModal } from "@/components/trakteer-modal";
@@ -11,6 +11,28 @@ const TAMPILAN = [
   { file: "silsilah-mobile.png", label: "Silsilah", icon: TreePine, alt: "Halaman Silsilah Keluarga menampilkan pohon keluarga bertingkat" },
   { file: "laporan-mobile.png", label: "Laporan", icon: FileText, alt: "Halaman Laporan menampilkan rekap keuangan tenant per kategori" },
 ];
+
+/**
+ * Satu screenshot dijadikan jangkar lebih besar dan lurus, tiga lainnya
+ * lebih kecil dan dimiringkan tipis di bawahnya — motif frame HP yang sama
+ * (border tebal, bezel, shadow) cuma diberi hierarki, bukan diseragamkan
+ * jadi grid rata seperti sebelumnya (§bolder, 15 Sep 2026).
+ */
+function Mockup({ t, rotate, besar }: { t: (typeof TAMPILAN)[number]; rotate: string; besar?: boolean }) {
+  return (
+    <figure className={`m-0 flex-shrink-0 ${rotate} ${besar ? "w-[220px] sm:w-[260px]" : "w-[140px] sm:w-[160px]"}`}>
+      <div className={`mx-auto w-full overflow-hidden rounded-[20px] border-4 border-foreground/90 bg-background ${besar ? "shadow-2xl" : "shadow-lg"}`}>
+        <div className="flex items-center justify-center bg-foreground/90 py-1">
+          <div className="h-1 w-10 rounded-full bg-background/40" />
+        </div>
+        <Image src={`/screenshots/${t.file}`} alt={t.alt} width={780} height={1688} className="h-auto w-full" />
+      </div>
+      <figcaption className={`mt-2 flex items-center justify-center gap-1.5 font-medium text-foreground/70 ${besar ? "text-sm" : "text-xs"}`}>
+        <t.icon className={`${besar ? "h-5 w-5" : "h-4 w-4"} text-primary`} /> {t.label}
+      </figcaption>
+    </figure>
+  );
+}
 
 const FITUR_PERAN = [
   { peran: "Ketua", desc: "Persetujuan tenant, atur pengurus, buka qurban joinan & arisan." },
@@ -57,30 +79,34 @@ export default async function Home() {
 
       <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8">
         <h2 className="mb-3 text-center text-lg font-semibold">Mulai dalam 3 langkah</h2>
-        <ol className="space-y-2 text-sm">
-          <li>1. Ketua daftar tenant (keluarga/RT/paguyuban) dengan akun Google.</li>
-          <li>2. Menunggu persetujuan singkat dari pengelola platform.</li>
-          <li>3. Undang anggota lewat link WhatsApp, pengurus konfirmasi yang bergabung.</li>
+        {/* Nomor lingkaran tint primary: urutannya memang membawa informasi
+            (langkah 2 baru bisa jalan setelah 1 selesai), jadi bukan hiasan —
+            sebelumnya cuma teks "1. 2. 3." polos tanpa penanda visual apa pun
+            (§colorize, 15 Sep 2026). */}
+        <ol className="space-y-3 text-sm">
+          {[
+            "Ketua daftar tenant (keluarga/RT/paguyuban) dengan akun Google.",
+            "Menunggu persetujuan singkat dari pengelola platform.",
+            "Undang anggota lewat link WhatsApp, pengurus konfirmasi yang bergabung.",
+          ].map((teks, i) => (
+            <li key={teks} className="flex items-start gap-3">
+              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">{i + 1}</span>
+              <span className="pt-0.5">{teks}</span>
+            </li>
+          ))}
         </ol>
       </section>
 
-      <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8">
-        <h2 className="mb-2 text-center text-lg font-semibold">Tampilan yang Anda Pakai Setiap Hari</h2>
-        <p className="mb-6 text-center text-sm text-foreground/70">Kas, qurban joinan, silsilah, dan laporan, semua dalam satu genggaman.</p>
-        <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
-          {TAMPILAN.map((t) => (
-            <figure key={t.file} className="m-0">
-              <div className="mx-auto w-full max-w-[180px] overflow-hidden rounded-[20px] border-4 border-foreground/90 bg-background shadow-xl">
-                <div className="flex items-center justify-center bg-foreground/90 py-1">
-                  <div className="h-1 w-10 rounded-full bg-background/40" />
-                </div>
-                <Image src={`/screenshots/${t.file}`} alt={t.alt} width={780} height={1688} className="h-auto w-full" />
-              </div>
-              <figcaption className="mt-2 flex items-center justify-center gap-1.5 text-xs font-medium text-foreground/70">
-                <t.icon className="h-4 w-4 text-primary" /> {t.label}
-              </figcaption>
-            </figure>
-          ))}
+      <section className="mx-auto max-w-lg px-4 md:max-w-4xl py-14">
+        <h2 className="mb-2 text-center text-2xl font-semibold">Tampilan yang Anda Pakai Setiap Hari</h2>
+        <p className="mb-10 text-center text-sm text-foreground/70">Kas, qurban joinan, silsilah, dan laporan, semua dalam satu genggaman.</p>
+        <div className="flex flex-col items-center gap-8">
+          <Mockup t={TAMPILAN[0]} rotate="-rotate-1" besar />
+          <div className="flex flex-wrap items-end justify-center gap-6">
+            {TAMPILAN.slice(1).map((t, i) => (
+              <Mockup key={t.file} t={t} rotate={["rotate-2", "-rotate-2", "rotate-1"][i]} />
+            ))}
+          </div>
         </div>
       </section>
 
@@ -97,7 +123,12 @@ export default async function Home() {
       </section>
 
       <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8 text-sm text-foreground/70">
-        <h2 className="mb-2 text-center text-lg font-semibold text-foreground">Data tenant Anda aman</h2>
+        {/* ShieldCheck di text-success: peran warna yang sama dengan "aman/berhasil"
+            di seluruh app (Badge & StatCard tone="success"), bukan warna baru
+            (§colorize, 15 Sep 2026). */}
+        <h2 className="mb-2 flex items-center justify-center gap-2 text-center text-lg font-semibold text-foreground">
+          <ShieldCheck className="h-5 w-5 text-success" /> Data tenant Anda aman
+        </h2>
         <p>
           Data setiap keluarga, RT, atau paguyuban terisolasi penuh dari tenant lain, tidak ada yang bisa saling
           mengintip. Fitur dasar (kas, tabungan, qurban joinan, arisan, silsilah, laporan) gratis dipakai; fitur

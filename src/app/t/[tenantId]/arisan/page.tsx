@@ -170,7 +170,7 @@ export default async function ArisanPage({ params }: { params: Promise<{ tenantI
                             <input type="hidden" name="tenantId" value={tenantId} />
                             <input type="hidden" name="undianId" value={u.id} />
                             <input name="catatan" placeholder="Alasan (opsional)" className={`${inputClass} px-2 py-0.5 text-[11px]`} />
-                            <button className={`${btnGhost} px-2 py-0.5 text-[11px]`}>Batalkan</button>
+                            <button className={`${btnGhost} px-2 py-0.5 text-[11px] text-danger hover:bg-danger/5`}>Batalkan</button>
                           </form>
                         )}
                       </li>

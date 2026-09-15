@@ -55,7 +55,7 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
                   <form action={revokeInviteAction}>
                     <input type="hidden" name="tenantId" value={tenantId} />
                     <input type="hidden" name="invitationId" value={inv.id} />
-                    <button className={btnGhost}>Cabut</button>
+                    <button className={`${btnGhost} text-danger hover:bg-danger/5`}>Cabut</button>
                   </form>
                 </li>
               );

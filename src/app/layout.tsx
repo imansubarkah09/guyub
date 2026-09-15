@@ -1,7 +1,20 @@
 import type { Metadata, Viewport } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { InstallBanner } from "@/components/install-banner";
+
+/**
+ * Sebelumnya app ini tidak pasang font sama sekali — semua render pakai font
+ * sistem visitor (San Francisco/Roboto/Segoe UI tergantung device), padahal
+ * identitas visualnya (cream/terracotta, "warm home + futuristik") sudah jelas
+ * di tempat lain. Plus Jakarta Sans dipilih karena hangat-tapi-profesional,
+ * relevan secara tematik (nama dari Jakarta), dan dukungan angka tabular
+ * kuat — app ini pakai `tabular-nums` di mana-mana untuk uang (§typeset,
+ * 15 Sep 2026). self-hosted otomatis oleh next/font, tanpa request ke Google
+ * saat runtime, tanpa render blocking.
+ */
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Guyub — Kas & Tabungan Komunitas",
@@ -21,14 +34,14 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#C1652D",
+  themeColor: "#A45626",
 };
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id">
+    <html lang="id" className={jakarta.variable}>
       <body className="min-h-screen antialiased">
         {children}
         <InstallBanner />

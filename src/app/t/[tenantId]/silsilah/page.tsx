@@ -59,9 +59,21 @@ function Branch({
    * sendiri — sebelumnya tombol edit muncul di semua node se-tenant dan baru
    * ditolak server setelah submit, membingungkan (ketemu review 15 Sep 2026). */
   const bisaKelolaNodeIni = pengurus || (scope?.has(node.id) ?? false);
+  /**
+   * Warna dipakai untuk wayfinding, bukan hiasan (§colorize, 15 Sep 2026):
+   * anggota biasa sekarang lihat garis keturunannya sendiri ditinting halus,
+   * jadi tidak perlu klik "edit" satu-satu buat tahu mana yang boleh disentuh
+   * (sebelumnya ini P1 di critique — tidak ada penanda visual sama sekali).
+   * Pengurus tidak dapat tint ini karena scope-nya memang seluruh tenant.
+   */
+  const diGarisSendiri = !pengurus && (scope?.has(node.id) ?? false);
   return (
     <li>
-      <span className={`inline-flex flex-wrap items-center gap-1 rounded-lg px-2 py-1 ${isMe ? "bg-primary/10 ring-1 ring-primary/40" : isMatch ? "bg-warning/10" : ""}`}>
+      <span
+        className={`inline-flex flex-wrap items-center gap-1 rounded-lg px-2 py-1 ${
+          isMe ? "bg-primary/10 ring-1 ring-primary/40" : isMatch ? "bg-warning/10" : diGarisSendiri ? "bg-primary/5" : ""
+        }`}
+      >
         {node.urutan != null && <Badge tone="muted">Anak ke-{node.urutan}</Badge>}
         {bisaKelolaNodeIni ? (
           <NodeRow
@@ -76,9 +88,15 @@ function Branch({
         ) : (
           <span className="font-medium">{node.nama}</span>
         )}
+        {/* Pemisah "·" (pola yang sama dipakai di seluruh app, mis. "{tanggal} ·
+            {nama}") menandai batas nama (primer) vs metadata (sekunder) — sebelumnya
+            semuanya nempel jadi satu span tanpa jeda baca (§layout, 15 Sep 2026). */}
+        {(node.spouse || isMe || (node.user && !isMe)) && <span className="text-muted">·</span>}
         {node.spouse && <span className="text-muted">⚭ {node.spouse.nama}</span>}
         {isMe && <Badge tone="primary">Anda</Badge>}
-        {node.user && !isMe && <span className="text-xs text-muted">({node.user.name})</span>}
+        {/* text-accent, bukan text-muted: menandai "punya akun terdaftar" sebagai
+            satu peran warna yang konsisten, bukan sekadar teks abu-abu biasa. */}
+        {node.user && !isMe && <span className="text-xs text-accent">({node.user.name})</span>}
       </span>
       {/* <details> bawaan browser: buka/tutup satu tingkat tanpa JavaScript sama
           sekali, dan tetap jalan sebelum hidrasi. Barisnya sengaja DI LUAR

@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 @theme inline {
+  /* Plus Jakarta Sans dari next/font (lihat layout.tsx) — fallback tetap ada
+     kalau variabelnya belum sempat ter-set (mis. render sebelum hidrasi). */
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-foreground: var(--foreground);
