@@ -6,9 +6,8 @@ import { effectiveRoles } from "@/lib/effective-roles";
 import Link from "next/link";
 import { angkaTenant } from "@/lib/ringkasan";
 import { ambilDari } from "@/lib/paging";
-import { Card, PageTitle, EmptyState, Badge, btnPrimary, inputClass, rupiah } from "@/components/ui";
-import { InputRupiah } from "@/components/input-rupiah";
-import { createKasTransaksiAction } from "./actions";
+import { Card, PageTitle, EmptyState, Badge, inputClass, rupiah } from "@/components/ui";
+import { KasForm } from "./kas-form";
 import { KasRow } from "./kas-row";
 
 export default async function KasPage({
@@ -56,30 +55,7 @@ export default async function KasPage({
         </p>
       </Card>
 
-      {canCatat && (
-        <Card>
-          <h2 className="mb-3 text-sm font-semibold">Catat Transaksi</h2>
-          <form action={createKasTransaksiAction} className="space-y-2" encType="multipart/form-data">
-            <input type="hidden" name="tenantId" value={tenantId} />
-            <div className="flex gap-2">
-              <input type="date" name="tanggal" required defaultValue={new Date().toISOString().slice(0, 10)} className={inputClass} />
-              <select name="tipe" required className={inputClass}>
-                <option value="masuk">Masuk</option>
-                <option value="keluar">Keluar</option>
-              </select>
-            </div>
-            <InputRupiah name="jumlah" placeholder="Jumlah (Rp)" className={inputClass} required />
-            <input name="keterangan" placeholder="Keterangan" className={inputClass} />
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted">Bukti transfer (opsional)</label>
-              <input type="file" name="bukti" accept="image/*" className="w-full text-xs" />
-            </div>
-            <button type="submit" className={`${btnPrimary} w-full`}>
-              Catat Transaksi
-            </button>
-          </form>
-        </Card>
-      )}
+      {canCatat && <KasForm tenantId={tenantId} />}
 
       <section>
         <div className="mb-2 flex flex-col gap-2 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">

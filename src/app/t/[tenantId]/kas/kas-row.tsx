@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { ArrowDownLeft, ArrowUpRight, Pencil } from "lucide-react";
 import { Card, btnPrimary, btnGhost, inputClass, rupiah, tanggal } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
+import { validasiFileGambar } from "@/lib/validasi-file";
 import { updateKasTransaksiAction } from "./actions";
 
 type Transaksi = {
@@ -17,10 +18,10 @@ type Transaksi = {
   dicatatOleh: { name: string };
 };
 
-function TombolSimpan() {
+function TombolSimpan({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className={`${btnPrimary} disabled:opacity-50`}>
+    <button type="submit" disabled={pending || disabled} className={`${btnPrimary} disabled:opacity-50`}>
       {pending ? "..." : "Simpan"}
     </button>
   );
@@ -28,6 +29,8 @@ function TombolSimpan() {
 
 export function KasRow({ tenantId, t, canEdit }: { tenantId: string; t: Transaksi; canEdit: boolean }) {
   const [editing, setEditing] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   if (!editing) {
     return (
@@ -71,11 +74,15 @@ export function KasRow({ tenantId, t, canEdit }: { tenantId: string; t: Transaks
     <Card>
       <form
         action={async (formData) => {
-          await updateKasTransaksiAction(formData);
+          setServerError(null);
+          const result = await updateKasTransaksiAction(formData);
+          if (result?.error) {
+            setServerError(result.error);
+            return;
+          }
           setEditing(false);
         }}
         className="space-y-2"
-        encType="multipart/form-data"
       >
         <input type="hidden" name="tenantId" value={tenantId} />
         <input type="hidden" name="id" value={t.id} />
@@ -92,11 +99,26 @@ export function KasRow({ tenantId, t, canEdit }: { tenantId: string; t: Transaks
           <label className="mb-1 block text-xs font-medium text-muted">
             {t.buktiUrl ? "Ganti bukti transfer (kosongkan untuk pakai yang lama)" : "Bukti transfer (opsional)"}
           </label>
-          <input type="file" name="bukti" accept="image/*" className="w-full text-xs" />
+          <input
+            type="file"
+            name="bukti"
+            accept="image/jpeg,image/png,image/webp"
+            className="w-full text-xs"
+            onChange={(e) => setFileError(e.target.files?.[0] ? validasiFileGambar(e.target.files[0]) : null)}
+          />
         </div>
+        {(fileError ?? serverError) && <p className="text-xs text-danger">{fileError ?? serverError}</p>}
         <div className="flex gap-2">
-          <TombolSimpan />
-          <button type="button" onClick={() => setEditing(false)} className={btnGhost}>
+          <TombolSimpan disabled={!!fileError} />
+          <button
+            type="button"
+            onClick={() => {
+              setEditing(false);
+              setFileError(null);
+              setServerError(null);
+            }}
+            className={btnGhost}
+          >
             Batal
           </button>
         </div>
