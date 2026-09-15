@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { LogOut, UserRound, ShieldCheck } from "lucide-react";
 import { signOut } from "@/lib/auth-client";
 import { updateAccountAction } from "@/app/account-actions";
+import { validasiFileGambar } from "@/lib/validasi-file";
 import { InstallButton } from "@/components/install-button";
 import { btnPrimary, inputClass } from "@/components/ui";
 
@@ -16,6 +17,7 @@ export function ProfileMenu({ user }: { user: AccountInfo }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const initial = user.name.charAt(0).toUpperCase();
 
   return (
@@ -45,16 +47,20 @@ export function ProfileMenu({ user }: { user: AccountInfo }) {
             <form
               action={async (fd) => {
                 setSaving(true);
+                setError(null);
                 try {
-                  await updateAccountAction(fd);
-                  setSaved(true);
-                  setTimeout(() => setSaved(false), 2500);
+                  const result = await updateAccountAction(fd);
+                  if (result?.error) {
+                    setError(result.error);
+                  } else {
+                    setSaved(true);
+                    setTimeout(() => setSaved(false), 2500);
+                  }
                 } finally {
                   setSaving(false);
                 }
               }}
               className="space-y-2"
-              encType="multipart/form-data"
             >
               <div>
                 <label className="mb-1 block text-xs font-medium text-muted">Nama tampilan</label>
@@ -66,8 +72,15 @@ export function ProfileMenu({ user }: { user: AccountInfo }) {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-muted">Foto profil</label>
-                <input type="file" name="avatar" accept="image/*" className="w-full text-xs" />
+                <input
+                  type="file"
+                  name="avatar"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="w-full text-xs"
+                  onChange={(e) => setError(e.target.files?.[0] ? validasiFileGambar(e.target.files[0]) : null)}
+                />
               </div>
+              {error && <p className="text-xs text-danger">{error}</p>}
               <button type="submit" disabled={saving} className={`${btnPrimary} w-full`}>
                 {saving ? "Menyimpan…" : saved ? "Tersimpan ✓" : "Simpan"}
               </button>

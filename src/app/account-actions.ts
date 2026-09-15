@@ -5,24 +5,42 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { uploadImage } from "@/lib/upload";
+import { validasiFileGambar } from "@/lib/validasi-file";
 import { PREVIEW_COOKIE } from "@/lib/preview";
 
-/** Profil pribadi (§7.13) — boleh diedit semua role, termasuk saat platform owner sedang preview. */
-export async function updateAccountAction(formData: FormData) {
+/**
+ * Profil pribadi (§7.13) — boleh diedit semua role, termasuk saat platform owner sedang
+ * preview. Upload & write dibungkus try/catch (bukan throw mentah) supaya kegagalan
+ * Cloudinary/DB tampil sebagai pesan jelas, bukan React error #441 (lihat kas/actions.ts).
+ */
+export async function updateAccountAction(formData: FormData): Promise<{ error: string } | null> {
   const user = await requireUser();
   const name = String(formData.get("name") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim() || null;
-  if (!name) throw new Error("Nama wajib diisi");
+  if (!name) return { error: "Nama wajib diisi" };
 
   let image: string | undefined;
   const avatar = formData.get("avatar");
   if (avatar instanceof File && avatar.size > 0) {
-    image = await uploadImage(avatar, `guyub/avatar/${user.id}`);
+    const pesanValidasi = validasiFileGambar(avatar);
+    if (pesanValidasi) return { error: pesanValidasi };
+    try {
+      image = await uploadImage(avatar, `guyub/avatar/${user.id}`);
+    } catch (e) {
+      console.error("Upload foto profil gagal", e);
+      return { error: "Gagal mengunggah foto profil. Coba lagi atau pakai file lain." };
+    }
   }
 
-  await prisma.user.update({ where: { id: user.id }, data: { name, phone, ...(image ? { image } : {}) } });
+  try {
+    await prisma.user.update({ where: { id: user.id }, data: { name, phone, ...(image ? { image } : {}) } });
+  } catch (e) {
+    console.error("Simpan profil akun gagal", e);
+    return { error: "Gagal menyimpan profil. Coba lagi." };
+  }
   await buangCacheSesi();
   revalidatePath("/", "layout");
+  return null;
 }
 
 /**

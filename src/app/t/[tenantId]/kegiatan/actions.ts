@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requireWrite, CAN_CATAT_UANG } from "@/lib/authz";
 import { uploadImage } from "@/lib/upload";
+import { validasiFileGambar } from "@/lib/validasi-file";
 import { saldoPool } from "@/lib/dana";
 import type { SumberDana } from "@prisma/client";
 
@@ -14,7 +15,10 @@ function uraikanSumber(raw: string) {
   return { sumberDana: raw as SumberDana, sumberTabunganTipeId: null };
 }
 
-export async function catatKegiatanAction(formData: FormData) {
+export type KegiatanActionState = { error: string } | null;
+
+/** Validasi, upload, & write dibalikin sebagai {error} bukan throw (lihat kas/actions.ts untuk alasannya). */
+export async function catatKegiatanAction(_prevState: KegiatanActionState, formData: FormData): Promise<KegiatanActionState> {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
   await requireWrite(user, tenantId, CAN_CATAT_UANG);
@@ -23,8 +27,8 @@ export async function catatKegiatanAction(formData: FormData) {
   const tanggalStr = String(formData.get("tanggal"));
   const keterangan = String(formData.get("keterangan") ?? "").trim() || null;
   const targetRaw = String(formData.get("targetDana") ?? "").trim();
-  if (!namaKegiatan) throw new Error("Nama kegiatan wajib diisi");
-  if (!tanggalStr) throw new Error("Tanggal wajib diisi");
+  if (!namaKegiatan) return { error: "Nama kegiatan wajib diisi" };
+  if (!tanggalStr) return { error: "Tanggal wajib diisi" };
 
   // Baris sumber dikirim berpasangan: sumber[] dan jumlahSumber[].
   const sumberRaw = formData.getAll("sumber").map(String);
@@ -32,7 +36,7 @@ export async function catatKegiatanAction(formData: FormData) {
   const baris = sumberRaw
     .map((s, i) => ({ raw: s, jumlah: jumlahRaw[i] ?? 0 }))
     .filter((b) => b.raw && b.jumlah > 0);
-  if (baris.length === 0) throw new Error("Isi minimal satu sumber dana dengan jumlah lebih dari 0");
+  if (baris.length === 0) return { error: "Isi minimal satu sumber dana dengan jumlah lebih dari 0" };
 
   // Validasi per pool: total yang diambil dari SATU pool tidak boleh melebihi saldonya.
   const perPool = new Map<string, number>();
@@ -43,38 +47,53 @@ export async function catatKegiatanAction(formData: FormData) {
     const tersedia = await saldoPool(tenantId, sumberDana, sumberTabunganTipeId);
     if (jumlah > tersedia) {
       const nama = { kas: "Kas", infaq: "Infaq & Shodaqoh", plerek: "Plerek" }[raw] ?? "tabungan";
-      throw new Error(`Jumlah dari ${nama} melebihi saldo (tersedia Rp${tersedia.toLocaleString("id-ID")})`);
+      return { error: `Jumlah dari ${nama} melebihi saldo (tersedia Rp${tersedia.toLocaleString("id-ID")})` };
     }
   }
 
   let buktiUrl: string | undefined;
   const bukti = formData.get("bukti");
-  if (bukti instanceof File && bukti.size > 0) buktiUrl = await uploadImage(bukti, `guyub/kegiatan/${tenantId}`);
-
-  await prisma.danaKegiatan.create({
-    data: {
-      tenantId,
-      namaKegiatan,
-      targetDana: targetRaw ? targetRaw : null,
-      tanggal: new Date(tanggalStr),
-      keterangan,
-      buktiUrl,
-      dicatatOlehId: user.id,
-      sumber: { create: baris.map((b) => ({ ...uraikanSumber(b.raw), jumlah: b.jumlah })) },
-    },
-  });
-
-  // Pool tabungan dikurangi fisik; kas & infaq saldonya dihitung turunan di lib/ringkasan.ts.
-  for (const b of baris) {
-    const { sumberDana, sumberTabunganTipeId } = uraikanSumber(b.raw);
-    if (sumberDana === "tabungan" && sumberTabunganTipeId) {
-      const pooled = await prisma.tabunganSaldo.findFirst({ where: { tabunganTipeId: sumberTabunganTipeId, userId: null } });
-      if (pooled) await prisma.tabunganSaldo.update({ where: { id: pooled.id }, data: { jumlah: { decrement: b.jumlah } } });
+  if (bukti instanceof File && bukti.size > 0) {
+    const pesanValidasi = validasiFileGambar(bukti);
+    if (pesanValidasi) return { error: pesanValidasi };
+    try {
+      buktiUrl = await uploadImage(bukti, `guyub/kegiatan/${tenantId}`);
+    } catch (e) {
+      console.error("Upload bukti kegiatan gagal", e);
+      return { error: "Gagal mengunggah bukti. Coba lagi atau pakai file lain." };
     }
+  }
+
+  try {
+    await prisma.danaKegiatan.create({
+      data: {
+        tenantId,
+        namaKegiatan,
+        targetDana: targetRaw ? targetRaw : null,
+        tanggal: new Date(tanggalStr),
+        keterangan,
+        buktiUrl,
+        dicatatOlehId: user.id,
+        sumber: { create: baris.map((b) => ({ ...uraikanSumber(b.raw), jumlah: b.jumlah })) },
+      },
+    });
+
+    // Pool tabungan dikurangi fisik; kas & infaq saldonya dihitung turunan di lib/ringkasan.ts.
+    for (const b of baris) {
+      const { sumberDana, sumberTabunganTipeId } = uraikanSumber(b.raw);
+      if (sumberDana === "tabungan" && sumberTabunganTipeId) {
+        const pooled = await prisma.tabunganSaldo.findFirst({ where: { tabunganTipeId: sumberTabunganTipeId, userId: null } });
+        if (pooled) await prisma.tabunganSaldo.update({ where: { id: pooled.id }, data: { jumlah: { decrement: b.jumlah } } });
+      }
+    }
+  } catch (e) {
+    console.error("Simpan dana kegiatan gagal", e);
+    return { error: "Gagal menyimpan kegiatan. Coba lagi." };
   }
 
   revalidatePath(`/t/${tenantId}/kegiatan`);
   revalidatePath(`/t/${tenantId}`);
+  return null;
 }
 
 /** Pemasukan donasi terbuka untuk satu kegiatan (§ permintaan: 1,4 juta open donasi). */

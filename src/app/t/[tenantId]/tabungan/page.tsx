@@ -5,7 +5,8 @@ import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
 import { Card, PageTitle, EmptyState, Badge, Progress, btnPrimary, btnGhost, inputClass, rupiah } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
-import { createTabunganTipeAction, setorAction, submitSetoranBuktiAction, submitSetoranXenditAction, validasiSetoranAction } from "./actions";
+import { createTabunganTipeAction, setorAction, submitSetoranXenditAction, validasiSetoranAction } from "./actions";
+import { SetoranBuktiForm } from "./setoran-bukti-form";
 
 const XENDIT_READY = Boolean(process.env.XENDIT_API_KEY) && process.env.XENDIT_API_KEY !== "your_xendit_api_key_here";
 
@@ -162,13 +163,7 @@ export default async function TabunganPage({ params }: { params: Promise<{ tenan
                 {(
                   <div className="mt-3 space-y-2 border-t border-border pt-3">
                     <p className="text-xs text-muted">Sudah transfer sendiri? Ajukan dengan bukti untuk divalidasi bendahara.</p>
-                    <form action={submitSetoranBuktiAction} className="flex flex-col gap-2 min-[420px]:flex-row" encType="multipart/form-data">
-                      <input type="hidden" name="tenantId" value={tenantId} />
-                      <input type="hidden" name="tabunganTipeId" value={tipe.id} />
-                      <InputRupiah name="jumlah" placeholder="Jumlah (Rp)" className={inputClass} required />
-                      <input type="file" name="bukti" accept="image/*" required className="flex-1 text-xs" />
-                      <button className={btnGhost}>Ajukan</button>
-                    </form>
+                    <SetoranBuktiForm tenantId={tenantId} tabunganTipeId={tipe.id} />
                     {XENDIT_READY && (
                       <form action={submitSetoranXenditAction} className="flex flex-col gap-2 min-[420px]:flex-row">
                         <input type="hidden" name="tenantId" value={tenantId} />

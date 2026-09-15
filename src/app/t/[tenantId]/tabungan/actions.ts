@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requireWrite, requireMemberWrite, CAN_CATAT_UANG } from "@/lib/authz";
 import { uploadImage } from "@/lib/upload";
+import { validasiFileGambar } from "@/lib/validasi-file";
 import { creditSaldo } from "@/lib/tabungan";
 import { createXenditInvoice } from "@/lib/xendit";
 import type { TabunganMode } from "@prisma/client";
@@ -41,8 +42,14 @@ export async function setorAction(formData: FormData) {
   revalidatePath(`/t/${tenantId}/tabungan`);
 }
 
-/** Fase 4 (§5) — anggota mana pun bisa mengajukan setoran transfer dengan bukti foto; belum menambah saldo sampai divalidasi. */
-export async function submitSetoranBuktiAction(formData: FormData) {
+export type SetoranBuktiActionState = { error: string } | null;
+
+/**
+ * Fase 4 (§5) — anggota mana pun bisa mengajukan setoran transfer dengan bukti foto; belum
+ * menambah saldo sampai divalidasi. Upload & write dibalikin sebagai {error}, bukan throw
+ * mentah (lihat kas/actions.ts untuk alasannya).
+ */
+export async function submitSetoranBuktiAction(_prevState: SetoranBuktiActionState, formData: FormData): Promise<SetoranBuktiActionState> {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
   await requireMemberWrite(user, tenantId);
@@ -50,16 +57,24 @@ export async function submitSetoranBuktiAction(formData: FormData) {
   const tabunganTipeId = String(formData.get("tabunganTipeId"));
   const jumlah = Number(formData.get("jumlah"));
   const bukti = formData.get("bukti");
-  if (!jumlah || jumlah <= 0) throw new Error("Jumlah setoran wajib lebih dari 0");
-  if (!(bukti instanceof File) || bukti.size === 0) throw new Error("Foto bukti transfer wajib diunggah");
+  if (!jumlah || jumlah <= 0) return { error: "Jumlah setoran wajib lebih dari 0" };
+  if (!(bukti instanceof File) || bukti.size === 0) return { error: "Foto bukti transfer wajib diunggah" };
+  const pesanValidasi = validasiFileGambar(bukti);
+  if (pesanValidasi) return { error: pesanValidasi };
 
   const tipe = await prisma.tabunganTipe.findUniqueOrThrow({ where: { id: tabunganTipeId } });
   if (tipe.tenantId !== tenantId) throw new Error("Tipe tabungan tidak ditemukan di tenant ini");
 
-  const buktiUrl = await uploadImage(bukti, `guyub/tabungan/${tenantId}`);
-  await prisma.tabunganSetoran.create({ data: { tabunganTipeId, userId: user.id, jumlah, buktiUrl } });
+  try {
+    const buktiUrl = await uploadImage(bukti, `guyub/tabungan/${tenantId}`);
+    await prisma.tabunganSetoran.create({ data: { tabunganTipeId, userId: user.id, jumlah, buktiUrl } });
+  } catch (e) {
+    console.error("Ajukan setoran bukti tabungan gagal", e);
+    return { error: "Gagal mengunggah bukti atau menyimpan setoran. Coba lagi." };
+  }
 
   revalidatePath(`/t/${tenantId}/tabungan`);
+  return null;
 }
 
 /** Fase 5 (§8) — bayar langsung lewat Xendit, tervalidasi otomatis oleh webhook saat invoice lunas (lihat api/webhooks/xendit). */

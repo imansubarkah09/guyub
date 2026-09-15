@@ -1,17 +1,27 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_UPDATE_PROFIL, has } from "@/lib/authz";
-import { updateProfilAction } from "./actions";
+import { effectiveRoles } from "@/lib/effective-roles";
+import { ProfilForm } from "./profil-form";
 
+/**
+ * Root cause React error #441 (ketemu review 15 Sep 2026): halaman ini baca
+ * Membership platform owner sendiri lewat `findUniqueOrThrow`, padahal saat
+ * mode Preview (§7.2) platform owner sengaja TIDAK punya baris Membership di
+ * tenant yang di-preview (lihat layout.tsx) — jadi query itu selalu P2025 dan
+ * meledak jadi digest generik di production. Halaman lain sudah pakai
+ * effectiveRoles() yang menangani preview dengan benar, cuma halaman ini yang
+ * ketinggalan (masih pola lama dari Fase 1).
+ */
 export default async function ProfilPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
   const user = await requireUser();
-  const [me, profile] = await Promise.all([
-    prisma.membership.findUniqueOrThrow({ where: { userId_tenantId: { userId: user.id, tenantId } } }),
+  const [{ roles }, profile] = await Promise.all([
+    effectiveRoles(user, tenantId),
     prisma.tenantProfile.findUniqueOrThrow({ where: { tenantId } }),
   ]);
 
-  if (!has(me.roles, CAN_UPDATE_PROFIL)) {
+  if (!has(roles, CAN_UPDATE_PROFIL)) {
     return (
       <div className="space-y-2 text-sm">
         {profile.logoUrl && <img src={profile.logoUrl} alt="" className="h-16 w-16 rounded-md object-cover" />}
@@ -21,25 +31,5 @@ export default async function ProfilPage({ params }: { params: Promise<{ tenantI
     );
   }
 
-  return (
-    <form action={updateProfilAction} className="space-y-3" encType="multipart/form-data">
-      <input type="hidden" name="tenantId" value={tenantId} />
-      {profile.logoUrl && <img src={profile.logoUrl} alt="" className="h-16 w-16 rounded-md object-cover" />}
-      <div>
-        <label className="mb-1 block text-xs font-medium">Nama Tenant</label>
-        <input name="nama" defaultValue={profile.nama} required className="w-full rounded-md border border-primary/30 p-2 text-sm" />
-      </div>
-      <div>
-        <label className="mb-1 block text-xs font-medium">Alamat</label>
-        <textarea name="alamat" defaultValue={profile.alamat ?? ""} className="w-full rounded-md border border-primary/30 p-2 text-sm" />
-      </div>
-      <div>
-        <label className="mb-1 block text-xs font-medium">Logo</label>
-        <input type="file" name="logo" accept="image/*" className="w-full text-sm" />
-      </div>
-      <button type="submit" className="w-full rounded-md bg-primary py-2 text-sm font-medium text-primary-foreground">
-        Simpan
-      </button>
-    </form>
-  );
+  return <ProfilForm tenantId={tenantId} profile={profile} />;
 }

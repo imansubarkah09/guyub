@@ -6,10 +6,10 @@ import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
 import { daftarPool } from "@/lib/dana";
 import { ambilDari } from "@/lib/paging";
-import { Card, PageTitle, EmptyState, Badge, Progress, btnPrimary, btnGhost, inputClass, rupiah, tanggal } from "@/components/ui";
+import { Card, PageTitle, EmptyState, Badge, Progress, btnGhost, inputClass, rupiah, tanggal } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
-import { catatKegiatanAction, catatDonasiAction } from "./actions";
-import { SumberFields } from "./sumber-fields";
+import { catatDonasiAction } from "./actions";
+import { KegiatanForm } from "./kegiatan-form";
 
 const LABEL_SUMBER = { kas: "Kas", infaq: "Infaq & Shodaqoh", donasi: "Donasi terbuka", tabungan: "Tabungan", plerek: "Plerek" } as const;
 
@@ -68,28 +68,7 @@ export default async function KegiatanPage({
         </div>
       </Card>
 
-      {canCatat && (
-        <Card>
-          <h2 className="mb-3 text-sm font-semibold">Catat Kegiatan</h2>
-          <form action={catatKegiatanAction} className="space-y-2" encType="multipart/form-data">
-            <input type="hidden" name="tenantId" value={tenantId} />
-            <input name="namaKegiatan" required placeholder="Nama kegiatan, misal: Santunan Anak Yatim 2026" className={inputClass} />
-            <div className="flex gap-2">
-              <InputRupiah name="targetDana" placeholder="Target dana (Rp, opsional)" className={inputClass} />
-              <input type="date" name="tanggal" required defaultValue={new Date().toISOString().slice(0, 10)} className={inputClass} />
-            </div>
-            <SumberFields pools={pools} />
-            <input name="keterangan" placeholder="Keterangan (opsional)" className={inputClass} />
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted">Bukti (opsional)</label>
-              <input type="file" name="bukti" accept="image/*" className="w-full text-xs" />
-            </div>
-            <button type="submit" className={`${btnPrimary} w-full`}>
-              Simpan Kegiatan
-            </button>
-          </form>
-        </Card>
-      )}
+      {canCatat && <KegiatanForm tenantId={tenantId} pools={pools} />}
 
       <section>
         <h2 className="mb-2 text-sm font-semibold">Riwayat Kegiatan</h2>
