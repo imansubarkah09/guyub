@@ -7,7 +7,7 @@ import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
 import { ambilDari } from "@/lib/paging";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, btnGhost, inputClass, rupiah, tanggal } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
-import { ajukanPinjamanAction, putuskanPinjamanAction, catatCicilanAction } from "./actions";
+import { ajukanPinjamanAction, putuskanPinjamanAction, catatCicilanAction, batalkanPinjamanAction } from "./actions";
 
 const STATUS_TONE = {
   diajukan: "warning",
@@ -216,6 +216,15 @@ export default async function PinjamanPage({
                       </div>
                       <Badge tone={STATUS_TONE[p.status]}>{STATUS_LABEL[p.status]}</Badge>
                     </div>
+                    {p.status === "diajukan" && (
+                      <form action={batalkanPinjamanAction}>
+                        <input type="hidden" name="tenantId" value={tenantId} />
+                        <input type="hidden" name="pinjamanId" value={p.id} />
+                        <button type="submit" className="text-xs text-danger underline">
+                          Batalkan pengajuan
+                        </button>
+                      </form>
+                    )}
                     {p.status === "disetujui" && (
                       <p className="text-xs text-muted">Sisa {rupiah.format(Number(p.jumlahPokok) - sudahDibayar)}</p>
                     )}

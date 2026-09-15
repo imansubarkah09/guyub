@@ -36,6 +36,28 @@ export async function ajukanPinjamanAction(formData: FormData) {
   revalidatePath(`/t/${tenantId}/pinjaman`);
 }
 
+/**
+ * Peminjam boleh batalkan pengajuannya sendiri selama masih "diajukan" — belum
+ * menyentuh saldo Kas sama sekali, jadi aman dihapus langsung (bukan sekadar
+ * diubah status) kalau ternyata salah input. Begitu sudah diputuskan bendahara,
+ * tidak bisa dibatalkan lewat sini lagi.
+ */
+export async function batalkanPinjamanAction(formData: FormData) {
+  const user = await requireUser();
+  const tenantId = String(formData.get("tenantId"));
+  await requireMemberWrite(user, tenantId);
+
+  const pinjamanId = String(formData.get("pinjamanId"));
+  const pinjaman = await prisma.pinjaman.findUniqueOrThrow({ where: { id: pinjamanId } });
+  if (pinjaman.tenantId !== tenantId) throw new Error("Pinjaman tidak ditemukan di tenant ini");
+  if (pinjaman.peminjamId !== user.id) throw new Error("Kamu cuma bisa membatalkan pengajuanmu sendiri");
+  if (pinjaman.status !== "diajukan") throw new Error("Pinjaman ini sudah diproses, tidak bisa dibatalkan");
+
+  await prisma.pinjaman.delete({ where: { id: pinjamanId } });
+
+  revalidatePath(`/t/${tenantId}/pinjaman`);
+}
+
 /** Hanya bendahara — approve mencairkan dana (dicatat sebagai KasTransaksi keluar), tolak tidak menyentuh Kas sama sekali. */
 export async function putuskanPinjamanAction(formData: FormData) {
   const user = await requireUser();
