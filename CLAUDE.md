@@ -2,6 +2,14 @@
 
 > File ini otomatis dibaca Claude Code sebagai konteks project setiap kali sesi dimulai di root repo ini. Taruh file ini di root repo (sejajar dengan `package.json`), dan taruh `arisan-app-spec.md` di `docs/`.
 
+## Gaya Penulisan (wajib, instruksi Iman 15 Sep 2026)
+
+**Dilarang keras memakai em dash (—)** di mana pun: commit message, komentar
+kode, dokumentasi, maupun teks biasa ke Iman. Ganti dengan tanda baca lain
+yang pas secara makna, misalnya koma, titik dua, tanda kurung, atau titik
+untuk memulai kalimat baru. Sesuaikan dengan konteks kalimatnya, jangan
+sekadar cari-ganti mekanis.
+
 ## Sebelum mulai kerja
 1. Baca `docs/arisan-app-spec.md` secara penuh, itu spec fungsional lengkap (entities, fitur, fase, open questions).
 2. Baca folder `./references/app/`, source code schoolcommunity.space (aplikasi kas kelas milik Iman). Contek pola UI, struktur folder, dan alur yang relevan, **kecuali** bagian yang eksplisit beda di spec (terutama alur onboarding anggota, lihat §4.1 spec).
@@ -185,7 +193,7 @@ middleware/proxy** (diuji 14 Sep 2026). `session.cookieCache` di `src/lib/auth.t
 menyalin sesi ke cookie bertanda tangan supaya tidak tiap request menembak SELECT
 Session + SELECT User. Terukur memang hemat (17 query jadi 15 di Dashboard) TAPI
 hanya selama cookie itu ada, dan yang boleh menulis cookie cuma route handler dan
-server action — bukan render Server Component. Karena seluruh pembacaan sesi
+server action, bukan render Server Component. Karena seluruh pembacaan sesi
 aplikasi ini terjadi di Server Component, cookie itu cuma disetel sekali waktu
 login lalu habis 60 detik kemudian dan tidak pernah disetel ulang.
 
