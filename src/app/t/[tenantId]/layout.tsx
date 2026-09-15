@@ -28,7 +28,26 @@ export default async function TenantLayout({
   const membership = await membershipSaya(user.id, tenantId);
 
   if (!previewingThis) {
-    if (!membership) notFound();
+    if (!membership) {
+      // Platform owner sering buka tenant ini TANPA jadi anggota, lewat mode
+      // Preview (§7.2). Begitu Preview di-exit (atau cookie-nya kedaluwarsa),
+      // dia jatuh ke jalur ini juga — notFound() di sini dulu bikin 404
+      // membingungkan buat platform owner sendiri, bukan cuma nyembunyikan
+      // tenant dari orang asing. Anggota biasa yang bukan bagian tenant ini
+      // tetap 404 seperti biasa.
+      if (user.isPlatformOwner) {
+        return (
+          <Shell>
+            Anda platform owner, tapi bukan anggota tenant ini. Mode Preview sudah berakhir.{" "}
+            <Link href={`/admin/tenant/${tenantId}`} className="text-primary underline">
+              Mulai Preview lagi
+            </Link>{" "}
+            untuk melihat tenant ini.
+          </Shell>
+        );
+      }
+      notFound();
+    }
     if (membership.status !== "active") {
       return (
         <Shell>
