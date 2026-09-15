@@ -31,11 +31,17 @@ export function NodeRow({
   node,
   options,
   anggota,
+  pengurus,
+  hasChildren,
+  hasSpouse,
 }: {
   tenantId: string;
   node: { id: string; nama: string; parentId: string | null; spouseId: string | null; userId: string | null; urutan: number | null };
   options: Option[];
   anggota: Akun[];
+  pengurus: boolean;
+  hasChildren: boolean;
+  hasSpouse: boolean;
 }) {
   const [editing, setEditing] = useState(false);
 
@@ -100,16 +106,27 @@ export function NodeRow({
         Batal
       </button>
       {/* formAction: tombol hapus ikut form yang sama, jadi tidak perlu form bersarang
-          (HTML melarangnya). confirm() dipasang karena penghapusan tidak bisa dibatalkan. */}
-      <TombolKirim
-        formAction={deleteFamilyNodeAction}
-        onClick={(e) => {
-          if (!confirm(`Hapus "${node.nama}" dari silsilah? Anak-anaknya akan naik ke orang tua di atasnya.`)) e.preventDefault();
-        }}
-        className="text-xs text-danger underline"
-      >
-        Hapus
-      </TombolKirim>
+          (HTML melarangnya). confirm() dipasang karena penghapusan tidak bisa dibatalkan.
+          Anggota biasa (bukan pengurus) wajib lepas pasangan & anak dulu (lihat actions.ts),
+          jadi tombolnya dimatikan duluan supaya tidak nunggu round-trip buat tahu itu ditolak. */}
+      {!pengurus && (hasChildren || hasSpouse) ? (
+        <span className="text-xs text-muted" title="Lepas dulu pasangan dan pindahkan anak-anaknya sebelum bisa menghapus">
+          Hapus
+        </span>
+      ) : (
+        <TombolKirim
+          formAction={deleteFamilyNodeAction}
+          onClick={(e) => {
+            const pesan = pengurus
+              ? `Hapus "${node.nama}" dari silsilah? Anak-anaknya akan naik ke orang tua di atasnya.`
+              : `Hapus "${node.nama}" dari silsilah?`;
+            if (!confirm(pesan)) e.preventDefault();
+          }}
+          className="text-xs text-danger underline"
+        >
+          Hapus
+        </TombolKirim>
+      )}
     </form>
   );
 }

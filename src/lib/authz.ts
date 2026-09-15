@@ -18,7 +18,7 @@ export const PENGURUS: Role[] = [...KETUA, "bendahara", "sekretaris"];
 export const CAN_CATAT_UANG: Role[] = ["bendahara"];
 /** Jadwal & urutan giliran arisan. */
 export const CAN_ATUR_ARISAN: Role[] = [...KETUA, "bendahara", "sekretaris"];
-/** Undangan, approve anggota, ubah role, edit silsilah orang lain. */
+/** Undangan, approve anggota, ubah role. Silsilah punya jalur tambahan di luar ini: lihat requireKelolaSilsilah di t/[tenantId]/silsilah/actions.ts — siapa pun yang sudah tertaut ke sebuah node boleh juga. */
 export const CAN_KELOLA_ANGGOTA: Role[] = [...KETUA, "sekretaris"];
 /** Generate laporan & export. */
 export const CAN_BUAT_LAPORAN: Role[] = [...KETUA, "bendahara", "sekretaris"];

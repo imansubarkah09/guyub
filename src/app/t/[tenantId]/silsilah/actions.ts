@@ -3,7 +3,33 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { requireWrite, CAN_KELOLA_ANGGOTA } from "@/lib/authz";
+import { requireMembership, CAN_KELOLA_ANGGOTA } from "@/lib/authz";
+import { assertNotPreview } from "@/lib/preview";
+import { computeScope, isReferenceable, type NodeLite } from "./scope";
+
+/**
+ * Pengurus (CAN_KELOLA_ANGGOTA) selalu boleh, tanpa batas. Anggota biasa boleh
+ * juga, TAPI cuma untuk node dalam scope-nya sendiri (lihat scope.ts): dirinya,
+ * leluhurnya, keturunannya, pasangannya — bukan keluarga orang lain yang tidak
+ * ada relasinya sama sekali (§ tidak boleh "menyebrang edit").
+ */
+async function requireKelolaSilsilah(user: { id: string; isPlatformOwner: boolean }, tenantId: string) {
+  await assertNotPreview(user);
+  const membership = await requireMembership(user.id, tenantId);
+  if (membership.roles.some((r) => CAN_KELOLA_ANGGOTA.includes(r))) {
+    return { pengurus: true as const, scope: null as Set<string> | null, nodes: [] as NodeLite[] };
+  }
+
+  const nodes = await prisma.familyNode.findMany({ where: { tenantId }, select: { id: true, parentId: true, spouseId: true, userId: true } });
+  const scope = computeScope(nodes, user.id);
+  if (!scope) throw new Error("Kamu belum tertaut ke silsilah tenant ini, jadi belum bisa mengelolanya.");
+  return { pengurus: false as const, scope: scope as Set<string> | null, nodes };
+}
+
+/** Dipakai anggota biasa untuk validasi referensi parentId/spouseId di luar target langsungnya. */
+function assertBolehReferensi(nodes: NodeLite[], scope: Set<string>, id: string | null, label: string) {
+  if (id && !isReferenceable(nodes, scope, id)) throw new Error(`Tidak bisa menautkan ${label} yang bukan bagian dari keluargamu sendiri. Minta pengurus untuk itu.`);
+}
 
 /**
  * Pasangan itu simetris: kalau A menikah dengan B, maka B juga menikah dengan A.
@@ -94,7 +120,7 @@ function bacaUrutan(formData: FormData) {
 export async function addFamilyNodeAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireWrite(user, tenantId, CAN_KELOLA_ANGGOTA);
+  const { pengurus, scope, nodes } = await requireKelolaSilsilah(user, tenantId);
 
   const nama = String(formData.get("nama") ?? "").trim();
   if (!nama) throw new Error("Nama wajib diisi");
@@ -103,6 +129,10 @@ export async function addFamilyNodeAction(formData: FormData) {
   const userId = String(formData.get("userId") ?? "") || null;
   const urutan = bacaUrutan(formData);
   await assertAnggotaTenant(userId, tenantId);
+  if (!pengurus) {
+    assertBolehReferensi(nodes, scope!, parentId, "orang tua");
+    assertBolehReferensi(nodes, scope!, spouseId, "pasangan");
+  }
 
   const node = await prisma.familyNode.create({ data: { tenantId, nama, parentId, userId, urutan } });
   if (spouseId) await ramahkanErrorPasangan(() => setPasangan(node.id, spouseId));
@@ -113,7 +143,7 @@ export async function addFamilyNodeAction(formData: FormData) {
 export async function updateFamilyNodeAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireWrite(user, tenantId, CAN_KELOLA_ANGGOTA);
+  const { pengurus, scope, nodes } = await requireKelolaSilsilah(user, tenantId);
 
   const nodeId = String(formData.get("nodeId"));
   const nama = String(formData.get("nama") ?? "").trim();
@@ -125,6 +155,12 @@ export async function updateFamilyNodeAction(formData: FormData) {
 
   const userId = String(formData.get("userId") ?? "") || null;
   const urutan = bacaUrutan(formData);
+
+  if (!pengurus) {
+    if (!scope!.has(nodeId)) throw new Error("Kamu tidak bisa mengubah orang yang bukan bagian dari keluargamu sendiri.");
+    assertBolehReferensi(nodes, scope!, parentId, "orang tua");
+    assertBolehReferensi(nodes, scope!, spouseId, "pasangan");
+  }
 
   const node = await prisma.familyNode.findUniqueOrThrow({ where: { id: nodeId }, include: { spouseOf: true } });
   if (node.tenantId !== tenantId) throw new Error("Data silsilah tidak ditemukan di tenant ini");
@@ -150,11 +186,23 @@ export async function updateFamilyNodeAction(formData: FormData) {
 export async function deleteFamilyNodeAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireWrite(user, tenantId, CAN_KELOLA_ANGGOTA);
+  const { pengurus, scope } = await requireKelolaSilsilah(user, tenantId);
 
   const nodeId = String(formData.get("nodeId"));
-  const node = await prisma.familyNode.findUniqueOrThrow({ where: { id: nodeId }, include: { spouseOf: true } });
+  if (!pengurus && !scope!.has(nodeId)) throw new Error("Kamu tidak bisa menghapus orang yang bukan bagian dari keluargamu sendiri.");
+
+  const node = await prisma.familyNode.findUniqueOrThrow({
+    where: { id: nodeId },
+    include: { spouseOf: true, _count: { select: { children: true } } },
+  });
   if (node.tenantId !== tenantId) throw new Error("Data silsilah tidak ditemukan di tenant ini");
+
+  // Anggota biasa (bukan pengurus) tidak boleh sekali hapus memindahkan cabang
+  // orang lain, jadi wajib lepas pasangan & anaknya dulu satu-satu. Pengurus
+  // tetap boleh cara cepat: anaknya otomatis naik ke orang tua di atasnya.
+  if (!pengurus && (node._count.children > 0 || node.spouseId || node.spouseOf.length > 0)) {
+    throw new Error("Lepas dulu pasangan dan pindahkan anak-anaknya (edit parent-nya) sebelum menghapus orang ini.");
+  }
 
   await ramahkanErrorPasangan(() => setPasangan(nodeId, null));
   await prisma.$transaction([

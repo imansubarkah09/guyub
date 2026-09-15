@@ -7,6 +7,7 @@ import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, inputClass } from "@/components/ui";
 import { addFamilyNodeAction } from "./actions";
 import { NodeRow } from "./node-row";
+import { computeScope, isReferenceable } from "./scope";
 
 type Node = Awaited<ReturnType<typeof loadNodes>>[number];
 
@@ -31,6 +32,7 @@ function Branch({
   options,
   anggota,
   canKelola,
+  pengurus,
   highlightId,
   matchIds,
 }: {
@@ -40,6 +42,7 @@ function Branch({
   options: { id: string; nama: string }[];
   anggota: { id: string; name: string; email: string }[];
   canKelola: boolean;
+  pengurus: boolean;
   highlightId: string | null;
   matchIds: Set<string> | null;
 }) {
@@ -51,7 +54,15 @@ function Branch({
       <span className={`inline-flex flex-wrap items-center gap-1 rounded-lg px-2 py-1 ${isMe ? "bg-primary/10 ring-1 ring-primary/40" : isMatch ? "bg-warning/10" : ""}`}>
         {node.urutan != null && <Badge tone="muted">Anak ke-{node.urutan}</Badge>}
         {canKelola ? (
-          <NodeRow tenantId={tenantId} node={node} options={options} anggota={anggota} />
+          <NodeRow
+            tenantId={tenantId}
+            node={node}
+            options={options}
+            anggota={anggota}
+            pengurus={pengurus}
+            hasChildren={children.length > 0}
+            hasSpouse={Boolean(node.spouse)}
+          />
         ) : (
           <span className="font-medium">{node.nama}</span>
         )}
@@ -70,7 +81,7 @@ function Branch({
           </summary>
           <ul className="mt-1 ml-3 space-y-1 border-l border-border pl-3">
             {children.map((c) => (
-              <Branch key={c.id} node={c} byParent={byParent} tenantId={tenantId} options={options} anggota={anggota} canKelola={canKelola} highlightId={highlightId} matchIds={matchIds} />
+              <Branch key={c.id} node={c} byParent={byParent} tenantId={tenantId} options={options} anggota={anggota} canKelola={canKelola} pengurus={pengurus} highlightId={highlightId} matchIds={matchIds} />
             ))}
           </ul>
         </details>
@@ -93,7 +104,15 @@ export default async function SilsilahPage({
   const viewerId = await viewerUserId(user, tenantId);
   const [nodes, anggota] = await Promise.all([loadNodes(tenantId), loadAnggota(tenantId)]);
 
-  const canKelola = has(roles, CAN_KELOLA_ANGGOTA);
+  const pengurus = has(roles, CAN_KELOLA_ANGGOTA);
+  /**
+   * Anggota biasa (bukan pengurus) cuma boleh mengelola node dalam scope-nya
+   * sendiri: dirinya, leluhur, keturunan, pasangan — bukan keluarga orang lain
+   * yang tidak ada relasinya (lihat scope.ts & authz-nya di actions.ts).
+   */
+  const scope = pengurus ? null : computeScope(nodes, viewerId);
+  const canKelola = pengurus || scope !== null;
+  const pilihanRelasi = pengurus || !scope ? nodes : nodes.filter((n) => isReferenceable(nodes, scope, n.id));
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const byParent = new Map<string | null, Node[]>();
   for (const n of nodes) {
@@ -186,9 +205,10 @@ export default async function SilsilahPage({
                 node={n}
                 byParent={byParent}
                 tenantId={tenantId}
-                options={nodes.map((x) => ({ id: x.id, nama: x.nama }))}
+                options={pilihanRelasi.map((x) => ({ id: x.id, nama: x.nama }))}
                 anggota={anggota}
                 canKelola={canKelola}
+                pengurus={pengurus}
                 highlightId={nodeSaya?.id ?? null}
                 matchIds={matchIds}
               />
@@ -215,7 +235,7 @@ export default async function SilsilahPage({
             <input name="nama" required placeholder="Nama lengkap" className={inputClass} />
             <select name="parentId" className={inputClass}>
               <option value="">Tanpa orang tua (leluhur tertinggi)</option>
-              {nodes.map((n) => (
+              {pilihanRelasi.map((n) => (
                 <option key={n.id} value={n.id}>
                   Anak dari {n.nama}
                 </option>
@@ -223,7 +243,7 @@ export default async function SilsilahPage({
             </select>
             <select name="spouseId" className={inputClass}>
               <option value="">Tanpa pasangan</option>
-              {nodes.map((n) => (
+              {pilihanRelasi.map((n) => (
                 <option key={n.id} value={n.id}>
                   Pasangan: {n.nama}
                 </option>
