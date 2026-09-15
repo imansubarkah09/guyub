@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight, Wallet, Receipt } from "lucide-react";
+import { Wallet, Receipt } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_CATAT_UANG, has } from "@/lib/authz";
@@ -6,9 +6,10 @@ import { effectiveRoles } from "@/lib/effective-roles";
 import Link from "next/link";
 import { angkaTenant } from "@/lib/ringkasan";
 import { ambilDari } from "@/lib/paging";
-import { Card, PageTitle, EmptyState, Badge, btnPrimary, inputClass, rupiah, tanggal } from "@/components/ui";
+import { Card, PageTitle, EmptyState, Badge, btnPrimary, inputClass, rupiah } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
 import { createKasTransaksiAction } from "./actions";
+import { KasRow } from "./kas-row";
 
 export default async function KasPage({
   params,
@@ -100,31 +101,7 @@ export default async function KasPage({
           <ul className="space-y-2">
             {transaksi.map((t) => (
               <li key={t.id}>
-                <Card className="flex items-center justify-between gap-3 p-3">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${t.tipe === "masuk" ? "bg-success/10" : "bg-danger/10"}`}>
-                      {t.tipe === "masuk" ? <ArrowDownLeft className="h-4 w-4 text-success" /> : <ArrowUpRight className="h-4 w-4 text-danger" />}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm">{t.keterangan ?? "(tanpa keterangan)"}</p>
-                      <p className="text-xs text-muted">
-                        {tanggal.format(t.tanggal)} · {t.dicatatOleh.name}
-                        {t.buktiUrl && (
-                          <>
-                            {" · "}
-                            <a href={t.buktiUrl} target="_blank" rel="noreferrer" className="text-primary underline">
-                              bukti
-                            </a>
-                          </>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                  <span className={`flex-shrink-0 text-sm font-medium tabular-nums ${t.tipe === "masuk" ? "text-success" : "text-danger"}`}>
-                    {t.tipe === "masuk" ? "+" : "−"}
-                    {rupiah.format(Number(t.jumlah))}
-                  </span>
-                </Card>
+                <KasRow tenantId={tenantId} t={t} canEdit={canCatat} />
               </li>
             ))}
           </ul>
