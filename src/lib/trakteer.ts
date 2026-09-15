@@ -53,12 +53,30 @@ export function sisaHari(nyawaSampai: Date | null) {
  * beda dengan yang dikirim API. Bentuk baris di bawah SUDAH dipastikan dari
  * traktir asli (dicontek dari ../brokado/src/lib/trakteer.ts, 5 Sep 2026):
  *   {"supporter_name":"Seseorang","support_message":"...","quantity":1,
- *    "amount":5000,"updated_at":"2026-09-05 19:16:04","net_amount":4711,
- *    "order_id":"3f72ffe9-..."}
+ *    "amount":5000,"unit_name":"Traktir Kopi Brokado","updated_at":"2026-09-05 19:16:04",
+ *    "net_amount":4711,"order_id":"3f72ffe9-..."}
  * Tiga jebakan dari sana yang ikut dibawa: tidak ada field `status`,
  * `supporter_email` null untuk QRIS guest (jadi kuncinya `order_id`), dan
  * `updated_at` dikirim tanpa zona waktu padahal jam WIB.
  */
+
+/**
+ * Akun Trakteer ini DIPAKAI BERSAMA dengan aplikasi lain (Brokado, creator_id
+ * `dz8a3ryo66lg4mnp`). `/v1/public/supports` mengembalikan RIWAYAT SELURUH
+ * AKUN, bukan cuma punya Guyub — `unit_name` di tiap baris satu-satunya
+ * penanda produk/tombol traktir mana yang diklik pendukung.
+ *
+ * Beda dari Brokado: Guyub SENGAJA TIDAK dipatok ke unit eksklusif (instruksi
+ * Iman 15 Sep 2026) — dukungan di sini sifatnya sukarela "traktir kopi" ke
+ * Iman pribadi, jumlahnya bebas ditentukan pendukung, jadi Guyub cukup pakai
+ * unit yang sudah ada, tidak perlu bikin unit terpisah di dashboard Trakteer.
+ * Dicek live: unit yang ada cuma satu, "Traktir Kopi Brokado" (id
+ * mojg5bnjz9d5ew80). Konstanta ini dipatok ke nama unit itu (bukan `null`)
+ * supaya kalau nanti Brokado bikin unit LAIN yang jelas bukan traktir kopi
+ * ini, baris itu tetap tidak ikut kepatok ke Guyub — tapi transaksi di unit
+ * "Traktir Kopi" ini sendiri memang sengaja diterima dari siapa pun.
+ */
+const UNIT_NAME_GUYUB: string | null = "Traktir Kopi Brokado";
 
 const TRAKTEER_API = "https://api.trakteer.id/v1/public";
 
@@ -86,6 +104,11 @@ export function waktuTrakteer(v: unknown): Date | null {
  * nyawa/penautan tenant cuma hidup di satu tempat. Idempoten lewat `orderId`.
  */
 export async function catatDonasi(row: Baris) {
+  // Cuma jaga-jaga kalau suatu saat muncul unit lain di akun yang sama (lihat
+  // catatan UNIT_NAME_GUYUB) — transaksi di unit "Traktir Kopi" sendiri sengaja
+  // diterima dari siapa pun, ini bukan filter pemisah aplikasi.
+  if (!UNIT_NAME_GUYUB || pick(row, "unit_name") !== UNIT_NAME_GUYUB) return { status: "ditolak-unit" as const };
+
   const orderId = pick(row, "order_id", "transaction_id", "id") as string | null;
   if (!orderId) return { status: "invalid" as const };
 

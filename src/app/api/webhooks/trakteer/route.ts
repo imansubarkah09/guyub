@@ -19,5 +19,6 @@ export async function POST(req: Request) {
   const hasil = await catatDonasi(await req.json());
   if (hasil.status === "invalid") return NextResponse.json({ error: "order_id wajib" }, { status: 400 });
   if (hasil.status === "duplikat") return NextResponse.json({ ok: true, note: "sudah diproses" });
+  if (hasil.status !== "baru") return NextResponse.json({ ok: true, note: "dilewati: bukan unit Trakteer Guyub" });
   return NextResponse.json({ ok: true, tenant: hasil.tenantId, hari: hasil.hari });
 }
