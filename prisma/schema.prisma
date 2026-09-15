@@ -9,11 +9,21 @@ generator client {
   previewFeatures = ["relationJoins"]
 }
 
+// engineType="client" (15 Sep 2026): hapus engine Rust/WASM Prisma (22MB,
+// query_engine_bg.wasm) demi CPU time di Workers Free plan (10ms/request),
+// diganti query compiler yang jauh lebih ringan (4.8MB, query_compiler_bg.wasm).
+// Diuji dulu sebelum dipasang (bandingkan hasil engine lama vs baru untuk
+// groupBy/aggregate/include+take+orderBy bersarang/desimal, semua identik) —
+// pola ujinya sama seperti scripts/db-ops-cek-relationjoins.mjs, tapi karena
+// engine dipilih saat build (bukan parameter per-query seperti relationJoins),
+// skrip ujinya tidak disimpan permanen. Kalau versi Prisma naik, uji ulang
+// manual dengan cara yang sama sebelum percaya hasilnya masih identik.
 generator clientWorkerd {
   provider        = "prisma-client"
   output          = "../src/generated/prisma-workerd"
   runtime         = "workerd"
   moduleFormat    = "esm"
+  engineType      = "client"
   previewFeatures = ["relationJoins"]
 }
 
