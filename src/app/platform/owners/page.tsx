@@ -30,14 +30,17 @@ export default async function PlatformOwnersPage({ searchParams }: { searchParam
           <PageTitle title="Platform Owner Saat Ini" />
           <ul className="space-y-2">
             {owners.map((o) => (
-              <li key={o.id} className="flex items-center justify-between rounded-md border border-primary/15 p-3 text-sm">
-                <span>
+              <li key={o.id} className="flex items-center justify-between gap-2 rounded-md border border-primary/15 p-3 text-sm">
+                {/* min-w-0 + truncate: email panjang tidak boleh mendorong tombol
+                    "Cabut" sampai terpotong di halaman paling sensitif se-app ini
+                    (§harden, 15 Sep 2026). */}
+                <span className="min-w-0 truncate">
                   {o.name} <span className="text-foreground/60">({o.email})</span>
                 </span>
                 {o.id === user.id ? (
-                  <span className="text-xs text-foreground/50">Anda</span>
+                  <span className="flex-shrink-0 text-xs text-foreground/50">Anda</span>
                 ) : (
-                  <form action={setPlatformOwnerAction}>
+                  <form action={setPlatformOwnerAction} className="flex-shrink-0">
                     <input type="hidden" name="userId" value={o.id} />
                     <input type="hidden" name="makeOwner" value="false" />
                     {/* Mencabut hak Platform Owner adalah aksi paling sensitif di
@@ -60,11 +63,11 @@ export default async function PlatformOwnersPage({ searchParams }: { searchParam
           {query && results.length === 0 && <p className="text-sm text-foreground/60">Tidak ketemu pengguna dengan nama/email itu.</p>}
           <ul className="space-y-2">
             {results.map((r) => (
-              <li key={r.id} className="flex items-center justify-between rounded-md border border-primary/15 p-3 text-sm">
-                <span>
+              <li key={r.id} className="flex items-center justify-between gap-2 rounded-md border border-primary/15 p-3 text-sm">
+                <span className="min-w-0 truncate">
                   {r.name} <span className="text-foreground/60">({r.email})</span>
                 </span>
-                <form action={setPlatformOwnerAction}>
+                <form action={setPlatformOwnerAction} className="flex-shrink-0">
                   <input type="hidden" name="userId" value={r.id} />
                   <input type="hidden" name="makeOwner" value="true" />
                   <button className="rounded-md bg-primary px-2 py-1 text-xs text-primary-foreground">Jadikan Owner</button>

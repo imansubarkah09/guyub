@@ -168,9 +168,12 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
           <div className="space-y-2">
             {saldoSaya.map((t) => (
               <Card key={t.nama}>
+                {/* min-w-0+truncate di nama, flex-shrink-0 di angka: nama jenis
+                    tabungan yang panjang tidak boleh memaksa nominal uang ikut
+                    terpotong/wrap (§harden, 15 Sep 2026). */}
                 <div className="flex items-center justify-between gap-2 text-sm">
-                  <span className="font-medium">{t.nama}</span>
-                  <span className="tabular-nums">{rupiah.format(t.mode === "pooled" ? t.total : t.milikSaya)}</span>
+                  <span className="min-w-0 truncate font-medium">{t.nama}</span>
+                  <span className="flex-shrink-0 tabular-nums">{rupiah.format(t.mode === "pooled" ? t.total : t.milikSaya)}</span>
                 </div>
                 <p className="mt-0.5 text-xs text-muted">
                   {t.mode === "pooled" ? "Tabungan bersama" : `${t.penabung} dari ${anggotaAktif} anggota sudah menabung · total ${rupiah.format(t.total)}`}

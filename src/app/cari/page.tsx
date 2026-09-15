@@ -49,19 +49,23 @@ export default async function CariPage({ searchParams }: { searchParams: Promise
         {results.map((r) => {
           const status = statusByTenant.get(r.id);
           return (
-            <li key={r.id} className="flex items-center justify-between rounded-md border border-primary/15 p-3 text-sm">
-              <div>
-                <p className="font-medium">{r.profile?.nama}</p>
+            <li key={r.id} className="flex items-center justify-between gap-2 rounded-md border border-primary/15 p-3 text-sm">
+              {/* min-w-0: tanpa ini flex item tidak bisa menyusut, jadi nama
+                  tenant yang panjang mendorong tombol di kanan sampai
+                  terpotong/keluar layar, bukan sekadar memotong teksnya
+                  sendiri (§harden, 15 Sep 2026). */}
+              <div className="min-w-0">
+                <p className="truncate font-medium">{r.profile?.nama}</p>
                 <p className="text-xs text-foreground/60">{JENIS_LABEL[r.jenis]}</p>
               </div>
               {status === "active" ? (
-                <Link href={`/t/${r.id}`} className="text-xs text-primary underline">
+                <Link href={`/t/${r.id}`} className="flex-shrink-0 text-xs text-primary underline">
                   Buka
                 </Link>
               ) : status === "pending_confirmation" ? (
                 <Badge tone="warning">Menunggu konfirmasi</Badge>
               ) : (
-                <form action={requestJoinAction}>
+                <form action={requestJoinAction} className="flex-shrink-0">
                   <input type="hidden" name="tenantId" value={r.id} />
                   <button className="rounded-md bg-primary px-2 py-1 text-xs text-primary-foreground">Minta Gabung</button>
                 </form>
