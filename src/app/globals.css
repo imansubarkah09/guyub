@@ -21,7 +21,10 @@
   --foreground: #2e2118;
   --muted: #8a7867;
   --border: #ebddcd;
-  --primary: #c1652d;
+  /* #c1652d sebelumnya cuma 3.85:1 vs --background & --primary-foreground, gagal
+     AA teks normal (4.5:1) di CTA, wordmark, dan label role sekaligus (ketemu
+     review 15 Sep 2026). Digelapkan ke #a45626, sama-sama ~5.05:1 ke dua arah. */
+  --primary: #a45626;
   --primary-foreground: #fff8ee;
   --accent: #0f766e;
   --success: #15803d;

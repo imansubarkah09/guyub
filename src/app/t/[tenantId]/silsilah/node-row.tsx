@@ -108,10 +108,22 @@ export function NodeRow({
       {/* formAction: tombol hapus ikut form yang sama, jadi tidak perlu form bersarang
           (HTML melarangnya). confirm() dipasang karena penghapusan tidak bisa dibatalkan.
           Anggota biasa (bukan pengurus) wajib lepas pasangan & anak dulu (lihat actions.ts),
-          jadi tombolnya dimatikan duluan supaya tidak nunggu round-trip buat tahu itu ditolak. */}
+          jadi tombolnya dimatikan duluan supaya tidak nunggu round-trip buat tahu itu ditolak.
+          `title` saja tidak cukup (tidak muncul di layar sentuh, tidak selalu dibacakan
+          screen reader) — tombol sungguhan + keterangan teks yang selalu terlihat, bukan
+          cuma tooltip (ketemu review 15 Sep 2026). */}
       {!pengurus && (hasChildren || hasSpouse) ? (
-        <span className="text-xs text-muted" title="Lepas dulu pasangan dan pindahkan anak-anaknya sebelum bisa menghapus">
-          Hapus
+        <span className="inline-flex items-center gap-1">
+          <button
+            type="button"
+            disabled
+            aria-disabled="true"
+            title="Lepas dulu pasangan dan pindahkan anak-anaknya sebelum bisa menghapus"
+            className="cursor-not-allowed text-xs text-muted"
+          >
+            Hapus
+          </button>
+          <span className="text-[11px] text-muted">(lepas pasangan/anak dulu)</span>
         </span>
       ) : (
         <TombolKirim

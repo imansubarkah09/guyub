@@ -31,29 +31,39 @@ function Branch({
   tenantId,
   options,
   anggota,
-  canKelola,
+  scope,
   pengurus,
   highlightId,
   matchIds,
+  depth = 0,
 }: {
   node: Node;
   byParent: Map<string | null, Node[]>;
   tenantId: string;
   options: { id: string; nama: string }[];
   anggota: { id: string; name: string; email: string }[];
-  canKelola: boolean;
+  scope: Set<string> | null;
   pengurus: boolean;
   highlightId: string | null;
   matchIds: Set<string> | null;
+  depth?: number;
 }) {
+  // Jaga-jaga kalau data parentId pernah korup jadi lingkaran (assertBukanKeturunan
+  // di actions.ts mencegah ini saat DITULIS, tapi tidak dicek ulang saat dibaca) —
+  // tanpa ini rekursi tak berhenti dan Worker crash (ketemu review 15 Sep 2026).
+  if (depth > 60) return null;
   const children = byParent.get(node.id) ?? [];
   const isMe = node.id === highlightId;
   const isMatch = matchIds?.has(node.id) ?? false;
+  /** Anggota biasa cuma boleh mengedit NODE INI kalau memang ada di scope-nya
+   * sendiri — sebelumnya tombol edit muncul di semua node se-tenant dan baru
+   * ditolak server setelah submit, membingungkan (ketemu review 15 Sep 2026). */
+  const bisaKelolaNodeIni = pengurus || (scope?.has(node.id) ?? false);
   return (
     <li>
       <span className={`inline-flex flex-wrap items-center gap-1 rounded-lg px-2 py-1 ${isMe ? "bg-primary/10 ring-1 ring-primary/40" : isMatch ? "bg-warning/10" : ""}`}>
         {node.urutan != null && <Badge tone="muted">Anak ke-{node.urutan}</Badge>}
-        {canKelola ? (
+        {bisaKelolaNodeIni ? (
           <NodeRow
             tenantId={tenantId}
             node={node}
@@ -81,7 +91,7 @@ function Branch({
           </summary>
           <ul className="mt-1 ml-3 space-y-1 border-l border-border pl-3">
             {children.map((c) => (
-              <Branch key={c.id} node={c} byParent={byParent} tenantId={tenantId} options={options} anggota={anggota} canKelola={canKelola} pengurus={pengurus} highlightId={highlightId} matchIds={matchIds} />
+              <Branch key={c.id} node={c} byParent={byParent} tenantId={tenantId} options={options} anggota={anggota} scope={scope} pengurus={pengurus} highlightId={highlightId} matchIds={matchIds} depth={depth + 1} />
             ))}
           </ul>
         </details>
@@ -207,7 +217,7 @@ export default async function SilsilahPage({
                 tenantId={tenantId}
                 options={pilihanRelasi.map((x) => ({ id: x.id, nama: x.nama }))}
                 anggota={anggota}
-                canKelola={canKelola}
+                scope={scope}
                 pengurus={pengurus}
                 highlightId={nodeSaya?.id ?? null}
                 matchIds={matchIds}
@@ -229,7 +239,12 @@ export default async function SilsilahPage({
 
       {canKelola && (
         <Card>
-          <h2 className="mb-3 text-sm font-semibold">Tambah Anggota Silsilah</h2>
+          <h2 className="mb-1 text-sm font-semibold">Tambah Anggota Silsilah</h2>
+          {!pengurus && (
+            <p className="mb-3 text-xs text-muted">
+              Anda bisa menambah/mengubah anggota di garis keturunan Anda sendiri (diri sendiri, orang tua, anak, cucu, dan pasangan). Untuk keluarga lain, hubungi pengurus.
+            </p>
+          )}
           <form action={addFamilyNodeAction} className="space-y-2">
             <input type="hidden" name="tenantId" value={tenantId} />
             <input name="nama" required placeholder="Nama lengkap" className={inputClass} />

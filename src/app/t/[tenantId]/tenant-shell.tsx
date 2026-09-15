@@ -97,6 +97,7 @@ export function TenantShell({
           <Link
             key={item.href}
             href={`${base}${item.href}`}
+            aria-current={isActive(item.href) ? "page" : undefined}
             className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${isActive(item.href) ? "text-primary" : "text-muted"}`}
           >
             <item.icon className="h-5 w-5" />
@@ -105,6 +106,7 @@ export function TenantShell({
         ))}
         <button
           onClick={() => setDrawer(true)}
+          aria-current={overflow.some((i) => isActive(i.href)) ? "true" : undefined}
           className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${overflow.some((i) => isActive(i.href)) ? "text-primary" : "text-muted"}`}
         >
           <MoreHorizontal className="h-5 w-5" />
@@ -140,6 +142,7 @@ function SidebarNav({
                   <Link
                     href={`${base}${item.href}`}
                     onClick={onNavigate}
+                    aria-current={isActive(item.href) ? "page" : undefined}
                     // prefetch={false}: sidebar memuat 10+ tautan sekaligus dan tiap
                     // halaman tenant menembak DB. Prefetch bawaan berarti belasan render
                     // SSR cuma karena menu terlihat. Transisi client-side sendiri sudah

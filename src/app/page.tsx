@@ -25,14 +25,16 @@ export default async function Home() {
   return (
     <main>
       <header className="flex items-center justify-between px-4 py-3">
-        <span className="font-semibold text-primary">Guyub</span>
+        <Link href="/" className="font-semibold text-primary">Guyub</Link>
         {user ? (
           <Link href="/dashboard" className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90">
             Dashboard
           </Link>
         ) : (
           <div className="flex items-center gap-2">
-            <Link href="/login" className="px-2 text-sm font-medium text-foreground/70 transition hover:text-foreground hover:underline">
+            {/* py-2 ditambah supaya tap target-nya tidak cuma setinggi baris teks
+                (60.9×20px, gagal minimum 24×24 WCAG — ketemu review 15 Sep 2026). */}
+            <Link href="/login" className="px-2 py-2 text-sm font-medium text-foreground/70 transition hover:text-foreground hover:underline">
               Masuk
             </Link>
             <Link href="/register" className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90">
@@ -139,7 +141,7 @@ export default async function Home() {
             </nav>
           </div>
           <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-primary/15 pt-6 text-center sm:flex-row sm:text-left">
-            <p className="text-xs text-foreground/50">
+            <p className="text-xs text-foreground/70">
               © {new Date().getFullYear()} Guyub. Hak cipta dilindungi.
               <br />
               Guyub merupakan kontribusi dari{" "}
@@ -148,7 +150,7 @@ export default async function Home() {
               </a>
               .
             </p>
-            <Link href="/login" className="text-xs text-foreground/50 hover:text-foreground hover:underline">
+            <Link href="/login" className="text-xs text-foreground/70 hover:text-foreground hover:underline">
               Masuk
             </Link>
           </div>

@@ -22,7 +22,7 @@ async function requireKelolaSilsilah(user: { id: string; isPlatformOwner: boolea
 
   const nodes = await prisma.familyNode.findMany({ where: { tenantId }, select: { id: true, parentId: true, spouseId: true, userId: true } });
   const scope = computeScope(nodes, user.id);
-  if (!scope) throw new Error("Kamu belum tertaut ke silsilah tenant ini, jadi belum bisa mengelolanya.");
+  if (!scope) throw new Error("Kamu belum tertaut ke silsilah grup/komunitas ini, jadi belum bisa mengelolanya.");
   return { pengurus: false as const, scope: scope as Set<string> | null, nodes };
 }
 
@@ -49,7 +49,7 @@ async function setPasangan(nodeId: string, spouseId: string | null) {
     spouseId ? prisma.familyNode.findUnique({ where: { id: spouseId } }) : null,
   ]);
   if (spouseId && !calon) throw new Error("Pasangan yang dipilih tidak ditemukan");
-  if (calon && calon.tenantId !== node.tenantId) throw new Error("Pasangan harus dari tenant yang sama");
+  if (calon && calon.tenantId !== node.tenantId) throw new Error("Pasangan harus dari grup/komunitas yang sama");
 
   const terlibat = [nodeId, spouseId].filter((x): x is string => Boolean(x));
 
@@ -105,7 +105,7 @@ async function assertBukanKeturunan(nodeId: string, parentId: string | null) {
 async function assertAnggotaTenant(userId: string | null, tenantId: string) {
   if (!userId) return;
   const m = await prisma.membership.findUnique({ where: { userId_tenantId: { userId, tenantId } } });
-  if (!m || m.status !== "active") throw new Error("Akun itu bukan anggota aktif tenant ini");
+  if (!m || m.status !== "active") throw new Error("Akun itu bukan anggota aktif grup/komunitas ini");
 }
 
 /** "Anak ke" kosong berarti belum diatur, bukan nol. */
@@ -163,7 +163,7 @@ export async function updateFamilyNodeAction(formData: FormData) {
   }
 
   const node = await prisma.familyNode.findUniqueOrThrow({ where: { id: nodeId }, include: { spouseOf: true } });
-  if (node.tenantId !== tenantId) throw new Error("Data silsilah tidak ditemukan di tenant ini");
+  if (node.tenantId !== tenantId) throw new Error("Data silsilah tidak ditemukan di grup/komunitas ini");
   await assertBukanKeturunan(nodeId, parentId);
   await assertAnggotaTenant(userId, tenantId);
 
@@ -195,13 +195,13 @@ export async function deleteFamilyNodeAction(formData: FormData) {
     where: { id: nodeId },
     include: { spouseOf: true, _count: { select: { children: true } } },
   });
-  if (node.tenantId !== tenantId) throw new Error("Data silsilah tidak ditemukan di tenant ini");
+  if (node.tenantId !== tenantId) throw new Error("Data silsilah tidak ditemukan di grup/komunitas ini");
 
   // Anggota biasa (bukan pengurus) tidak boleh sekali hapus memindahkan cabang
   // orang lain, jadi wajib lepas pasangan & anaknya dulu satu-satu. Pengurus
   // tetap boleh cara cepat: anaknya otomatis naik ke orang tua di atasnya.
   if (!pengurus && (node._count.children > 0 || node.spouseId || node.spouseOf.length > 0)) {
-    throw new Error("Lepas dulu pasangan dan pindahkan anak-anaknya (edit parent-nya) sebelum menghapus orang ini.");
+    throw new Error("Lepas dulu pasangan dan pindahkan anak-anaknya (ubah orang tuanya) sebelum menghapus orang ini.");
   }
 
   await ramahkanErrorPasangan(() => setPasangan(nodeId, null));

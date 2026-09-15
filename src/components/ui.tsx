@@ -29,16 +29,19 @@ export function StatCard({
   value: string;
   sub?: React.ReactNode;
   icon?: LucideIcon;
-  tone?: "primary" | "accent" | "success";
+  tone?: "primary" | "accent" | "success" | "danger";
 }) {
-  const toneClass = { primary: "text-primary", accent: "text-accent", success: "text-success" }[tone];
+  const toneClass = { primary: "text-primary", accent: "text-accent", success: "text-success", danger: "text-danger" }[tone];
   return (
     <Card>
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-medium uppercase tracking-wide text-muted">{label}</p>
         {Icon && <Icon className={`h-4 w-4 flex-shrink-0 ${toneClass}`} />}
       </div>
-      <p className="mt-1 text-xl font-semibold tabular-nums">{value}</p>
+      {/* Nilai ikut diwarnai cuma untuk tone="danger" — saldo kritis butuh sinyal
+          lebih dari sekadar ikon kecil (ketemu review 15 Sep 2026). Tone lain
+          sengaja tidak diubah supaya tampilan StatCard yang sudah ada tidak geser. */}
+      <p className={`mt-1 text-xl font-semibold tabular-nums ${tone === "danger" ? "text-danger" : ""}`}>{value}</p>
       {sub && <div className="mt-1 text-xs text-muted">{sub}</div>}
     </Card>
   );

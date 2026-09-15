@@ -69,20 +69,14 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
     <div className="space-y-5">
       <PageTitle title="Dashboard" desc={`${anggotaAktif} anggota aktif`} />
 
-      <NyawaBar sisaHari={sisaHari(tenant.nyawaSampai)} sampai={tenant.nyawaSampai ? tanggal.format(tenant.nyawaSampai) : null} />
-
-      <section className="grid gap-3 min-[520px]:grid-cols-2">
-        <DonaturList judul="Donatur Terbaru" items={donaturTerbaru.map(keDonatur)} urut="terbaru" />
-        <DonaturList judul="Donasi Terbesar" items={donaturTerbesar.map(keDonatur)} urut="terbesar" />
-      </section>
-
-      {TRAKTEER_MODAL_URL && (
-        <TrakteerModal modalUrl={TRAKTEER_MODAL_URL} kodeDonasi={tenant.kodeDonasi} namaTenant={tenant.profile?.nama ?? "tenant ini"} />
-      )}
-
+      {/* Ringkasan keuangan TENANT didahulukan — sebelumnya NyawaBar & donatur
+          platform (di bawah) render duluan, jadi tenant baru disambut badge
+          merah "Masa aktif habis" sebelum sempat lihat saldo kasnya sendiri
+          (ketemu review 15 Sep 2026). */}
       <section className="grid grid-cols-2 gap-3">
-        <StatCard label="Saldo Kas" value={rupiah.format(r.saldoKas)} icon={Wallet} />
-        <StatCard label="Infaq & Shodaqoh" value={rupiah.format(r.saldoInfaq)} icon={HeartHandshake} tone="accent" />
+        <h2 className="sr-only col-span-2">Ringkasan Keuangan</h2>
+        <StatCard label="Saldo Kas" value={rupiah.format(r.saldoKas)} icon={Wallet} tone={r.saldoKas < 0 ? "danger" : "primary"} />
+        <StatCard label="Infaq & Shodaqoh" value={rupiah.format(r.saldoInfaq)} icon={HeartHandshake} tone={r.saldoInfaq < 0 ? "danger" : "accent"} />
         <StatCard
           label="Tabungan Qurban"
           value={rupiah.format(r.qurbanTotal)}
@@ -102,6 +96,17 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
           sub={arisanAktif ? `Giliran: ${arisanAktif.penerimaBerikutnya ?? "selesai semua"}` : "Belum ada arisan"}
         />
       </section>
+
+      <NyawaBar sisaHari={sisaHari(tenant.nyawaSampai)} sampai={tenant.nyawaSampai ? tanggal.format(tenant.nyawaSampai) : null} />
+
+      <section className="grid gap-3 min-[520px]:grid-cols-2">
+        <DonaturList judul="Pendukung Aplikasi Terbaru" items={donaturTerbaru.map(keDonatur)} urut="terbaru" />
+        <DonaturList judul="Dukungan Terbesar untuk Guyub" items={donaturTerbesar.map(keDonatur)} urut="terbesar" />
+      </section>
+
+      {TRAKTEER_MODAL_URL && (
+        <TrakteerModal modalUrl={TRAKTEER_MODAL_URL} kodeDonasi={tenant.kodeDonasi} namaTenant={tenant.profile?.nama ?? "tenant ini"} />
+      )}
 
       {arisanAktif?.jadwalTanggal && (
         <Card className="border-accent/30 bg-accent/5">
