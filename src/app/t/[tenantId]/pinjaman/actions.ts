@@ -68,7 +68,7 @@ export async function putuskanPinjamanAction(formData: FormData) {
   const decision = String(formData.get("decision"));
   if (decision !== "disetujui" && decision !== "ditolak") throw new Error("Keputusan tidak valid");
 
-  const pinjaman = await prisma.pinjaman.findUniqueOrThrow({ where: { id: pinjamanId }, include: { peminjam: { select: { name: true } } } });
+  const pinjaman = await prisma.pinjaman.findUniqueOrThrow({ where: { id: pinjamanId } });
   if (pinjaman.tenantId !== tenantId) throw new Error("Pinjaman tidak ditemukan di tenant ini");
   if (pinjaman.status !== "diajukan") throw new Error("Pinjaman ini sudah diproses");
 
@@ -84,7 +84,11 @@ export async function putuskanPinjamanAction(formData: FormData) {
           tanggal: new Date(),
           jumlah: pinjaman.jumlahPokok,
           tipe: "keluar",
-          keterangan: `Pencairan pinjaman - ${pinjaman.peminjam.name}`,
+          // Sengaja TIDAK menyebut nama peminjam — riwayat Kas ini tampil ke
+          // SEMUA anggota (transparan), sedangkan detail siapa yang pinjam
+          // cuma boleh dilihat bendahara & peminjamnya sendiri di halaman
+          // Simpan Pinjam (instruksi Iman 15 Sep 2026).
+          keterangan: "Pencairan pinjaman (Simpan Pinjam)",
           dicatatOlehId: user.id,
         },
       }),
@@ -114,7 +118,7 @@ export async function catatCicilanAction(formData: FormData) {
 
   const pinjaman = await prisma.pinjaman.findUniqueOrThrow({
     where: { id: pinjamanId },
-    include: { peminjam: { select: { name: true } }, cicilan: { select: { jumlahPokok: true } } },
+    include: { cicilan: { select: { jumlahPokok: true } } },
   });
   if (pinjaman.tenantId !== tenantId) throw new Error("Pinjaman tidak ditemukan di tenant ini");
   if (pinjaman.status !== "disetujui") throw new Error("Pinjaman ini belum disetujui atau sudah lunas");
@@ -142,7 +146,9 @@ export async function catatCicilanAction(formData: FormData) {
         tanggal: new Date(),
         jumlah: total,
         tipe: "masuk",
-        keterangan: `Cicilan pinjaman - ${pinjaman.peminjam.name}${jumlahBunga > 0 ? ` (pokok Rp${jumlahPokokDibayar} + bunga Rp${jumlahBunga})` : ""}`,
+        // Sama seperti pencairan: tanpa nama peminjam, riwayat ini transparan
+        // ke semua anggota (§harden privasi, 15 Sep 2026).
+        keterangan: `Cicilan pinjaman (Simpan Pinjam)${jumlahBunga > 0 ? `, pokok Rp${jumlahPokokDibayar} + bunga Rp${jumlahBunga}` : ""}`,
         dicatatOlehId: user.id,
       },
     }),

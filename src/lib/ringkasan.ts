@@ -11,12 +11,15 @@ import { prisma } from "@/lib/prisma";
  * Dashboard, Kas, Infaq, Laporan, dan Dana Kegiatan tidak mungkin beda.
  */
 export async function angkaTenant(tenantId: string) {
-  const [kas, infaq, sumber, qurban] = await Promise.all([
+  const [kas, infaq, sumber, qurban, pinjamanPokok, pinjamanDibayar] = await Promise.all([
     prisma.kasTransaksi.groupBy({ by: ["tipe"], where: { tenantId }, _sum: { jumlah: true } }),
     prisma.infaqShodaqoh.aggregate({ where: { tenantId }, _sum: { jumlah: true } }),
     // Satu kegiatan bisa menarik dari beberapa pool sekaligus, jadi dijumlah per baris sumber.
     prisma.danaKegiatanSumber.groupBy({ by: ["sumberDana"], where: { kegiatan: { tenantId } }, _sum: { jumlah: true } }),
     prisma.qurbanSlot.aggregate({ where: { qurbanGroup: { tenantId } }, _sum: { saldoTerkumpul: true } }),
+    // Sisa pokok pinjaman berjalan (bukan tarik semua baris + reduce, lihat komentar di atas).
+    prisma.pinjaman.aggregate({ where: { tenantId, status: "disetujui" }, _sum: { jumlahPokok: true } }),
+    prisma.pinjamanCicilan.aggregate({ where: { pinjaman: { tenantId, status: "disetujui" } }, _sum: { jumlahPokok: true } }),
   ]);
 
   const angka = (v: unknown) => Number(v ?? 0);
@@ -35,6 +38,9 @@ export async function angkaTenant(tenantId: string) {
     saldoInfaq: infaqMasuk - keluarDariInfaq,
     keluarDariKas,
     qurbanTotal: angka(qurban._sum.saldoTerkumpul),
+    /** Sudah ikut mengurangi saldoKas (pencairan tercatat sebagai KasTransaksi
+     * keluar) — angka ini cuma buat dijelaskan ke anggota, bukan pengurang kedua. */
+    pinjamanOutstanding: angka(pinjamanPokok._sum.jumlahPokok) - angka(pinjamanDibayar._sum.jumlahPokok),
   };
 }
 

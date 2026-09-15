@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Wallet, HandCoins, CircleDollarSign, HeartHandshake, PiggyBank, CalendarDays, CheckCircle2, ListTodo } from "lucide-react";
+import { Wallet, HandCoins, CircleDollarSign, HeartHandshake, PiggyBank, CalendarDays, CheckCircle2, ListTodo, Banknote } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { ringkasanTenant, pesanGamifiedQurban } from "@/lib/ringkasan";
@@ -94,6 +94,23 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
           tone="success"
           sub={arisanAktif ? `Giliran: ${arisanAktif.penerimaBerikutnya ?? "selesai semua"}` : "Belum ada arisan"}
         />
+        {/* Cuma tampil kalau ada pinjaman berjalan — supaya semua anggota (bukan
+            cuma bendahara) tahu Saldo Kas di atas SUDAH dikurangi uang yang
+            sedang dipinjamkan, tanpa perlu buka halaman Simpan Pinjam (yang
+            detail per-orangnya memang dibatasi bendahara+peminjam saja).
+            col-span penuh: ini catatan penjelas, bukan angka sejajar 4 di atas
+            (§permintaan Iman, 15 Sep 2026). */}
+        {r.pinjamanOutstanding > 0 && (
+          <div className="col-span-2 sm:col-span-4">
+            <StatCard
+              label="Simpan Pinjam"
+              value={rupiah.format(r.pinjamanOutstanding)}
+              icon={Banknote}
+              tone="warning"
+              sub="Sedang dipinjamkan ke anggota — sudah mengurangi Saldo Kas di atas"
+            />
+          </div>
+        )}
       </section>
 
       {/* "Tugas Anda" dipindah naik ke urutan ke-2 (setelah uang) — ini daftar

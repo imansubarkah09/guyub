@@ -29,9 +29,9 @@ export function StatCard({
   value: string;
   sub?: React.ReactNode;
   icon?: LucideIcon;
-  tone?: "primary" | "accent" | "success" | "danger";
+  tone?: "primary" | "accent" | "success" | "danger" | "warning";
 }) {
-  const toneClass = { primary: "text-primary", accent: "text-accent", success: "text-success", danger: "text-danger" }[tone];
+  const toneClass = { primary: "text-primary", accent: "text-accent", success: "text-success", danger: "text-danger", warning: "text-warning" }[tone];
   return (
     <Card>
       <div className="flex items-start justify-between gap-2">
