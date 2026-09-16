@@ -1,15 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Wallet, HandCoins, CircleDollarSign, HeartHandshake, PiggyBank, CalendarDays, CheckCircle2, ListTodo, Banknote } from "lucide-react";
+import { Wallet, HandCoins, CircleDollarSign, HeartHandshake, PiggyBank, CalendarDays, CheckCircle2, ListTodo, Banknote, MessageCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { effectiveRoles } from "@/lib/effective-roles";
+import { CAN_KELOLA_ANGGOTA, has } from "@/lib/authz";
+import { waShareUrl } from "@/lib/whatsapp";
 import { ringkasanTenant, pesanGamifiedQurban } from "@/lib/ringkasan";
 import { tenantDenganProfil } from "@/lib/tenant";
-import { Card, StatCard, PageTitle, Badge, Progress, EmptyState, rupiah, tanggal } from "@/components/ui";
+import { Card, StatCard, PageTitle, Badge, Progress, EmptyState, btnPrimary, rupiah, tanggal } from "@/components/ui";
 import { HewanIcon } from "@/components/hewan";
 import { NyawaBar, DonaturList } from "@/components/nyawa";
 import { TrakteerModal } from "@/components/trakteer-modal";
 import { TRAKTEER_MODAL_URL, sisaHari } from "@/lib/trakteer";
+import { generateInviteAction } from "./anggota/actions";
 
 /** Kolom yang benar-benar dipakai kartu donatur — sisanya (orderId, pesan) tidak perlu ikut terbawa. */
 const KOLOM_DONATUR = { id: true, namaDonatur: true, jumlah: true, hariNyawa: true, createdAt: true } as const;
@@ -20,15 +24,18 @@ const CARD_LINK = "h-full transition hover:border-primary/40";
 export default async function RingkasanPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
   const user = await requireUser();
+  const { roles } = await effectiveRoles(user, tenantId);
   const r = await ringkasanTenant(tenantId);
   const base = `/t/${tenantId}`;
 
-  const [nodeSaya, anggotaAktif, tenant, donaturTerbaru, donaturTerbesar] = await Promise.all([
+  const canKelolaAnggota = has(roles, CAN_KELOLA_ANGGOTA);
+  const [nodeSaya, anggotaAktif, tenant, donaturTerbaru, donaturTerbesar, invitasiAktif] = await Promise.all([
     prisma.familyNode.findFirst({ where: { tenantId, userId: user.id }, select: { id: true } }),
     prisma.membership.count({ where: { tenantId, status: "active" } }),
     tenantDenganProfil(tenantId),
     prisma.trakteerDonasi.findMany({ where: { tenantId }, select: KOLOM_DONATUR, orderBy: { createdAt: "desc" }, take: 50 }),
     prisma.trakteerDonasi.findMany({ where: { tenantId }, select: KOLOM_DONATUR, orderBy: { jumlah: "desc" }, take: 50 }),
+    canKelolaAnggota ? prisma.invitation.findFirst({ where: { tenantId, status: "active" }, orderBy: { createdAt: "desc" } }) : null,
   ]);
 
   // Layout tenant sudah menolak tenant yang tidak ada; ini cuma supaya tipenya menyempit.
@@ -127,6 +134,30 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
           </Link>
         )}
       </section>
+
+      {canKelolaAnggota && (
+        <section>
+          {invitasiAktif ? (
+            <a
+              href={waShareUrl(
+                `Anda diundang bergabung ke ${tenant.profile?.nama ?? "tenant ini"} di Guyub, klik link ini untuk gabung: ${process.env.NEXT_PUBLIC_URL ?? ""}/invite/${invitasiAktif.token}`,
+              )}
+              target="_blank"
+              rel="noreferrer"
+              className={`${btnPrimary} w-full`}
+            >
+              <MessageCircle className="h-4 w-4" /> Undang Keluarga/Warga Bergabung
+            </a>
+          ) : (
+            <form action={generateInviteAction}>
+              <input type="hidden" name="tenantId" value={tenantId} />
+              <button className={`${btnPrimary} w-full`}>
+                <MessageCircle className="h-4 w-4" /> Buat Link & Undang Keluarga/Warga
+              </button>
+            </form>
+          )}
+        </section>
+      )}
 
       {/* "Tugas Anda" dipindah naik ke urutan ke-2 (setelah uang) — ini daftar
           personal yang butuh aksi, jauh lebih relevan buat visitor yang balik

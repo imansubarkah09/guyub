@@ -16,6 +16,8 @@ export async function generateInviteAction(formData: FormData) {
 
   await prisma.invitation.create({ data: { tenantId, createdById: user.id } });
   revalidatePath(`/t/${tenantId}/anggota`);
+  // Tombol "Undang Keluarga/Warga Bergabung" di Dashboard juga pakai undangan aktif ini.
+  revalidatePath(`/t/${tenantId}`);
 }
 
 export async function revokeInviteAction(formData: FormData) {
