@@ -60,11 +60,15 @@ export async function updateRolesAction(formData: FormData) {
   const target = await prisma.membership.findUniqueOrThrow({ where: { id: membershipId } });
   if (target.tenantId !== tenantId) throw new Error("Anggota tidak ditemukan di tenant ini");
 
-  // Peran ketua yang sedang menjabat terkunci total dari form ini (permintaan
-  // Iman, 16 Sep 2026): checkbox-nya memang tidak dirender di UI, tapi dijaga
-  // di sini juga supaya tidak bisa ditembus lewat request mentah di luar UI.
-  if (target.roles.includes("ketua")) {
-    throw new Error("Peran ketua yang menjabat tidak bisa diubah lewat sini");
+  const sayaKetua = me.roles.some((r) => KETUA.includes(r));
+
+  // Peran ketua yang sedang menjabat cuma boleh diubah ketua/wakil ketua
+  // (koreksi salah klik, atau serah terima jabatan) atau platform owner,
+  // BUKAN sekretaris (ketemu 16 Sep 2026: sekretaris salah klik menjadikan
+  // anggota lain ketua, dan lock sebelumnya keliru ikut mengunci ketua/owner
+  // sendiri, jadi kesalahan itu tidak bisa dikoreksi siapa pun).
+  if (target.roles.includes("ketua") && !sayaKetua && !user.isPlatformOwner) {
+    throw new Error("Cuma ketua/wakil ketua yang menjabat atau platform owner yang bisa mengubah peran ketua");
   }
 
   const roles = ALL_ROLES.filter((r) => formData.getAll("roles").includes(r));
@@ -72,7 +76,6 @@ export async function updateRolesAction(formData: FormData) {
 
   // §5: sekretaris boleh mengubah role, kecuali mengangkat DIRINYA SENDIRI jadi
   // ketua. Wakil ketua ikut dijaga karena izinnya sama persis dengan ketua.
-  const sayaKetua = me.roles.some((r) => KETUA.includes(r));
   const naikJadiKetua = KETUA.some((r) => roles.includes(r) && !target.roles.includes(r));
   if (!sayaKetua && target.userId === user.id && naikJadiKetua) {
     throw new Error("Sekretaris tidak bisa mengangkat dirinya sendiri menjadi ketua atau wakil ketua");

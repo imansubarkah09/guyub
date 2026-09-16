@@ -1,7 +1,7 @@
 import { Users, UserPlus, Link2, MessageCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { CAN_KELOLA_ANGGOTA, PENGURUS, ROLE_LABEL, has } from "@/lib/authz";
+import { CAN_KELOLA_ANGGOTA, PENGURUS, KETUA, ROLE_LABEL, has } from "@/lib/authz";
 import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
 import { waShareUrl } from "@/lib/whatsapp";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, btnGhost, inputClass } from "@/components/ui";
@@ -26,6 +26,11 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
   // pengurus (termasuk bendahara), bukan cuma ketua/wakil ketua/sekretaris
   // (permintaan Iman, 16 Sep 2026).
   const canApprove = has(roles, PENGURUS);
+  // Cuma ketua/wakil ketua yang menjabat atau platform owner yang boleh ubah
+  // peran ketua (koreksi salah klik, serah terima), sekretaris tidak (ketemu
+  // 16 Sep 2026: sekretaris salah klik menjadikan anggota lain ketua, dan lock
+  // sebelumnya keliru ikut mengunci ketua/owner sendiri juga).
+  const bisaUbahKetua = has(roles, KETUA) || user.isPlatformOwner;
   const base = process.env.NEXT_PUBLIC_URL ?? "";
   const pending = memberships.filter((m) => m.status === "pending_confirmation");
   const active = memberships.filter((m) => m.status === "active");
@@ -114,7 +119,7 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
                     </div>
                   </div>
 
-                  {canKelola && !m.roles.includes("ketua") ? (
+                  {canKelola && (!m.roles.includes("ketua") || bisaUbahKetua) ? (
                     <form action={updateRolesAction} className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2 text-xs">
                       <input type="hidden" name="tenantId" value={tenantId} />
                       <input type="hidden" name="membershipId" value={m.id} />
@@ -133,7 +138,9 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
                           {r}
                         </Badge>
                       ))}
-                      {canKelola && m.roles.includes("ketua") && <span className="text-[11px] text-muted">Peran ketua yang menjabat terkunci, tidak bisa diubah dari sini.</span>}
+                      {canKelola && m.roles.includes("ketua") && !bisaUbahKetua && (
+                        <span className="text-[11px] text-muted">Peran ketua yang menjabat cuma bisa diubah ketua/wakil ketua atau platform owner.</span>
+                      )}
                     </div>
                   )}
                 </Card>
