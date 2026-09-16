@@ -16,11 +16,12 @@ const BIAYA = [
 ];
 
 export default async function TentangPage() {
-  const [user, tenantAktif, anggotaAktif] = await Promise.all([
-    getSessionUser(),
-    prisma.tenant.count({ where: { status: "approved" } }),
-    prisma.membership.count({ where: { status: "active" } }),
-  ]);
+  // Sequential, bukan Promise.all: paralel pernah bikin "/tentang" kena
+  // Worker exceeded CPU time limit di produksi (ketemu 16 Sep 2026 lewat
+  // wrangler tail), lihat catatan sama di src/app/page.tsx dan CLAUDE.md.
+  const user = await getSessionUser();
+  const tenantAktif = await prisma.tenant.count({ where: { status: "approved" } });
+  const anggotaAktif = await prisma.membership.count({ where: { status: "active" } });
 
   return (
     <main>
