@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requireWrite, CAN_BUAT_LAPORAN } from "@/lib/authz";
 import { angkaTenant } from "@/lib/ringkasan";
-import { cloudinary } from "@/lib/cloudinary";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 
 export type LaporanActionResult = { error: string } | { shareLink: string };
 
@@ -30,7 +30,7 @@ export async function createLaporanAction(tenantId: string, periode: string, pdf
   let pdfUrl: string | undefined;
   if (pdfDataUri) {
     try {
-      const uploaded = await cloudinary.uploader.upload(pdfDataUri, { folder: `guyub/laporan/${tenantId}`, resource_type: "auto" });
+      const uploaded = await uploadToCloudinary(pdfDataUri, { folder: `guyub/laporan/${tenantId}`, resourceType: "auto" });
       pdfUrl = uploaded.secure_url;
     } catch (e) {
       console.error("Upload PDF laporan gagal", e);
