@@ -2,9 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Wallet, HandCoins, TreePine, FileText, ShieldCheck, X, Check, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { getSessionUser } from "@/lib/session";
-import { TRAKTEER_MODAL_URL } from "@/lib/trakteer";
-import { TrakteerModal } from "@/components/trakteer-modal";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 
 const TANGGAL_LENGKAP = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "short", year: "numeric" });
 
@@ -61,33 +60,14 @@ const FITUR_PERAN = [
 ];
 
 export default async function Home() {
-  const [user, tenantAktif, anggotaAktif] = await Promise.all([
-    getSessionUser(),
+  const [tenantAktif, anggotaAktif] = await Promise.all([
     prisma.tenant.count({ where: { status: "approved" } }),
     prisma.membership.count({ where: { status: "active" } }),
   ]);
 
   return (
     <main>
-      <header className="flex items-center justify-between px-4 py-3">
-        <Link href="/" className="font-semibold text-primary">Guyub</Link>
-        {user ? (
-          <Link href="/dashboard" className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90">
-            Dashboard
-          </Link>
-        ) : (
-          <div className="flex items-center gap-2">
-            {/* py-2 ditambah supaya tap target-nya tidak cuma setinggi baris teks
-                (60.9×20px, gagal minimum 24×24 WCAG, ketemu review 15 Sep 2026). */}
-            <Link href="/login" className="px-2 py-2 text-sm font-medium text-foreground/70 transition hover:text-foreground hover:underline">
-              Masuk
-            </Link>
-            <Link href="/register" className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90">
-              Daftar
-            </Link>
-          </div>
-        )}
-      </header>
+      <SiteHeader />
 
       <section className="mx-auto max-w-md px-4 md:max-w-2xl py-10 text-center">
         <h1 className="text-2xl font-semibold">Kas keluarga, RT, atau paguyuban, rapi tanpa bikin pengurus pusing</h1>
@@ -199,57 +179,16 @@ export default async function Home() {
         </p>
       </section>
 
-      {TRAKTEER_MODAL_URL && (
-        <section id="dukung" className="mx-auto max-w-md px-4 md:max-w-2xl py-8 text-center text-sm">
-          <p className="mb-2 text-foreground/70">Suka sama Guyub? Boleh banget traktir kami buat dukung pengembangannya.</p>
-          <TrakteerModal
-            modalUrl={TRAKTEER_MODAL_URL}
-            label="Traktir Kami"
-            className="inline-flex items-center gap-2 rounded-md border border-primary/30 px-4 py-2 font-medium text-primary"
-          />
-        </section>
-      )}
+      <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8 text-center text-sm">
+        <p className="text-foreground/70">
+          Guyub gratis, tapi bukan berarti tanpa biaya, semuanya ditanggung sendiri oleh pengembangnya.{" "}
+          <Link href="/tentang" className="font-medium text-primary hover:underline">
+            Baca ceritanya & ikut dukung →
+          </Link>
+        </p>
+      </section>
 
-      <footer className="border-t border-primary/15 bg-primary/5">
-        <div className="mx-auto max-w-md px-4 py-10 md:max-w-2xl">
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
-            <div className="col-span-2 sm:col-span-1">
-              <span className="text-lg font-bold text-primary">Guyub</span>
-              <p className="mt-2 max-w-xs text-sm text-foreground/70">Kas, tabungan, qurban joinan, dan silsilah keluarga, RT, atau paguyuban, beres dalam satu tempat.</p>
-            </div>
-            <nav aria-label="Produk">
-              <p className="text-sm font-semibold">Produk</p>
-              <ul className="mt-3 space-y-2">
-                <li><Link href="/register" className="text-sm text-foreground/70 hover:text-foreground hover:underline">Daftar</Link></li>
-                <li><Link href="/login" className="text-sm text-foreground/70 hover:text-foreground hover:underline">Masuk</Link></li>
-                <li><Link href="/cari" className="text-sm text-foreground/70 hover:text-foreground hover:underline">Cari Tenant</Link></li>
-              </ul>
-            </nav>
-            <nav aria-label="Lainnya">
-              <p className="text-sm font-semibold">Lainnya</p>
-              <ul className="mt-3 space-y-2">
-                {TRAKTEER_MODAL_URL && (
-                  <li><a href="#dukung" className="text-sm text-foreground/70 hover:text-foreground hover:underline">Dukung Pengembang</a></li>
-                )}
-              </ul>
-            </nav>
-          </div>
-          <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-primary/15 pt-6 text-center sm:flex-row sm:text-left">
-            <p className="text-xs text-foreground/70">
-              © {new Date().getFullYear()} Guyub. Hak cipta dilindungi.
-              <br />
-              Guyub merupakan kontribusi dari{" "}
-              <a href="https://thedreamcompany.space" target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline">
-                The Dream Company
-              </a>
-              .
-            </p>
-            <Link href="/login" className="text-xs text-foreground/70 hover:text-foreground hover:underline">
-              Masuk
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

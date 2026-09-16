@@ -72,7 +72,15 @@ export function EmptyState({
   );
 }
 
-export function Badge({ children, tone = "muted" }: { children: React.ReactNode; tone?: "muted" | "success" | "warning" | "danger" | "primary" }) {
+export function Badge({
+  children,
+  tone = "muted",
+  className = "",
+}: {
+  children: React.ReactNode;
+  tone?: "muted" | "success" | "warning" | "danger" | "primary";
+  className?: string;
+}) {
   const tones = {
     muted: "bg-border/60 text-muted",
     success: "bg-success/10 text-success",
@@ -80,7 +88,7 @@ export function Badge({ children, tone = "muted" }: { children: React.ReactNode;
     danger: "bg-danger/10 text-danger",
     primary: "bg-primary/10 text-primary",
   };
-  return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${tones[tone]}`}>{children}</span>;
+  return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${tones[tone]} ${className}`}>{children}</span>;
 }
 
 export function Progress({ value }: { value: number }) {

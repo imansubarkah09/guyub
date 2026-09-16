@@ -11,6 +11,8 @@ import { createQurbanGroupAction, joinQurbanSlotAction, setorQurbanAction } from
 import { EditGroupButton, EditSlotButton, CancelSlotButton } from "./edit-controls";
 
 const MAX_SLOT = { sapi: 7, kambing: 1 } as const;
+const ORDINAL = ["Pertama", "Kedua", "Ketiga", "Keempat", "Kelima", "Keenam", "Ketujuh", "Kedelapan", "Kesembilan", "Kesepuluh"];
+const ordinal = (n: number) => ORDINAL[n - 1] ?? `ke-${n}`;
 
 export default async function QurbanPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
@@ -27,21 +29,14 @@ export default async function QurbanPage({ params }: { params: Promise<{ tenantI
   const canKelola = has(roles, CAN_CATAT_UANG);
 
   // Rekap agregat tenant (§7.6).
-  const rekap = { kambingLunas: 0, kambingTerbuka: 0, sapiLunas: 0, sapiTerbuka: 0, jiwaSapiTerisi: 0, jiwaSapiTotal: 0, total: 0 };
+  const rekap = { lunas: 0, kambingTotal: 0, sapiList: [] as { terisi: number }[], total: 0 };
   for (const g of groups) {
     const max = MAX_SLOT[g.jenisHewan];
     const lunasCount = g.slots.filter((s) => s.status === "lunas").length;
-    const selesai = lunasCount === max;
     rekap.total += g.slots.reduce((a, s) => a + Number(s.saldoTerkumpul), 0);
-    if (g.jenisHewan === "kambing") {
-      if (selesai) rekap.kambingLunas++;
-      else rekap.kambingTerbuka++;
-    } else {
-      if (selesai) rekap.sapiLunas++;
-      else rekap.sapiTerbuka++;
-      rekap.jiwaSapiTerisi += g.slots.length;
-      rekap.jiwaSapiTotal += max;
-    }
+    if (lunasCount === max) rekap.lunas++;
+    if (g.jenisHewan === "kambing") rekap.kambingTotal++;
+    else rekap.sapiList.push({ terisi: g.slots.length });
   }
 
   return (
@@ -52,12 +47,16 @@ export default async function QurbanPage({ params }: { params: Promise<{ tenantI
         <StatCard label="Total Terkumpul" value={rupiah.format(rekap.total)} icon={HandCoins} />
         <StatCard
           label="Hewan Qurban"
-          value={`${rekap.kambingLunas + rekap.sapiLunas} lunas`}
+          value={`${rekap.lunas} lunas`}
           tone="success"
           sub={
             <>
-              Kambing {rekap.kambingLunas} lunas / {rekap.kambingTerbuka} terbuka · Sapi {rekap.sapiLunas} lunas / {rekap.sapiTerbuka} terbuka
-              {rekap.jiwaSapiTotal > 0 && ` · jiwa sapi ${rekap.jiwaSapiTerisi}/${rekap.jiwaSapiTotal}`}
+              {rekap.kambingTotal > 0 && <p>{rekap.kambingTotal} Kambing</p>}
+              {rekap.sapiList.map((s, i) => (
+                <p key={i}>
+                  Sapi {ordinal(i + 1)} {s.terisi}/{MAX_SLOT.sapi}
+                </p>
+              ))}
             </>
           }
         />
