@@ -33,9 +33,10 @@ export default async function TentangPage() {
       <section className="mx-auto max-w-md px-4 md:max-w-2xl py-10 text-center">
         <h1 className="text-2xl font-semibold">Guyub gratis, biayanya saya yang tanggung sendiri</h1>
         <p className="mt-3 text-sm text-foreground/70">
-          Nama saya Iman, saya yang bikin Guyub. Fitur dasarnya, kas, tabungan, qurban joinan, arisan, silsilah,
-          laporan, memang sengaja saya bikin gratis. Tapi server, database, dan domain yang menjalankannya tetap
-          harus dibayar tiap bulan, dan itu keluar dari kantong saya pribadi, bukan investor atau iklan.
+          Saya yang bikin Guyub, sengaja nggak pakai nama biar ceritanya soal kenapa Guyub ada, bukan soal siapa
+          saya. Fitur dasarnya, kas, tabungan, qurban joinan, arisan, silsilah, laporan, memang sengaja saya bikin
+          gratis. Tapi server, database, dan domain yang menjalankannya tetap harus dibayar tiap bulan, dan itu
+          keluar dari kantong saya pribadi, bukan investor atau iklan.
         </p>
       </section>
 
