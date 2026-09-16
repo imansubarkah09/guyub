@@ -11,7 +11,7 @@ import { updateKasTransaksiAction } from "./actions";
 type Transaksi = {
   id: string;
   tanggal: Date;
-  jumlah: unknown;
+  jumlah: number;
   tipe: "masuk" | "keluar";
   keterangan: string | null;
   buktiUrl: string | null;

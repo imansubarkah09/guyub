@@ -50,6 +50,18 @@ export function TrakteerModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [tahap]);
 
+  // Salin otomatis begitu tahap "kode" kebuka, supaya donatur tinggal paste tanpa perlu klik ikon copy dulu (tombol copy tetap ada buat salin ulang / kalau gagal karena izin clipboard).
+  useEffect(() => {
+    if (tahap !== "kode" || !kodeDonasi) return;
+    navigator.clipboard
+      ?.writeText(kodeDonasi)
+      .then(() => {
+        setTersalin(true);
+        window.setTimeout(() => setTersalin(false), 2000);
+      })
+      .catch(() => {});
+  }, [tahap, kodeDonasi]);
+
   return (
     <>
       <button onClick={() => setTahap(kodeDonasi ? "kode" : "overlay")} className={className ?? `${btnPrimary} w-full`}>
@@ -61,10 +73,10 @@ export function TrakteerModal({
           <div className="w-full max-w-sm rounded-[var(--radius)] bg-surface p-4 shadow-xl">
             <p className="font-semibold">Dukung {namaTenant}</p>
             <p className="mt-1 text-sm text-muted">
-              Salin kode di bawah, lalu <strong>tempelkan di kolom pesan dukungan</strong> saat traktir. Kode ini yang membuat donasi Anda menambah masa aktif tenant ini.
+              Kode di bawah sudah disalin otomatis, tinggal <strong>tempelkan di kolom pesan dukungan</strong> saat traktir. Kode ini yang membuat donasi Anda menambah masa aktif tenant ini.
             </p>
             <div className="mt-3 flex items-center gap-2">
-              <code className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-center font-mono text-lg tracking-widest">{kodeDonasi}</code>
+              <code className="min-w-0 flex-1 break-all rounded-lg border border-border bg-background px-3 py-2 text-center font-mono text-base tracking-wide">{kodeDonasi}</code>
               <button
                 onClick={() => {
                   navigator.clipboard?.writeText(kodeDonasi).then(() => {
@@ -72,7 +84,7 @@ export function TrakteerModal({
                     window.setTimeout(() => setTersalin(false), 2000);
                   });
                 }}
-                className={btnGhost}
+                className={`${btnGhost} shrink-0`}
                 aria-label="Salin kode"
               >
                 {tersalin ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}

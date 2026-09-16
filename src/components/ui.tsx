@@ -2,8 +2,8 @@ import type { LucideIcon } from "lucide-react";
 
 /** Komponen dasar dipakai di semua halaman supaya tampilannya konsisten (§4). */
 
-export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`overflow-hidden break-words rounded-[var(--radius)] border border-border bg-surface p-4 shadow-sm ${className}`}>{children}</div>;
+export function Card({ children, className = "", id }: { children: React.ReactNode; className?: string; id?: string }) {
+  return <div id={id} className={`overflow-hidden break-words rounded-[var(--radius)] border border-border bg-surface p-4 shadow-sm ${className}`}>{children}</div>;
 }
 
 export function PageTitle({ title, desc, action }: { title: string; desc?: string; action?: React.ReactNode }) {
@@ -24,16 +24,18 @@ export function StatCard({
   sub,
   icon: Icon,
   tone = "primary",
+  className = "",
 }: {
   label: string;
   value: string;
   sub?: React.ReactNode;
   icon?: LucideIcon;
   tone?: "primary" | "accent" | "success" | "danger" | "warning";
+  className?: string;
 }) {
   const toneClass = { primary: "text-primary", accent: "text-accent", success: "text-success", danger: "text-danger", warning: "text-warning" }[tone];
   return (
-    <Card>
+    <Card className={className}>
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-medium uppercase tracking-wide text-muted">{label}</p>
         {Icon && <Icon className={`h-4 w-4 flex-shrink-0 ${toneClass}`} />}

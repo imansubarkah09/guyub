@@ -77,7 +77,7 @@ export default async function KasPage({
           <ul className="space-y-2">
             {transaksi.map((t) => (
               <li key={t.id}>
-                <KasRow tenantId={tenantId} t={t} canEdit={canCatat} />
+                <KasRow tenantId={tenantId} t={{ ...t, jumlah: Number(t.jumlah) }} canEdit={canCatat} />
               </li>
             ))}
           </ul>

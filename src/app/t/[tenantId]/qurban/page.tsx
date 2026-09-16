@@ -93,7 +93,7 @@ export default async function QurbanPage({ params }: { params: Promise<{ tenantI
             const lunasNama = g.slots.filter((s) => s.status === "lunas").map((s) => s.user.name);
             const canJoin = g.slots.length < max && !g.slots.some((s) => s.userId === viewerId);
             return (
-              <Card key={g.id}>
+              <Card key={g.id} id={g.id} className="scroll-mt-16">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="flex items-center gap-1.5 font-medium">

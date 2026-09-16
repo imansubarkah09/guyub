@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { updateQurbanGroupAction, updateQurbanSlotAction, cancelQurbanSlotAction } from "./actions";
 import { InputRupiah } from "@/components/input-rupiah";
+import { Card, btnGhost } from "@/components/ui";
 
 export function EditGroupButton({
   tenantId,
@@ -70,18 +71,43 @@ export function EditSlotButton({ tenantId, slotId, saldoTerkumpul }: { tenantId:
   );
 }
 
-/** Batal ikut slot, hanya muncul selama saldoTerkumpul-nya masih 0. */
+/** Batal ikut slot, hanya muncul selama saldoTerkumpul-nya masih 0. Modal konfirmasi meniru pola TrakteerModal (backdrop + panel bg-surface). */
 export function CancelSlotButton({ tenantId, slotId }: { tenantId: string; slotId: string }) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   return (
-    <form
-      action={cancelQurbanSlotAction}
-      onSubmit={(e) => {
-        if (!confirm("Batal ikut slot qurban ini?")) e.preventDefault();
-      }}
-    >
-      <input type="hidden" name="tenantId" value={tenantId} />
-      <input type="hidden" name="slotId" value={slotId} />
-      <button className="text-xs text-red-600 underline">batal ikut</button>
-    </form>
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="text-xs text-danger underline">
+        batal ikut
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
+          <Card className="w-full max-w-sm shadow-xl">
+            <p className="font-semibold">Batal ikut slot qurban?</p>
+            <p className="mt-1 text-sm text-muted">Slot ini akan dihapus dari daftar patungan, dan bisa diisi orang lain.</p>
+            <form action={cancelQurbanSlotAction} className="mt-4 flex gap-2">
+              <input type="hidden" name="tenantId" value={tenantId} />
+              <input type="hidden" name="slotId" value={slotId} />
+              <button className="flex-1 rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 active:scale-[0.98]">
+                Ya, batalkan
+              </button>
+              <button type="button" onClick={() => setOpen(false)} className={btnGhost}>
+                Tutup
+              </button>
+            </form>
+          </Card>
+        </div>
+      )}
+    </>
   );
 }

@@ -14,6 +14,9 @@ import { TRAKTEER_MODAL_URL, sisaHari } from "@/lib/trakteer";
 /** Kolom yang benar-benar dipakai kartu donatur — sisanya (orderId, pesan) tidak perlu ikut terbawa. */
 const KOLOM_DONATUR = { id: true, namaDonatur: true, jumlah: true, hariNyawa: true, createdAt: true } as const;
 
+/** Feedback hover buat card dashboard yang dibungkus Link ke halaman detailnya. */
+const CARD_LINK = "h-full transition hover:border-primary/40";
+
 export default async function RingkasanPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
   const user = await requireUser();
@@ -42,6 +45,7 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
   // Saldo tabungan pribadi + berapa anggota yang sudah menabung (§7.3).
   const saldoSaya = r.tabunganTipe
     .map((t) => ({
+      id: t.id,
       nama: t.nama,
       mode: t.mode,
       milikSaya: t.saldo.filter((s) => s.userId === user.id).reduce((a, s) => a + Number(s.jumlah), 0),
@@ -74,26 +78,36 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
           di layar lebar (sm:) supaya tidak jadi 2 baris sempit begitu ada ruang. */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <h2 className="sr-only col-span-2 sm:col-span-4">Ringkasan Keuangan</h2>
-        <StatCard label="Saldo Kas" value={rupiah.format(r.saldoKas)} icon={Wallet} tone={r.saldoKas < 0 ? "danger" : "primary"} />
-        <StatCard label="Infaq & Shodaqoh" value={rupiah.format(r.saldoInfaq)} icon={HeartHandshake} tone={r.saldoInfaq < 0 ? "danger" : "accent"} />
-        <StatCard
-          label="Tabungan Qurban"
-          value={rupiah.format(r.qurbanTotal)}
-          icon={HandCoins}
-          sub={
-            <>
-              {r.qurban.filter((q) => q.jenisHewan === "kambing").length} kambing ·{" "}
-              {r.qurban.filter((q) => q.jenisHewan === "sapi").length} sapi ({r.qurban.filter((q) => q.selesai).length} lunas)
-            </>
-          }
-        />
-        <StatCard
-          label="Arisan Berjalan"
-          value={rupiah.format(arisanAktif?.saldoBerjalan ?? 0)}
-          icon={CircleDollarSign}
-          tone="success"
-          sub={arisanAktif ? `Giliran: ${arisanAktif.penerimaBerikutnya ?? "selesai semua"}` : "Belum ada arisan"}
-        />
+        <Link href={`${base}/kas`} className="block h-full">
+          <StatCard label="Saldo Kas" value={rupiah.format(r.saldoKas)} icon={Wallet} tone={r.saldoKas < 0 ? "danger" : "primary"} className={CARD_LINK} />
+        </Link>
+        <Link href={`${base}/infaq`} className="block h-full">
+          <StatCard label="Infaq & Shodaqoh" value={rupiah.format(r.saldoInfaq)} icon={HeartHandshake} tone={r.saldoInfaq < 0 ? "danger" : "accent"} className={CARD_LINK} />
+        </Link>
+        <Link href={`${base}/qurban`} className="block h-full">
+          <StatCard
+            label="Tabungan Qurban"
+            value={rupiah.format(r.qurbanTotal)}
+            icon={HandCoins}
+            className={CARD_LINK}
+            sub={
+              <>
+                {r.qurban.filter((q) => q.jenisHewan === "kambing").length} kambing ·{" "}
+                {r.qurban.filter((q) => q.jenisHewan === "sapi").length} sapi ({r.qurban.filter((q) => q.selesai).length} lunas)
+              </>
+            }
+          />
+        </Link>
+        <Link href={`${base}/arisan`} className="block h-full">
+          <StatCard
+            label="Arisan Berjalan"
+            value={rupiah.format(arisanAktif?.saldoBerjalan ?? 0)}
+            icon={CircleDollarSign}
+            tone="success"
+            className={CARD_LINK}
+            sub={arisanAktif ? `Giliran: ${arisanAktif.penerimaBerikutnya ?? "selesai semua"}` : "Belum ada arisan"}
+          />
+        </Link>
         {/* Cuma tampil kalau ada pinjaman berjalan — supaya semua anggota (bukan
             cuma bendahara) tahu Saldo Kas di atas SUDAH dikurangi uang yang
             sedang dipinjamkan, tanpa perlu buka halaman Simpan Pinjam (yang
@@ -101,15 +115,16 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
             col-span penuh: ini catatan penjelas, bukan angka sejajar 4 di atas
             (§permintaan Iman, 15 Sep 2026). */}
         {r.pinjamanOutstanding > 0 && (
-          <div className="col-span-2 sm:col-span-4">
+          <Link href={`${base}/pinjaman`} className="col-span-2 block sm:col-span-4">
             <StatCard
               label="Simpan Pinjam"
               value={rupiah.format(r.pinjamanOutstanding)}
               icon={Banknote}
               tone="warning"
+              className={CARD_LINK}
               sub="Sedang dipinjamkan ke anggota — sudah mengurangi Saldo Kas di atas"
             />
-          </div>
+          </Link>
         )}
       </section>
 
@@ -142,36 +157,45 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
       </section>
 
       {arisanAktif?.jadwalTanggal && (
-        <Card className="border-accent/30 bg-accent/5">
-          <p className="flex items-center gap-2 text-sm font-medium">
-            <CalendarDays className="h-4 w-4 text-accent" />
-            Arisan berikutnya: {tanggal.format(arisanAktif.jadwalTanggal)}
-            {arisanAktif.jadwalTempat ? ` di ${arisanAktif.jadwalTempat}` : ""}
-          </p>
-        </Card>
+        <Link href={`${base}/arisan`} className="block">
+          <Card className={`border-accent/30 bg-accent/5 ${CARD_LINK}`}>
+            <p className="flex items-center gap-2 text-sm font-medium">
+              <CalendarDays className="h-4 w-4 text-accent" />
+              Arisan berikutnya: {tanggal.format(arisanAktif.jadwalTanggal)}
+              {arisanAktif.jadwalTempat ? ` di ${arisanAktif.jadwalTempat}` : ""}
+            </p>
+          </Card>
+        </Link>
       )}
 
-      {r.qurban.filter((q) => !q.selesai).length > 0 && (
+      {ikutQurban && (
         <section>
-          <h2 className="mb-2 text-sm font-semibold">Progress Qurban</h2>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold">Progress Qurban</h2>
+            <Link href={`${base}/qurban`} className="text-xs text-primary underline">
+              Lihat semua
+            </Link>
+          </div>
           <div className="space-y-2">
             {r.qurban
               .filter((q) => !q.selesai)
               .map((q) => (
-                <Card key={q.id}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-1.5 text-sm font-medium">
-                      <HewanIcon jenis={q.jenisHewan} className="h-4 w-4 text-primary" /> Qurban {q.jenisHewan}
-                    </span>
-                    <Badge tone="primary">
-                      {q.terisi}/{q.max} jiwa
-                    </Badge>
-                  </div>
-                  <p className="mt-1 text-xs text-muted">{pesanGamifiedQurban(q)}</p>
-                  <div className="mt-2">
-                    <Progress value={(q.lunasNama.length / q.max) * 100} />
-                  </div>
-                </Card>
+                <Link key={q.id} href={`${base}/qurban#${q.id}`} className="block">
+                  <Card className="transition hover:border-primary/40">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-1.5 text-sm font-medium">
+                        <HewanIcon jenis={q.jenisHewan} className="h-4 w-4 text-primary" /> Qurban {q.jenisHewan}
+                      </span>
+                      <Badge tone="primary">
+                        {q.terisi}/{q.max} jiwa
+                      </Badge>
+                    </div>
+                    <p className="mt-1 text-xs text-muted">{pesanGamifiedQurban(q)}</p>
+                    <div className="mt-2">
+                      <Progress value={(q.lunasNama.length / q.max) * 100} />
+                    </div>
+                  </Card>
+                </Link>
               ))}
           </div>
         </section>
@@ -184,18 +208,20 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
         ) : (
           <div className="space-y-2">
             {saldoSaya.map((t) => (
-              <Card key={t.nama}>
-                {/* min-w-0+truncate di nama, flex-shrink-0 di angka: nama jenis
-                    tabungan yang panjang tidak boleh memaksa nominal uang ikut
-                    terpotong/wrap (§harden, 15 Sep 2026). */}
-                <div className="flex items-center justify-between gap-2 text-sm">
-                  <span className="min-w-0 truncate font-medium">{t.nama}</span>
-                  <span className="flex-shrink-0 tabular-nums">{rupiah.format(t.mode === "pooled" ? t.total : t.milikSaya)}</span>
-                </div>
-                <p className="mt-0.5 text-xs text-muted">
-                  {t.mode === "pooled" ? "Tabungan bersama" : `${t.penabung} dari ${anggotaAktif} anggota sudah menabung · total ${rupiah.format(t.total)}`}
-                </p>
-              </Card>
+              <Link key={t.id} href={`${base}/tabungan#${t.id}`} className="block">
+                <Card className={CARD_LINK}>
+                  {/* min-w-0+truncate di nama, flex-shrink-0 di angka: nama jenis
+                      tabungan yang panjang tidak boleh memaksa nominal uang ikut
+                      terpotong/wrap (§harden, 15 Sep 2026). */}
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <span className="min-w-0 truncate font-medium">{t.nama}</span>
+                    <span className="flex-shrink-0 tabular-nums">{rupiah.format(t.mode === "pooled" ? t.total : t.milikSaya)}</span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted">
+                    {t.mode === "pooled" ? "Tabungan bersama" : `${t.penabung} dari ${anggotaAktif} anggota sudah menabung · total ${rupiah.format(t.total)}`}
+                  </p>
+                </Card>
+              </Link>
             ))}
           </div>
         )}

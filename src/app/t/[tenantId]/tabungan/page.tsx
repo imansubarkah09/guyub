@@ -98,7 +98,7 @@ export default async function TabunganPage({ params }: { params: Promise<{ tenan
             const total = tipe.saldo.reduce((a, s) => a + Number(s.jumlah), 0);
             const target = Math.max(...tipe.saldo.map((s) => Number(s.jumlah)), 1);
             return (
-              <Card key={tipe.id}>
+              <Card key={tipe.id} id={tipe.id} className="scroll-mt-16">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">{tipe.nama}</p>
