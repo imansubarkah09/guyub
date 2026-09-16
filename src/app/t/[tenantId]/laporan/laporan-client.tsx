@@ -90,8 +90,12 @@ export function LaporanTabs({
       // jsPDF menyisipkan `;filename=generated.pdf` di data URI, dan Cloudinary
       // menolaknya ("Unsupported source URL") — dibuang dulu sebelum diunggah.
       const dataUri = doc.output("datauristring").replace(/;filename=[^;]*/, "");
-      const link = await createLaporanAction(tenantId, periode, dataUri);
-      setPublishedLink(`${baseUrl}/laporan/${link}`);
+      const result = await createLaporanAction(tenantId, periode, dataUri);
+      if ("error" in result) {
+        setError(result.error);
+      } else {
+        setPublishedLink(`${baseUrl}/laporan/${result.shareLink}`);
+      }
     } catch (err) {
       if (isRedirectError(err)) throw err;
       setError(err instanceof Error ? err.message : "Gagal menerbitkan laporan, coba lagi.");
