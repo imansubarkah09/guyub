@@ -2,18 +2,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { Wallet, HandCoins, TreePine, FileText, ShieldCheck, X, Check, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getSessionUser } from "@/lib/session";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-
-/**
- * Wajib eksplisit: SiteHeader (di dalam JSX yang direturn, bukan di-await duluan
- * di sini) yang memanggil headers(), bukan Home() sendiri. Tanpa ini, saat build
- * mencoba prerender statis, prisma.tenant.count()/membership.count() di bawah
- * jalan duluan sebelum Next sempat lihat sinyal dynamic dari SiteHeader, dan
- * build gagal kalau DB tidak bisa dihubungi (persis begini di CI, DATABASE_URL
- * cuma placeholder localhost yang tidak ada Postgres-nya).
- */
-export const dynamic = "force-dynamic";
 
 const TANGGAL_LENGKAP = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "short", year: "numeric" });
 
@@ -70,14 +61,15 @@ const FITUR_PERAN = [
 ];
 
 export default async function Home() {
-  const [tenantAktif, anggotaAktif] = await Promise.all([
+  const [user, tenantAktif, anggotaAktif] = await Promise.all([
+    getSessionUser(),
     prisma.tenant.count({ where: { status: "approved" } }),
     prisma.membership.count({ where: { status: "active" } }),
   ]);
 
   return (
     <main>
-      <SiteHeader />
+      <SiteHeader loggedIn={!!user} />
 
       <section className="mx-auto max-w-md px-4 md:max-w-2xl py-10 text-center">
         <h1 className="text-2xl font-semibold">Kas keluarga, RT, atau paguyuban, rapi tanpa bikin pengurus pusing</h1>
