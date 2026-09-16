@@ -3,16 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { requireWrite, CAN_KELOLA_ANGGOTA, KETUA } from "@/lib/authz";
+import { requireWrite, requireMemberWrite, CAN_KELOLA_ANGGOTA, PENGURUS, KETUA } from "@/lib/authz";
 import { notify } from "@/lib/notifikasi";
 import type { Role } from "@prisma/client";
 
 const ALL_ROLES: Role[] = ["ketua", "wakil_ketua", "bendahara", "sekretaris", "anggota"];
 
+/** Siapa saja anggota aktif boleh bikin & sebar link undangan (permintaan Iman, 16 Sep 2026), yang dibatasi cuma persetujuan anggota baru (confirmMemberAction), bukan siapa yang boleh mengundang. */
 export async function generateInviteAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireWrite(user, tenantId, CAN_KELOLA_ANGGOTA);
+  await requireMemberWrite(user, tenantId);
 
   await prisma.invitation.create({ data: { tenantId, createdById: user.id } });
   revalidatePath(`/t/${tenantId}/anggota`);
@@ -37,7 +38,10 @@ export async function confirmMemberAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
   const membershipId = String(formData.get("membershipId"));
-  await requireWrite(user, tenantId, CAN_KELOLA_ANGGOTA);
+  // Seluruh pengurus (ketua, wakil ketua, bendahara, sekretaris) boleh approve
+  // anggota baru, lebih longgar dari CAN_KELOLA_ANGGOTA yang dipakai kelola
+  // peran/undangan (permintaan Iman, 16 Sep 2026).
+  await requireWrite(user, tenantId, PENGURUS);
 
   const target = await prisma.membership.findUniqueOrThrow({ where: { id: membershipId } });
   if (target.tenantId !== tenantId) throw new Error("Anggota tidak ditemukan di tenant ini");
@@ -55,6 +59,13 @@ export async function updateRolesAction(formData: FormData) {
 
   const target = await prisma.membership.findUniqueOrThrow({ where: { id: membershipId } });
   if (target.tenantId !== tenantId) throw new Error("Anggota tidak ditemukan di tenant ini");
+
+  // Peran ketua yang sedang menjabat terkunci total dari form ini (permintaan
+  // Iman, 16 Sep 2026): checkbox-nya memang tidak dirender di UI, tapi dijaga
+  // di sini juga supaya tidak bisa ditembus lewat request mentah di luar UI.
+  if (target.roles.includes("ketua")) {
+    throw new Error("Peran ketua yang menjabat tidak bisa diubah lewat sini");
+  }
 
   const roles = ALL_ROLES.filter((r) => formData.getAll("roles").includes(r));
   if (roles.length === 0) throw new Error("Minimal satu peran harus dipilih");

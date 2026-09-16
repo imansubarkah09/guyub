@@ -1,7 +1,7 @@
 import { Users, UserPlus, Link2, MessageCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { CAN_KELOLA_ANGGOTA, ROLE_LABEL, has } from "@/lib/authz";
+import { CAN_KELOLA_ANGGOTA, PENGURUS, ROLE_LABEL, has } from "@/lib/authz";
 import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
 import { waShareUrl } from "@/lib/whatsapp";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, btnGhost, inputClass } from "@/components/ui";
@@ -22,6 +22,10 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
   ]);
 
   const canKelola = has(roles, CAN_KELOLA_ANGGOTA);
+  // Approve anggota baru boleh lebih longgar dari kelola peran/undangan: seluruh
+  // pengurus (termasuk bendahara), bukan cuma ketua/wakil ketua/sekretaris
+  // (permintaan Iman, 16 Sep 2026).
+  const canApprove = has(roles, PENGURUS);
   const base = process.env.NEXT_PUBLIC_URL ?? "";
   const pending = memberships.filter((m) => m.status === "pending_confirmation");
   const active = memberships.filter((m) => m.status === "active");
@@ -64,7 +68,7 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
         </Card>
       )}
 
-      {canKelola && pending.length > 0 && (
+      {canApprove && pending.length > 0 && (
         <Card className="border-warning/30 bg-warning/5">
           <h2 className="mb-2 text-sm font-semibold">Menunggu Konfirmasi</h2>
           <ul className="space-y-2">
@@ -110,7 +114,7 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
                     </div>
                   </div>
 
-                  {canKelola ? (
+                  {canKelola && !m.roles.includes("ketua") ? (
                     <form action={updateRolesAction} className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2 text-xs">
                       <input type="hidden" name="tenantId" value={tenantId} />
                       <input type="hidden" name="membershipId" value={m.id} />
@@ -123,12 +127,13 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
                       <button className={`${btnGhost} px-2 py-1 text-xs`}>Simpan</button>
                     </form>
                   ) : (
-                    <div className="mt-2 flex flex-wrap gap-1 border-t border-border pt-2">
+                    <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-border pt-2">
                       {m.roles.map((r) => (
                         <Badge key={r} tone={r === "anggota" ? "muted" : "primary"}>
                           {r}
                         </Badge>
                       ))}
+                      {canKelola && m.roles.includes("ketua") && <span className="text-[11px] text-muted">Peran ketua yang menjabat terkunci, tidak bisa diubah dari sini.</span>}
                     </div>
                   )}
                 </Card>
