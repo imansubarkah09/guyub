@@ -229,6 +229,27 @@ sudah dihapus dari dependencies. Kalau nanti butuh fitur Cloudinary lain
 (transformasi, delete asset, dst), tambahkan ke uploader fetch-based ini,
 jangan pasang lagi SDK resminya.
 
+**`wallTime` tail bisa ~10 detik walau respons ke user tetap cepat, dan itu
+BUKAN soal Promise.all paralel.** (diselidiki 16 Sep 2026 lewat `wrangler
+tail --format json` setelah `/tentang` benar-benar kena "Worker exceeded CPU
+time limit" dua kali). Dugaan pertama: prisma.count() dkk dipanggil paralel
+lewat `Promise.all` bareng `getSessionUser()` bikin koneksi Neon rebutan.
+Dugaan itu TERBANTAHKAN: `/dashboard` sama sekali tidak pakai `Promise.all`
+(semua query sudah sequential dari awal) tapi tetap menunjukkan pola
+`wallTime` ~10.000-10.700ms yang identik, sementara halaman tenant biasa
+(arisan, qurban, infaq) normal di bawah 15ms. Perbedaannya BUKAN struktur
+query. cpuTime asli yang benar-benar dilaporkan `exceededCpu` justru kecil
+(11-33ms), jadi errornya bukan soal kerja Worker yang berat, kemungkinan
+lebih ke pembukaan koneksi WebSocket Neon di isolate yang belum hangat.
+Perubahan ke query sequential di `src/app/page.tsx` dan
+`src/app/tentang/page.tsx` (commit e19a74c, 77d117a) TIDAK terbukti
+menghilangkan pola wallTime-nya (masih ~10s sesudahnya), jadi JANGAN anggap
+itu fix definitif kalau menyentuh file itu lagi, itu cuma percobaan yang
+disimpan karena tidak merugikan, bukan solusi yang terverifikasi. Kalau
+error "exceeded CPU time limit" muncul lagi di halaman lain, jangan langsung
+tebak paralel-vs-sequential, ukur dulu pola cpuTime vs wallTime-nya lewat
+`wrangler tail --format json` seperti di atas sebelum mengubah kode apa pun.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
