@@ -61,11 +61,10 @@ const FITUR_PERAN = [
 ];
 
 export default async function Home() {
-  const [user, tenantAktif, anggotaAktif] = await Promise.all([
-    getSessionUser(),
-    prisma.tenant.count({ where: { status: "approved" } }),
-    prisma.membership.count({ where: { status: "active" } }),
-  ]);
+  // ponytail: sequential, bukan Promise.all, buat eksperimen wallTime Worker (lihat CLAUDE.md).
+  const user = await getSessionUser();
+  const tenantAktif = await prisma.tenant.count({ where: { status: "approved" } });
+  const anggotaAktif = await prisma.membership.count({ where: { status: "active" } });
 
   return (
     <main>
