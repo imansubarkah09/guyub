@@ -8,10 +8,10 @@ import { TrakteerModal } from "@/components/trakteer-modal";
 import { TRAKTEER_MODAL_URL } from "@/lib/trakteer";
 
 const BIAYA = [
-  { icon: Server, judul: "Server & compute (Cloudflare Workers)", ket: "Supaya Guyub bisa dibuka kapan saja dari HP siapa pun, tanpa nunggu loading lama." },
-  { icon: Database, judul: "Database (Neon Postgres)", ket: "Tempat kas, tabungan, dan silsilah keluarga Anda tersimpan aman, bukan cuma di HP satu orang." },
+  { icon: Server, judul: "Web server", ket: "Supaya Guyub bisa dibuka kapan saja dari HP siapa pun, tanpa nunggu loading lama." },
+  { icon: Database, judul: "Database server", ket: "Tempat kas, tabungan, dan silsilah keluarga Anda tersimpan aman, bukan cuma di HP satu orang." },
   { icon: Globe, judul: "Nama domain", ket: "Biar alamatnya gampang diingat & dipercaya, bukan link acak-acakan yang gampang dicurigai." },
-  { icon: Cloud, judul: "Penyimpanan foto & dokumen (Cloudinary)", ket: "Buat bukti transfer, logo tenant, dan foto lain yang diupload pengurus." },
+  { icon: Cloud, judul: "File server", ket: "Buat bukti transfer, logo tenant, dan foto lain yang diupload pengurus." },
 ];
 
 export default async function TentangPage() {
@@ -72,7 +72,7 @@ export default async function TentangPage() {
                     <p className="text-xs text-foreground/60">{b.ket}</p>
                   </div>
                 </div>
-                <Badge tone="muted" className="self-start sm:self-auto">Ditanggung Iman</Badge>
+                <Badge tone="muted" className="self-start sm:self-auto">Ditanggung developer, biaya pribadi</Badge>
               </li>
             ))}
           </ul>
