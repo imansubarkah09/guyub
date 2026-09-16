@@ -214,6 +214,21 @@ Cara membaca lognya: `observability` sudah aktif di `wrangler.jsonc`, dan
 `npx wrangler tail --format json` menampilkan `cpuTime`, `outcome`, serta
 exception per request.
 
+**Paket npm `cloudinary` sama sekali tidak jalan di Workers, jangan dipasang
+lagi.** (ketemu 16 Sep 2026 lewat `wrangler tail` produksi, dipicu tombol
+Terbitkan Laporan yang gagal senyap tanpa pesan). SDK resminya
+(`execute_request.js`) selalu kirim request pakai `https.request` Node
+mentah, dan runtime Workers (`unenv`) sama sekali tidak mengimplementasikan
+itu, gagal dengan "[unenv] https.request is not implemented yet!" di SETIAP
+pemanggilan `cloudinary.uploader.upload(...)`, bukan cuma untuk PDF, upload
+bukti transfer Kas dan foto lain lewat helper yang sama ikut gagal identik,
+cuma belum sempat dilaporkan sebelumnya. `src/lib/cloudinary.ts` sekarang
+upload lewat `fetch()` langsung ke REST API Cloudinary (signed upload,
+signature SHA-1 pakai Web Crypto, bukan modul Node), dan paket `cloudinary`
+sudah dihapus dari dependencies. Kalau nanti butuh fitur Cloudinary lain
+(transformasi, delete asset, dst), tambahkan ke uploader fetch-based ini,
+jangan pasang lagi SDK resminya.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
