@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { updateQurbanGroupAction, updateQurbanSlotAction } from "./actions";
+import { updateQurbanGroupAction, updateQurbanSlotAction, cancelQurbanSlotAction } from "./actions";
 import { InputRupiah } from "@/components/input-rupiah";
 
 export function EditGroupButton({
@@ -66,6 +66,22 @@ export function EditSlotButton({ tenantId, slotId, saldoTerkumpul }: { tenantId:
       <button type="button" onClick={() => setEditing(false)} className="text-xs text-foreground/50">
         Batal
       </button>
+    </form>
+  );
+}
+
+/** Batal ikut slot, hanya muncul selama saldoTerkumpul-nya masih 0. */
+export function CancelSlotButton({ tenantId, slotId }: { tenantId: string; slotId: string }) {
+  return (
+    <form
+      action={cancelQurbanSlotAction}
+      onSubmit={(e) => {
+        if (!confirm("Batal ikut slot qurban ini?")) e.preventDefault();
+      }}
+    >
+      <input type="hidden" name="tenantId" value={tenantId} />
+      <input type="hidden" name="slotId" value={slotId} />
+      <button className="text-xs text-red-600 underline">batal ikut</button>
     </form>
   );
 }

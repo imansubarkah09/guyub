@@ -8,7 +8,7 @@ import { pesanGamifiedQurban } from "@/lib/ringkasan";
 import { Card, PageTitle, StatCard, EmptyState, Badge, Progress, btnPrimary, btnGhost, inputClass, rupiah } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
 import { createQurbanGroupAction, joinQurbanSlotAction, setorQurbanAction } from "./actions";
-import { EditGroupButton, EditSlotButton } from "./edit-controls";
+import { EditGroupButton, EditSlotButton, CancelSlotButton } from "./edit-controls";
 
 const MAX_SLOT = { sapi: 7, kambing: 1 } as const;
 
@@ -116,6 +116,7 @@ export default async function QurbanPage({ params }: { params: Promise<{ tenantI
                 <ul className="mt-3 space-y-2">
                   {g.slots.map((s) => {
                     const pct = (Number(s.saldoTerkumpul) / Number(g.targetPerJiwa)) * 100;
+                    const canCancel = Number(s.saldoTerkumpul) === 0 && (s.userId === viewerId || canKelola);
                     return (
                       <li key={s.id} className={`rounded-lg p-2 ${s.userId === viewerId ? "bg-primary/5" : ""}`}>
                         <div className="flex items-center justify-between gap-2 text-sm">
@@ -126,6 +127,7 @@ export default async function QurbanPage({ params }: { params: Promise<{ tenantI
                           <span className="flex items-center gap-1 text-xs tabular-nums">
                             {rupiah.format(Number(s.saldoTerkumpul))}
                             {canKelola && <EditSlotButton tenantId={tenantId} slotId={s.id} saldoTerkumpul={s.saldoTerkumpul.toString()} />}
+                            {canCancel && <CancelSlotButton tenantId={tenantId} slotId={s.id} />}
                           </span>
                         </div>
                         <div className="mt-1">

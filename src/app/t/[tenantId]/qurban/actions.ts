@@ -37,6 +37,26 @@ export async function joinQurbanSlotAction(formData: FormData) {
   revalidatePath(`/t/${tenantId}/qurban`);
 }
 
+/** Batal ikut slot: pemilik slot sendiri, atau bendahara mewakilkan. Hanya boleh selama belum ada setoran. */
+export async function cancelQurbanSlotAction(formData: FormData) {
+  const user = await requireUser();
+  const tenantId = String(formData.get("tenantId"));
+  const membership = await requireMemberWrite(user, tenantId);
+
+  const slotId = String(formData.get("slotId"));
+  const slot = await prisma.qurbanSlot.findUniqueOrThrow({ where: { id: slotId }, include: { qurbanGroup: true } });
+  if (slot.qurbanGroup.tenantId !== tenantId) throw new Error("Slot tidak ditemukan di tenant ini");
+
+  const isOwner = slot.userId === user.id;
+  const isBendahara = membership.roles.some((r) => CAN_CATAT_UANG.includes(r));
+  if (!isOwner && !isBendahara) throw new Error("Hanya pemilik slot atau bendahara yang bisa membatalkan");
+  if (Number(slot.saldoTerkumpul) > 0) throw new Error("Sudah ada setoran, tidak bisa dibatalkan lagi");
+
+  await prisma.qurbanSlot.delete({ where: { id: slotId } });
+  await resyncQurbanGroupStatus(slot.qurbanGroupId);
+  revalidatePath(`/t/${tenantId}/qurban`);
+}
+
 /** Recompute a slot's lunas flag and the group's overall status after any balance/target change. */
 async function resyncQurbanGroupStatus(qurbanGroupId: string) {
   const group = await prisma.qurbanGroup.findUniqueOrThrow({ where: { id: qurbanGroupId }, include: { slots: true } });
