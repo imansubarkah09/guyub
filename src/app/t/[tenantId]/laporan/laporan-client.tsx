@@ -30,6 +30,7 @@ export function LaporanTabs({
   const [periode, setPeriode] = useState(new Date().toLocaleDateString("id-ID", { month: "long", year: "numeric" }));
   const [busy, setBusy] = useState(false);
   const [publishedLink, setPublishedLink] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const tab = tabs.find((t) => t.id === aktif) ?? tabs[0];
 
   async function buatPdf(gabungan: boolean) {
@@ -62,11 +63,20 @@ export function LaporanTabs({
     return doc;
   }
 
+  /** Redirect dari requireUser() (sesi habis) dilempar sebagai error khusus Next, harus diteruskan, bukan ditelan. */
+  function isRedirectError(err: unknown): boolean {
+    return typeof err === "object" && err !== null && "digest" in err && typeof err.digest === "string" && err.digest.startsWith("NEXT_REDIRECT");
+  }
+
   async function unduhPdf(gabungan: boolean) {
     setBusy(true);
+    setError(null);
     try {
       const doc = await buatPdf(gabungan);
       doc.save(`laporan-${periode.replace(/\s+/g, "-").toLowerCase()}.pdf`);
+    } catch (err) {
+      if (isRedirectError(err)) throw err;
+      setError(err instanceof Error ? err.message : "Gagal membuat PDF, coba lagi.");
     } finally {
       setBusy(false);
     }
@@ -74,6 +84,7 @@ export function LaporanTabs({
 
   async function publish() {
     setBusy(true);
+    setError(null);
     try {
       const doc = await buatPdf(true);
       // jsPDF menyisipkan `;filename=generated.pdf` di data URI, dan Cloudinary
@@ -81,6 +92,9 @@ export function LaporanTabs({
       const dataUri = doc.output("datauristring").replace(/;filename=[^;]*/, "");
       const link = await createLaporanAction(tenantId, periode, dataUri);
       setPublishedLink(`${baseUrl}/laporan/${link}`);
+    } catch (err) {
+      if (isRedirectError(err)) throw err;
+      setError(err instanceof Error ? err.message : "Gagal menerbitkan laporan, coba lagi.");
     } finally {
       setBusy(false);
     }
@@ -173,6 +187,8 @@ export function LaporanTabs({
               <Share2 className="h-4 w-4" /> {busy ? "Memproses…" : "Terbitkan & Bagikan"}
             </button>
           </div>
+
+          {error && <p className="text-xs text-danger">{error}</p>}
 
           {publishedLink && (
             <div className="space-y-2 border-t border-border pt-3">
