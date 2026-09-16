@@ -5,6 +5,16 @@ import { prisma } from "@/lib/prisma";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 
+/**
+ * Wajib eksplisit: SiteHeader (di dalam JSX yang direturn, bukan di-await duluan
+ * di sini) yang memanggil headers(), bukan Home() sendiri. Tanpa ini, saat build
+ * mencoba prerender statis, prisma.tenant.count()/membership.count() di bawah
+ * jalan duluan sebelum Next sempat lihat sinyal dynamic dari SiteHeader, dan
+ * build gagal kalau DB tidak bisa dihubungi (persis begini di CI, DATABASE_URL
+ * cuma placeholder localhost yang tidak ada Postgres-nya).
+ */
+export const dynamic = "force-dynamic";
+
 const TANGGAL_LENGKAP = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "short", year: "numeric" });
 
 const TAMPILAN = [

@@ -7,6 +7,12 @@ import { Card, StatCard, Badge } from "@/components/ui";
 import { TrakteerModal } from "@/components/trakteer-modal";
 import { TRAKTEER_MODAL_URL } from "@/lib/trakteer";
 
+/** Sama seperti src/app/page.tsx: SiteHeader manggil headers() di dalam JSX
+ * yang direturn, bukan di-await duluan di sini, jadi wajib dipaksa dynamic
+ * eksplisit supaya prisma.count() di bawah tidak dicoba jalan saat build
+ * statis (gagal kalau DB tidak bisa dihubungi, lihat komentar di page.tsx). */
+export const dynamic = "force-dynamic";
+
 const BIAYA = [
   { icon: Server, judul: "Web server", ket: "Supaya Guyub bisa dibuka kapan saja dari HP siapa pun, tanpa nunggu loading lama." },
   { icon: Database, judul: "Database server", ket: "Tempat kas, tabungan, dan silsilah keluarga Anda tersimpan aman, bukan cuma di HP satu orang." },
