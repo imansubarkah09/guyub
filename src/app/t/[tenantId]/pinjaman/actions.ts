@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requireWrite, requireMemberWrite, CAN_CATAT_UANG } from "@/lib/authz";
+import { notifyTenant } from "@/lib/notifikasi";
+import { rupiah } from "@/components/ui";
 import type { BungaMode } from "@prisma/client";
 
 /** Anggota mana pun boleh mengajukan; belum menyentuh saldo Kas sampai bendahara approve. */
@@ -31,6 +33,14 @@ export async function ajukanPinjamanAction(formData: FormData) {
       bungaPersen: bungaMode === "persen" ? bungaPersenRaw : null,
       keterangan,
     },
+  });
+
+  // Ketemu 17 Sep 2026: pengajuan pinjaman tidak pernah memberi tahu bendahara,
+  // jadi menumpuk di status "diajukan" tanpa ada yang tahu perlu diputuskan.
+  await notifyTenant(tenantId, "pinjaman_diajukan", `${user.name} mengajukan pinjaman ${rupiah.format(jumlahPokok)}`, {
+    roles: CAN_CATAT_UANG,
+    href: `/t/${tenantId}/pinjaman`,
+    kecuali: user.id,
   });
 
   revalidatePath(`/t/${tenantId}/pinjaman`);
