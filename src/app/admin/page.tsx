@@ -7,7 +7,7 @@ import { Card, PageTitle, EmptyState, Badge, btnPrimary, btnGhost, inputClass, t
 import { decideTenantAction, suspendTenantAction } from "./actions";
 
 const JENIS_LABEL = { keluarga: "Keluarga", rt: "RT", paguyuban: "Paguyuban" } as const;
-const STATUS_TONE = { pending: "warning", approved: "success", suspended: "danger" } as const;
+const STATUS_TONE = { pending: "warning", approved: "success", suspended: "danger", rejected: "danger" } as const;
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const user = await requireUser();
@@ -28,7 +28,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     orderBy: { createdAt: "desc" },
   });
 
-  const pending = tenants.filter((t) => t.status === "pending");
+  // Bukan t.status: TenantStatus cuma punya pending/approved/suspended (tidak ada
+  // "rejected"), jadi tenant yang ditolak tetap tersimpan status "pending" di situ.
+  // Keputusan sebenarnya ada di approvalRequest.status, sumber kebenaran di sini
+  // (ketemu 17 Sep 2026: tombol "Tolak" kelihatan tidak berfungsi karena tenant-nya
+  // tidak pernah hilang dari antrean, walau penolakannya sendiri sudah tersimpan).
+  const pending = tenants.filter((t) => t.approvalRequest?.status === "pending");
 
   return (
     <main className="mx-auto max-w-3xl p-4 pb-16">
@@ -88,7 +93,12 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <EmptyState icon={Building2} title="Belum ada tenant" desc="Tenant akan muncul di sini setelah ada yang mendaftar." />
         ) : (
           <ul className="space-y-2">
-            {tenants.map((t) => (
+            {tenants.map((t) => {
+              // Sama seperti filter pending di atas: t.status tidak bisa membedakan
+              // "belum diputuskan" dari "sudah ditolak", jadi status tampil dihitung
+              // dari approvalRequest, bukan langsung dari t.status.
+              const statusTampil = t.approvalRequest?.status === "rejected" ? "rejected" : t.status;
+              return (
               <li key={t.id}>
                 <Card className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
@@ -98,7 +108,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge tone={STATUS_TONE[t.status]}>{t.status}</Badge>
+                    <Badge tone={STATUS_TONE[statusTampil]}>{statusTampil}</Badge>
                     <Link href={`/admin/tenant/${t.id}`} className={`${btnGhost} px-2 py-1 text-xs`}>
                       Preview
                     </Link>
@@ -112,7 +122,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                   </div>
                 </Card>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </section>
