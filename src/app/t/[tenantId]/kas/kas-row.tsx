@@ -6,6 +6,7 @@ import { ArrowDownLeft, ArrowUpRight, Pencil } from "lucide-react";
 import { Card, btnPrimary, btnGhost, inputClass, rupiah, tanggal } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
 import { validasiFileGambar } from "@/lib/validasi-file";
+import { tanggalWIB } from "@/lib/waktu";
 import { updateKasTransaksiAction } from "./actions";
 
 type Transaksi = {
@@ -87,7 +88,7 @@ export function KasRow({ tenantId, t, canEdit }: { tenantId: string; t: Transaks
         <input type="hidden" name="tenantId" value={tenantId} />
         <input type="hidden" name="id" value={t.id} />
         <div className="flex gap-2">
-          <input type="date" name="tanggal" required defaultValue={t.tanggal.toISOString().slice(0, 10)} className={inputClass} />
+          <input type="date" name="tanggal" required defaultValue={tanggalWIB(t.tanggal)} className={inputClass} />
           <select name="tipe" required defaultValue={t.tipe} className={inputClass}>
             <option value="masuk">Masuk</option>
             <option value="keluar">Keluar</option>

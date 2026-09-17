@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { TIMEZONE_WIB } from "@/lib/waktu";
 
 /** Komponen dasar dipakai di semua halaman supaya tampilannya konsisten (§4). */
 
@@ -108,4 +109,4 @@ export const btnGhost =
   "inline-flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium transition hover:bg-primary/5 active:scale-[0.98] disabled:opacity-50";
 
 export const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
-export const tanggal = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" });
+export const tanggal = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: TIMEZONE_WIB });

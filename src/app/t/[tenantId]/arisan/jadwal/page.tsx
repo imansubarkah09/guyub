@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/session";
 import { CAN_ATUR_ARISAN, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
 import { Card, PageTitle, EmptyState, btnPrimary, inputClass, tanggal } from "@/components/ui";
+import { tanggalWIB } from "@/lib/waktu";
 import { updateJadwalAction } from "../actions";
 
 export default async function JadwalArisanPage({ params }: { params: Promise<{ tenantId: string }> }) {
@@ -49,7 +50,7 @@ export default async function JadwalArisanPage({ params }: { params: Promise<{ t
                 <input
                   type="date"
                   name="jadwalTanggal"
-                  defaultValue={a.jadwalTanggal ? a.jadwalTanggal.toISOString().slice(0, 10) : ""}
+                  defaultValue={a.jadwalTanggal ? tanggalWIB(a.jadwalTanggal) : ""}
                   className={inputClass}
                 />
                 <input name="jadwalTempat" defaultValue={a.jadwalTempat ?? ""} placeholder="Tempat, misal: Rumah Pak Widodo" className={inputClass} />

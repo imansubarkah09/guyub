@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { Card, btnPrimary, inputClass } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
 import { validasiFileGambar } from "@/lib/validasi-file";
+import { hariIniWIB } from "@/lib/waktu";
 import { createKasTransaksiAction } from "./actions";
 
 export function KasForm({ tenantId }: { tenantId: string }) {
@@ -16,7 +17,7 @@ export function KasForm({ tenantId }: { tenantId: string }) {
       <form action={formAction} className="space-y-2">
         <input type="hidden" name="tenantId" value={tenantId} />
         <div className="flex gap-2">
-          <input type="date" name="tanggal" required defaultValue={new Date().toISOString().slice(0, 10)} className={inputClass} />
+          <input type="date" name="tanggal" required defaultValue={hariIniWIB()} className={inputClass} />
           <select name="tipe" required className={inputClass}>
             <option value="masuk">Masuk</option>
             <option value="keluar">Keluar</option>

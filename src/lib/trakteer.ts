@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { TIMEZONE_WIB } from "@/lib/waktu";
 
 /**
  * Slug creator Trakteer Guyub — diisi lewat env, tidak di-hardcode.
@@ -141,7 +142,7 @@ export async function catatDonasi(row: Baris) {
     await notifyTenant(
       tenant.id,
       "trakteer",
-      `${(pick(row, "supporter_name") as string | null)?.trim() || "Seseorang"} mendukung tenant ini (+${hari} hari). Aktif sampai ${sampai.toLocaleDateString("id-ID")}`,
+      `${(pick(row, "supporter_name") as string | null)?.trim() || "Seseorang"} mendukung tenant ini (+${hari} hari). Aktif sampai ${sampai.toLocaleDateString("id-ID", { timeZone: TIMEZONE_WIB })}`,
       { href: `/t/${tenant.id}` },
     );
   }

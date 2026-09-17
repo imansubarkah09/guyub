@@ -6,6 +6,7 @@ import { getPreview } from "@/lib/preview";
 import { KETUA } from "@/lib/authz";
 import { membershipSaya } from "@/lib/effective-roles";
 import { tenantDenganProfil } from "@/lib/tenant";
+import { TIMEZONE_WIB } from "@/lib/waktu";
 import { Card } from "@/components/ui";
 import { TenantShell } from "./tenant-shell";
 
@@ -102,7 +103,7 @@ export default async function TenantLayout({
         pesan: n.pesan,
         href: n.href,
         isRead: n.isRead,
-        createdAt: n.createdAt.toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }),
+        createdAt: n.createdAt.toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: TIMEZONE_WIB }),
       }))}
       unread={unread}
       isKetua={roles.some((r) => KETUA.includes(r))}

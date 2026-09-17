@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { Card, btnPrimary, inputClass } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
 import { validasiFileGambar } from "@/lib/validasi-file";
+import { hariIniWIB } from "@/lib/waktu";
 import { catatKegiatanAction } from "./actions";
 import { SumberFields, type Pool } from "./sumber-fields";
 
@@ -19,7 +20,7 @@ export function KegiatanForm({ tenantId, pools }: { tenantId: string; pools: Poo
         <input name="namaKegiatan" required placeholder="Nama kegiatan, misal: Santunan Anak Yatim 2026" className={inputClass} />
         <div className="flex gap-2">
           <InputRupiah name="targetDana" placeholder="Target dana (Rp, opsional)" className={inputClass} />
-          <input type="date" name="tanggal" required defaultValue={new Date().toISOString().slice(0, 10)} className={inputClass} />
+          <input type="date" name="tanggal" required defaultValue={hariIniWIB()} className={inputClass} />
         </div>
         <SumberFields pools={pools} />
         <input name="keterangan" placeholder="Keterangan (opsional)" className={inputClass} />

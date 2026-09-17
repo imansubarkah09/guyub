@@ -6,11 +6,12 @@ import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
 import { angkaPlerek, kilogram } from "@/lib/plerek";
 import { ambilDari } from "@/lib/paging";
+import { hariIniWIB } from "@/lib/waktu";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, inputClass, rupiah, tanggal } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
 import { catatPutaranAction, catatBerasKeluarAction, setorKeKasAction } from "./actions";
 
-const hariIni = () => new Date().toISOString().slice(0, 10);
+const hariIni = hariIniWIB;
 
 export default async function PlerekPage({
   params,

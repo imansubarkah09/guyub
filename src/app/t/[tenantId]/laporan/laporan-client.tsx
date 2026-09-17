@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FileDown, MessageCircle, Share2 } from "lucide-react";
 import { createLaporanAction } from "./actions";
 import { Card, Badge, btnPrimary, btnGhost, inputClass, rupiah } from "@/components/ui";
+import { TIMEZONE_WIB } from "@/lib/waktu";
 
 export type TabData = {
   id: string;
@@ -27,7 +28,7 @@ export function LaporanTabs({
   baseUrl: string;
 }) {
   const [aktif, setAktif] = useState(tabs[0]?.id ?? "");
-  const [periode, setPeriode] = useState(new Date().toLocaleDateString("id-ID", { month: "long", year: "numeric" }));
+  const [periode, setPeriode] = useState(new Date().toLocaleDateString("id-ID", { month: "long", year: "numeric", timeZone: TIMEZONE_WIB }));
   const [busy, setBusy] = useState(false);
   const [publishedLink, setPublishedLink] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requireWrite, CAN_ATUR_ARISAN, CAN_CATAT_UANG } from "@/lib/authz";
 import { notifyTenant } from "@/lib/notifikasi";
+import { TIMEZONE_WIB } from "@/lib/waktu";
 
 export async function createArisanAction(formData: FormData) {
   const user = await requireUser();
@@ -227,7 +228,7 @@ export async function updateJadwalAction(formData: FormData) {
   });
 
   if (jadwalTanggalStr) {
-    const tgl = new Date(jadwalTanggalStr).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+    const tgl = new Date(jadwalTanggalStr).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: TIMEZONE_WIB });
     await notifyTenant(tenantId, "arisan_jadwal", `Jadwal arisan berikutnya: ${tgl}${jadwalTempat ? ` di ${jadwalTempat}` : ""}`, {
       href: `/t/${tenantId}/arisan/jadwal`,
       kecuali: user.id,

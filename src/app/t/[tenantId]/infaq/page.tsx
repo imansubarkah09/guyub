@@ -6,6 +6,7 @@ import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
 import { angkaTenant } from "@/lib/ringkasan";
 import { ambilDari } from "@/lib/paging";
+import { hariIniWIB } from "@/lib/waktu";
 import { Card, PageTitle, EmptyState, btnPrimary, btnGhost, inputClass, rupiah, tanggal } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
 import { catatInfaqAction, hapusInfaqAction } from "./actions";
@@ -56,7 +57,7 @@ export default async function InfaqPage({
           <h2 className="mb-3 text-sm font-semibold">Catat Infaq Pertemuan</h2>
           <form action={catatInfaqAction} className="space-y-2">
             <input type="hidden" name="tenantId" value={tenantId} />
-            <input type="date" name="tanggalPertemuan" required defaultValue={new Date().toISOString().slice(0, 10)} className={inputClass} />
+            <input type="date" name="tanggalPertemuan" required defaultValue={hariIniWIB()} className={inputClass} />
             <InputRupiah name="jumlah" placeholder="Jumlah terkumpul (Rp)" className={inputClass} required />
             <input name="keterangan" placeholder="Keterangan (opsional)" className={inputClass} />
             <button type="submit" className={`${btnPrimary} w-full`}>

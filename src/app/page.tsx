@@ -5,8 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { TIMEZONE_WIB } from "@/lib/waktu";
 
-const TANGGAL_LENGKAP = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "short", year: "numeric" });
+const TANGGAL_LENGKAP = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "short", year: "numeric", timeZone: TIMEZONE_WIB });
 
 const TAMPILAN = [
   { file: "kas-mobile.png", label: "Kas", icon: Wallet, alt: "Halaman Kas menampilkan saldo dan riwayat transaksi masuk/keluar tenant" },
