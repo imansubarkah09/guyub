@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/session";
 import { CAN_KELOLA_ANGGOTA, has } from "@/lib/authz";
 import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, inputClass } from "@/components/ui";
+import { SearchableSelect } from "@/components/searchable-select";
 import { addFamilyNodeAction } from "./actions";
 import { NodeRow } from "./node-row";
 import { computeScope, isReferenceable } from "./scope";
@@ -266,31 +267,29 @@ export default async function SilsilahPage({
           <form action={addFamilyNodeAction} className="space-y-2">
             <input type="hidden" name="tenantId" value={tenantId} />
             <input name="nama" required placeholder="Nama lengkap" className={inputClass} />
-            <select name="parentId" className={inputClass}>
-              <option value="">Tanpa orang tua (leluhur tertinggi)</option>
-              {pilihanRelasi.map((n) => (
-                <option key={n.id} value={n.id}>
-                  Anak dari {n.nama}
-                </option>
-              ))}
-            </select>
-            <select name="spouseId" className={inputClass}>
-              <option value="">Tanpa pasangan</option>
-              {pilihanRelasi.map((n) => (
-                <option key={n.id} value={n.id}>
-                  Pasangan: {n.nama}
-                </option>
-              ))}
-            </select>
+            <SearchableSelect
+              name="parentId"
+              emptyLabel="Tanpa orang tua (leluhur tertinggi)"
+              placeholder="Cari orang tua…"
+              className={inputClass}
+              options={pilihanRelasi.map((n) => ({ value: n.id, label: `Anak dari ${n.nama}` }))}
+            />
+            <SearchableSelect
+              name="spouseId"
+              emptyLabel="Tanpa pasangan"
+              placeholder="Cari pasangan…"
+              className={inputClass}
+              options={pilihanRelasi.map((n) => ({ value: n.id, label: `Pasangan: ${n.nama}` }))}
+            />
             <input type="number" name="urutan" min={1} placeholder="Anak ke- (opsional)" className={inputClass} />
-            <select name="userId" className={inputClass} defaultValue="">
-              <option value="">Tautkan akun: tidak ada</option>
-              {anggota.map((a) => (
-                <option key={a.id} value={a.id}>
-                  Tautkan akun: {a.name} ({a.email})
-                </option>
-              ))}
-            </select>
+            <SearchableSelect
+              name="userId"
+              defaultValue=""
+              emptyLabel="Tautkan akun: tidak ada"
+              placeholder="Cari akun…"
+              className={inputClass}
+              options={anggota.map((a) => ({ value: a.id, label: `Tautkan akun: ${a.name} (${a.email})` }))}
+            />
             <button type="submit" className={`${btnPrimary} w-full`}>
               Tambah
             </button>

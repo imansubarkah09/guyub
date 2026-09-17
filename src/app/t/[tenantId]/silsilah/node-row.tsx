@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { updateFamilyNodeAction, deleteFamilyNodeAction } from "./actions";
+import { SearchableSelect } from "@/components/searchable-select";
 
 type Option = { id: string; nama: string };
 
@@ -69,14 +70,14 @@ export function NodeRow({
       <input type="hidden" name="tenantId" value={tenantId} />
       <input type="hidden" name="nodeId" value={node.id} />
       <input name="nama" defaultValue={node.nama} required className="rounded border border-primary/30 p-1 text-xs" />
-      <select name="parentId" defaultValue={node.parentId ?? ""} className="rounded border border-primary/30 p-1 text-xs">
-        <option value="">Tanpa orang tua</option>
-        {pilihan.map((o) => (
-          <option key={o.id} value={o.id}>
-            Anak dari {o.nama}
-          </option>
-        ))}
-      </select>
+      <SearchableSelect
+        name="parentId"
+        defaultValue={node.parentId ?? ""}
+        emptyLabel="Tanpa orang tua"
+        placeholder="Cari orang tua…"
+        className="rounded border border-primary/30 p-1 text-xs"
+        options={pilihan.map((o) => ({ value: o.id, label: `Anak dari ${o.nama}` }))}
+      />
       <input
         type="number"
         name="urutan"
@@ -85,22 +86,22 @@ export function NodeRow({
         placeholder="Anak ke-"
         className="w-24 rounded border border-primary/30 p-1 text-xs"
       />
-      <select name="spouseId" defaultValue={node.spouseId ?? ""} className="rounded border border-primary/30 p-1 text-xs">
-        <option value="">Tanpa pasangan</option>
-        {pilihan.map((o) => (
-          <option key={o.id} value={o.id}>
-            Pasangan: {o.nama}
-          </option>
-        ))}
-      </select>
-      <select name="userId" defaultValue={node.userId ?? ""} className="rounded border border-primary/30 p-1 text-xs">
-        <option value="">Tanpa akun</option>
-        {anggota.map((a) => (
-          <option key={a.id} value={a.id}>
-            Akun: {a.name} ({a.email})
-          </option>
-        ))}
-      </select>
+      <SearchableSelect
+        name="spouseId"
+        defaultValue={node.spouseId ?? ""}
+        emptyLabel="Tanpa pasangan"
+        placeholder="Cari pasangan…"
+        className="rounded border border-primary/30 p-1 text-xs"
+        options={pilihan.map((o) => ({ value: o.id, label: `Pasangan: ${o.nama}` }))}
+      />
+      <SearchableSelect
+        name="userId"
+        defaultValue={node.userId ?? ""}
+        emptyLabel="Tanpa akun"
+        placeholder="Cari akun…"
+        className="rounded border border-primary/30 p-1 text-xs"
+        options={anggota.map((a) => ({ value: a.id, label: `Akun: ${a.name} (${a.email})` }))}
+      />
       <TombolKirim className="rounded border border-primary/30 px-2 py-1 text-xs">Simpan</TombolKirim>
       <button type="button" onClick={() => setEditing(false)} className="text-xs text-foreground/50">
         Batal

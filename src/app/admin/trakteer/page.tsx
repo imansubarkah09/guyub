@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/session";
 import { requirePlatformOwner } from "@/lib/authz";
 import { RUPIAH_PER_HARI, sisaHari } from "@/lib/trakteer";
 import { Card, PageTitle, EmptyState, Badge, StatCard, btnPrimary, btnGhost, inputClass, rupiah, tanggal } from "@/components/ui";
+import { SearchableSelect } from "@/components/searchable-select";
 import { tautkanDonasiAction, tarikDonasiAction } from "./actions";
 
 export default async function AdminTrakteerPage() {
@@ -73,14 +74,13 @@ export default async function AdminTrakteerPage() {
                 {d.pesan && <p className="mt-0.5 text-xs text-muted">&quot;{d.pesan}&quot;</p>}
                 <form action={tautkanDonasiAction} className="mt-2 flex flex-wrap gap-2">
                   <input type="hidden" name="donasiId" value={d.id} />
-                  <select name="tenantId" required className={`${inputClass} flex-1 text-xs`}>
-                    <option value="">Pilih tenant…</option>
-                    {tenants.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.profile?.nama ?? t.id}
-                      </option>
-                    ))}
-                  </select>
+                  <SearchableSelect
+                    name="tenantId"
+                    required
+                    placeholder="Cari tenant…"
+                    className={`${inputClass} flex-1 text-xs`}
+                    options={tenants.map((t) => ({ value: t.id, label: t.profile?.nama ?? t.id }))}
+                  />
                   <button className={btnPrimary}>Tautkan</button>
                 </form>
               </li>

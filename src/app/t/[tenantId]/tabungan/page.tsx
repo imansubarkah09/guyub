@@ -5,6 +5,7 @@ import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
 import { Card, PageTitle, EmptyState, Badge, Progress, btnPrimary, btnGhost, inputClass, rupiah } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
+import { SearchableSelect } from "@/components/searchable-select";
 import { createTabunganTipeAction, setorAction, submitSetoranXenditAction, validasiSetoranAction } from "./actions";
 import { SetoranBuktiForm } from "./setoran-bukti-form";
 
@@ -147,13 +148,13 @@ export default async function TabunganPage({ params }: { params: Promise<{ tenan
                     <input type="hidden" name="tenantId" value={tenantId} />
                     <input type="hidden" name="tabunganTipeId" value={tipe.id} />
                     {tipe.mode === "individual" && (
-                      <select name="userId" required className={inputClass}>
-                        {anggota.map((m) => (
-                          <option key={m.id} value={m.userId}>
-                            {m.user.name}
-                          </option>
-                        ))}
-                      </select>
+                      <SearchableSelect
+                        name="userId"
+                        required
+                        placeholder="Cari anggota…"
+                        className={inputClass}
+                        options={anggota.map((m) => ({ value: m.userId, label: m.user.name }))}
+                      />
                     )}
                     <InputRupiah name="jumlah" placeholder="Setoran tunai (Rp)" className={inputClass} required />
                     <button className={btnGhost}>Catat</button>

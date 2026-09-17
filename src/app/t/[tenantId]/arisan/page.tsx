@@ -6,6 +6,7 @@ import { CAN_ATUR_ARISAN, CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
 import { Card, PageTitle, StatCard, EmptyState, Badge, btnPrimary, btnGhost, inputClass, rupiah } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
+import { SearchableSelect } from "@/components/searchable-select";
 import { SpinWheel } from "./spin-wheel";
 import {
   createArisanAction,
@@ -253,13 +254,13 @@ export default async function ArisanPage({ params }: { params: Promise<{ tenantI
                   <form action={addPesertaAction} className="mt-2 flex flex-wrap items-center gap-2">
                     <input type="hidden" name="tenantId" value={tenantId} />
                     <input type="hidden" name="arisanId" value={a.id} />
-                    <select name="userId" required className={`${inputClass} flex-1`}>
-                      {anggota.map((m) => (
-                        <option key={m.id} value={m.userId}>
-                          {m.user.name}
-                        </option>
-                      ))}
-                    </select>
+                    <SearchableSelect
+                      name="userId"
+                      required
+                      placeholder="Cari anggota…"
+                      className={`${inputClass} flex-1`}
+                      options={anggota.map((m) => ({ value: m.userId, label: m.user.name }))}
+                    />
                     <input type="number" name="jumlahSlot" min="1" max="20" defaultValue={1} title="Jumlah slot" className={`${inputClass} w-20`} />
                     <label className="flex items-center gap-1 text-xs text-muted">
                       <input type="checkbox" name="sudahDapat" />
