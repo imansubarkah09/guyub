@@ -1,13 +1,12 @@
-import { Users, UserPlus, Link2, MessageCircle } from "lucide-react";
+import { UserPlus, Link2, MessageCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
-import { CAN_KELOLA_ANGGOTA, PENGURUS, KETUA, ROLE_LABEL, has } from "@/lib/authz";
+import { CAN_KELOLA_ANGGOTA, PENGURUS, KETUA, has } from "@/lib/authz";
 import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
 import { waShareUrl } from "@/lib/whatsapp";
-import { Card, PageTitle, EmptyState, Badge, btnPrimary, btnGhost, inputClass } from "@/components/ui";
-import { generateInviteAction, revokeInviteAction, confirmMemberAction, updateRolesAction } from "./actions";
-
-const ALL_ROLES = ["ketua", "wakil_ketua", "bendahara", "sekretaris", "anggota"] as const;
+import { Card, PageTitle, btnPrimary, btnGhost, inputClass } from "@/components/ui";
+import { generateInviteAction, revokeInviteAction, confirmMemberAction } from "./actions";
+import { AnggotaAktifList } from "./anggota-aktif-list";
 
 export default async function AnggotaPage({ params }: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await params;
@@ -33,7 +32,15 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
   const bisaUbahKetua = has(roles, KETUA) || user.isPlatformOwner;
   const base = process.env.NEXT_PUBLIC_URL ?? "";
   const pending = memberships.filter((m) => m.status === "pending_confirmation");
-  const active = memberships.filter((m) => m.status === "active");
+  const active = memberships
+    .filter((m) => m.status === "active")
+    .map((m) => ({
+      id: m.id,
+      userId: m.userId,
+      roles: m.roles,
+      isPengurus: has(m.roles, PENGURUS),
+      user: { name: m.user.name, email: m.user.email, image: m.user.image },
+    }));
 
   return (
     <div className="space-y-5">
@@ -95,59 +102,7 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
 
       <section>
         <h2 className="mb-2 text-sm font-semibold">Anggota Aktif</h2>
-        {active.length === 0 ? (
-          <EmptyState icon={Users} title="Belum ada anggota" desc="Buat link undangan dan sebarkan lewat WhatsApp untuk mengajak anggota." />
-        ) : (
-          <ul className="space-y-2">
-            {active.map((m) => (
-              <li key={m.id}>
-                <Card className={m.userId === viewerId ? "bg-primary/5" : ""}>
-                  <div className="flex items-center gap-2">
-                    {m.user.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={m.user.image} alt="" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
-                    ) : (
-                      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-                        {m.user.name.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
-                        {m.user.name} {m.userId === viewerId && <Badge tone="primary">Anda</Badge>}
-                      </p>
-                      <p className="truncate text-xs text-muted">{m.user.email}</p>
-                    </div>
-                  </div>
-
-                  {canKelola && (!m.roles.includes("ketua") || bisaUbahKetua) ? (
-                    <form action={updateRolesAction} className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2 text-xs">
-                      <input type="hidden" name="tenantId" value={tenantId} />
-                      <input type="hidden" name="membershipId" value={m.id} />
-                      {ALL_ROLES.map((role) => (
-                        <label key={role} className="flex items-center gap-1 rounded-md border border-border px-2 py-1">
-                          <input type="checkbox" name="roles" value={role} defaultChecked={m.roles.includes(role)} />
-                          {ROLE_LABEL[role]}
-                        </label>
-                      ))}
-                      <button className={`${btnGhost} px-2 py-1 text-xs`}>Simpan</button>
-                    </form>
-                  ) : (
-                    <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-border pt-2">
-                      {m.roles.map((r) => (
-                        <Badge key={r} tone={r === "anggota" ? "muted" : "primary"}>
-                          {r}
-                        </Badge>
-                      ))}
-                      {canKelola && m.roles.includes("ketua") && !bisaUbahKetua && (
-                        <span className="text-[11px] text-muted">Peran ketua yang menjabat cuma bisa diubah ketua/wakil ketua atau platform owner.</span>
-                      )}
-                    </div>
-                  )}
-                </Card>
-              </li>
-            ))}
-          </ul>
-        )}
+        <AnggotaAktifList tenantId={tenantId} active={active} viewerId={viewerId} canKelola={canKelola} bisaUbahKetua={bisaUbahKetua} />
       </section>
     </div>
   );
