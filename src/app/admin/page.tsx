@@ -3,8 +3,9 @@ import { Building2, Search, ShieldCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requirePlatformOwner } from "@/lib/authz";
-import { Card, PageTitle, EmptyState, Badge, btnPrimary, btnGhost, inputClass, tanggal } from "@/components/ui";
-import { decideTenantAction, suspendTenantAction } from "./actions";
+import { Card, PageTitle, EmptyState, Badge, btnGhost, inputClass, tanggal } from "@/components/ui";
+import { suspendTenantAction } from "./actions";
+import { TenantDecisionForm } from "./tenant-decision-form";
 
 const JENIS_LABEL = { keluarga: "Keluarga", rt: "RT", paguyuban: "Paguyuban" } as const;
 const STATUS_TONE = { pending: "warning", approved: "success", suspended: "danger", rejected: "danger" } as const;
@@ -60,16 +61,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                     {JENIS_LABEL[t.jenis]}
                     {t.profile?.alamat ? ` · ${t.profile.alamat}` : ""} · diajukan {ketua?.user.name ?? "-"} ({ketua?.user.email ?? "-"})
                   </p>
-                  <form action={decideTenantAction} className="mt-2 flex flex-wrap gap-2">
-                    <input type="hidden" name="tenantId" value={t.id} />
-                    <input name="catatan" placeholder="Catatan (opsional)" className={`${inputClass} flex-1`} />
-                    <button name="decision" value="approved" className={btnPrimary}>
-                      Setujui
-                    </button>
-                    <button name="decision" value="rejected" className={btnGhost}>
-                      Tolak
-                    </button>
-                  </form>
+                  <TenantDecisionForm tenantId={t.id} />
                 </Card>
               );
             })}
