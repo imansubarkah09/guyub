@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requirePlatformOwner } from "@/lib/authz";
-import { AppHeader } from "@/components/app-header";
 import { PageTitle } from "@/components/ui";
 import { setPlatformOwnerAction } from "./actions";
 
@@ -24,7 +23,6 @@ export default async function PlatformOwnersPage({ searchParams }: { searchParam
 
   return (
     <main className="min-h-screen">
-      <AppHeader email={user.email} title="Guyub · Platform Owner" />
       <div className="mx-auto max-w-lg space-y-6 p-4">
         <section>
           <PageTitle title="Platform Owner Saat Ini" />

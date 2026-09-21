@@ -124,13 +124,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <ShieldCheck className="h-4 w-4" />
         Mode preview selalu read-only, semua aksi tulis ditolak server walau tombolnya dipaksa lewat API.
       </p>
-      <Link href="/admin/trakteer" className="mt-2 mr-4 inline-block text-sm text-primary underline">Monitor Trakteer</Link>
-      <Link href="/platform/pengguna" className="mt-2 mr-4 inline-block text-sm text-primary underline">
-        Daftar Pengguna
-      </Link>
-      <Link href="/platform/owners" className="mt-2 inline-block text-sm text-primary underline">
-        Kelola Platform Owner
-      </Link>
     </main>
   );
 }

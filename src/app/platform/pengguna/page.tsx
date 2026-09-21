@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
@@ -36,15 +35,7 @@ export default async function DaftarPenggunaPage({ searchParams }: { searchParam
 
   return (
     <main className="mx-auto max-w-3xl p-4 pb-16">
-      <PageTitle
-        title="Daftar Pengguna"
-        desc="Semua akun terdaftar dan keanggotaan tenantnya (keluarga, RT, atau paguyuban)."
-        action={
-          <Link href="/admin" className={btnGhost}>
-            Ke Platform Owner
-          </Link>
-        }
-      />
+      <PageTitle title="Daftar Pengguna" desc="Semua akun terdaftar dan keanggotaan tenantnya (keluarga, RT, atau paguyuban)." />
 
       <form className="mb-4 flex gap-1">
         <div className="relative flex-1">
