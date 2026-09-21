@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Server, Database, Globe, Cloud, Users, Home } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
@@ -7,6 +8,19 @@ import { SiteFooter } from "@/components/site-footer";
 import { Card, StatCard, Badge } from "@/components/ui";
 import { TrakteerModal } from "@/components/trakteer-modal";
 import { TRAKTEER_MODAL_URL } from "@/lib/trakteer";
+
+// Dulu halaman ini diam-diam mewarisi title+description landing page apa
+// adanya, jadi dua halaman berbeda tampil identik di hasil pencarian
+// (§SEO, 21 Sep 2026).
+const DESCRIPTION = "Kenapa fitur dasar Guyub gratis, siapa yang menanggung biaya server dan domainnya, dan bagaimana cara ikut mendukung lewat Trakteer.";
+
+export const metadata: Metadata = {
+  title: "Tentang",
+  description: DESCRIPTION,
+  alternates: { canonical: "/tentang" },
+  openGraph: { title: "Tentang Guyub", description: DESCRIPTION, url: "/tentang" },
+  twitter: { title: "Tentang Guyub", description: DESCRIPTION },
+};
 
 const BIAYA = [
   { icon: Server, judul: "Web server", ket: "Supaya Guyub bisa dibuka kapan saja dari HP siapa pun, tanpa nunggu loading lama." },

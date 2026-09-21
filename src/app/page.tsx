@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { Wallet, HandCoins, TreePine, FileText, ShieldCheck, Lock, X, Check, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
@@ -7,6 +8,8 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { HeroWithStickyCta } from "@/components/sticky-cta";
 import { TIMEZONE_WIB } from "@/lib/waktu";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 const TANGGAL_LENGKAP = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "short", year: "numeric", timeZone: TIMEZONE_WIB });
 
