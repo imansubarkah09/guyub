@@ -14,12 +14,31 @@ import { TRAKTEER_MODAL_URL } from "@/lib/trakteer";
 // (§SEO, 21 Sep 2026).
 const DESCRIPTION = "Kenapa fitur dasar Guyub gratis, siapa yang menanggung biaya server dan domainnya, dan bagaimana cara ikut mendukung lewat Trakteer.";
 
+// Metadata openGraph/twitter Next.js TIDAK digabung otomatis sama punya
+// layout root, kalau halaman ini setel ulang, seluruh objeknya (termasuk
+// images) ketimpa habis, bukan cuma field yang disebut di sini (dicek
+// langsung lewat next start lokal, 21 Sep 2026).
+const OG_IMAGE = { url: "/og-image.png", width: 1200, height: 630, alt: "Guyub: Kas & Tabungan Komunitas" };
+
 export const metadata: Metadata = {
   title: "Tentang",
   description: DESCRIPTION,
   alternates: { canonical: "/tentang" },
-  openGraph: { title: "Tentang Guyub", description: DESCRIPTION, url: "/tentang" },
-  twitter: { title: "Tentang Guyub", description: DESCRIPTION },
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    siteName: "Guyub",
+    title: "Tentang Guyub",
+    description: DESCRIPTION,
+    url: "/tentang",
+    images: [OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Tentang Guyub",
+    description: DESCRIPTION,
+    images: [OG_IMAGE.url],
+  },
 };
 
 const BIAYA = [

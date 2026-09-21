@@ -19,6 +19,7 @@ const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakart
 const SITE_URL = process.env.NEXT_PUBLIC_URL ?? "https://guyub.thedreamcompany.space";
 const TITLE = "Guyub: Kas & Tabungan Komunitas";
 const DESCRIPTION = "Kelola kas, tabungan, dan qurban joinan keluarga, RT, atau paguyuban dari satu aplikasi.";
+const OG_IMAGE = { url: "/og-image.png", width: 1200, height: 630, alt: "Guyub: Kas & Tabungan Komunitas" };
 
 // WebSite terstruktur (§SEO, 21 Sep 2026): dulu tidak ada metadataBase/Open
 // Graph/JSON-LD sama sekali, jadi link Guyub yang dibagikan di WhatsApp/media
@@ -38,11 +39,13 @@ export const metadata: Metadata = {
     siteName: "Guyub",
     title: TITLE,
     description: DESCRIPTION,
+    images: [OG_IMAGE],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
+    images: [OG_IMAGE.url],
   },
   icons: {
     icon: [
