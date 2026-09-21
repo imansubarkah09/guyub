@@ -1,10 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Wallet, HandCoins, TreePine, FileText, ShieldCheck, X, Check, Users } from "lucide-react";
+import { Wallet, HandCoins, TreePine, FileText, ShieldCheck, Lock, X, Check, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { HeroWithStickyCta } from "@/components/sticky-cta";
 import { TIMEZONE_WIB } from "@/lib/waktu";
 
 const TANGGAL_LENGKAP = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "short", year: "numeric", timeZone: TIMEZONE_WIB });
@@ -72,16 +73,25 @@ export default async function Home() {
     <main>
       <SiteHeader loggedIn={!!user} />
 
-      <section className="mx-auto max-w-md px-4 md:max-w-2xl py-10 text-center">
-        <h1 className="text-2xl font-semibold">Kas keluarga, RT, atau paguyuban, rapi tanpa bikin pengurus pusing</h1>
-        <p className="mt-3 text-sm text-foreground/70">
-          Selama ini catatan kas cuma nongkrong di grup WhatsApp atau buku tulis satu orang. Begitu pengurus ganti, riwayatnya ikut raib.
-          Di Guyub, kas, tabungan, qurban joinan, sampai silsilah keluarga Anda tersimpan rapi di satu tempat, tinggal dicek semua anggota kapan saja.
-        </p>
-        <Link href="/register" className="mt-6 inline-block rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90">
-          Daftarkan Tenant Anda, Yuk
-        </Link>
-      </section>
+      <HeroWithStickyCta>
+        <section className="mx-auto max-w-md px-4 md:max-w-2xl py-10 text-center">
+          <h1 className="text-2xl font-semibold">Kas keluarga, RT, atau paguyuban, rapi tanpa bikin pengurus pusing</h1>
+          <p className="mt-3 text-sm text-foreground/70">
+            Selama ini catatan kas cuma nongkrong di grup WhatsApp atau buku tulis satu orang. Begitu pengurus ganti, riwayatnya ikut raib.
+            Di Guyub, kas, tabungan, qurban joinan, sampai silsilah keluarga Anda tersimpan rapi di satu tempat, tinggal dicek semua anggota kapan saja.
+          </p>
+          <Link href="/register" className="mt-6 inline-block rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90">
+            Daftarkan Tenant Anda, Yuk
+          </Link>
+          {/* Trust line dipindah ke sini, langsung di bawah CTA (dulu satu-satunya
+              penenang baru muncul di section 5 dari 6, jauh setelah kecemasan
+              "menunggu ACC" di langkah 2 muncul duluan tanpa jangka waktu jelas,
+              ketemu review 15 Sep 2026). */}
+          <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-foreground/70">
+            <Lock className="h-3.5 w-3.5 text-success" /> Data tenant Anda terkunci privat, fitur dasarnya gratis dipakai.
+          </p>
+        </section>
+      </HeroWithStickyCta>
 
       {tenantAktif > 0 && (
         <section className="mx-auto max-w-md px-4 md:max-w-2xl py-6 text-center">
