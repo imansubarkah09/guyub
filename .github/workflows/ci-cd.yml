@@ -68,23 +68,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
-      - name: Build for Cloudflare
-        run: pnpm cf:build
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
-          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-          NEXTAUTH_URL: https://guyub.thedreamcompany.space
-          # NEXT_PUBLIC_* di-inline saat build, jadi wajib ada di sini (bukan rahasia).
-          NEXT_PUBLIC_URL: https://guyub.thedreamcompany.space
-          NEXT_PUBLIC_TRAKTEER_SLUG: brokado
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
-          CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
-      - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
+      # Migrasi ke Vercel (2026-09-21): build + deploy aplikasi sendiri sudah
+      # ditangani otomatis oleh integrasi Git Vercel begitu push ke main,
+      # jadi job ini cuma perlu jalankan migrasi skema, bukan deploy manual
+      # lewat wrangler lagi.
