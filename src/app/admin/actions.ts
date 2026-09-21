@@ -44,7 +44,7 @@ export async function decideTenantAction(_prevState: DecideTenantResult, formDat
     }
   } catch (e) {
     console.error("Keputusan tenant gagal", e);
-    return { error: "Gagal menyimpan keputusan. Coba lagi, atau cek wrangler tail kalau masih gagal." };
+    return { error: "Gagal menyimpan keputusan. Coba lagi, atau cek Runtime Logs di Vercel kalau masih gagal." };
   }
 
   revalidatePath("/admin");

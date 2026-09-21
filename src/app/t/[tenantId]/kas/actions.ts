@@ -17,7 +17,7 @@ export type KasActionState = { error: string } | null;
  * digest generik di production, apa pun sebab error-nya (bukan cuma masalah
  * config yang kemarin). Jalan keluarnya bukan menghindari semua error, tapi
  * tidak pernah throw ke boundary React: tangkap di sini, log detail aslinya
- * (kebaca lewat `wrangler tail`/Workers Logs), balikin pesan jelas ke form.
+ * (kebaca lewat Vercel Runtime Logs), balikin pesan jelas ke form.
  */
 async function unggahBuktiJikaAda(bukti: FormDataEntryValue | null, tenantId: string): Promise<{ url?: string; error?: string }> {
   if (!(bukti instanceof File) || bukti.size === 0) return {};
