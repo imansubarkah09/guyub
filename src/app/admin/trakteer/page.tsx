@@ -40,7 +40,7 @@ export default async function AdminTrakteerPage() {
   const jumlahBelumTertaut = rekapTenant.get(null)?.jumlahDonasi ?? 0;
 
   return (
-    <main className="mx-auto max-w-3xl space-y-5 p-4 pb-16">
+    <div className="space-y-5">
       <PageTitle
         title="Monitor Trakteer"
         desc={`Rp${RUPIAH_PER_HARI.toLocaleString("id-ID")} = 1 hari masa aktif`}
@@ -141,6 +141,6 @@ export default async function AdminTrakteerPage() {
           </ul>
         )}
       </section>
-    </main>
+    </div>
   );
 }

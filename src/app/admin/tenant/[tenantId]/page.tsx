@@ -22,7 +22,7 @@ export default async function AdminTenantPage({ params }: { params: Promise<{ te
   if (!tenant) notFound();
 
   return (
-    <main className="mx-auto max-w-3xl p-4 pb-16">
+    <div className="space-y-5">
       <PageTitle
         title={tenant.profile?.nama ?? "(tanpa nama)"}
         desc={`${JENIS_LABEL[tenant.jenis]} · ${tenant.memberships.length} anggota · daftar ${tanggal.format(tenant.createdAt)}`}
@@ -33,7 +33,7 @@ export default async function AdminTenantPage({ params }: { params: Promise<{ te
         }
       />
 
-      <Card className="mb-4">
+      <Card>
         <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
           <Eye className="h-4 w-4 text-accent" /> Preview as Role
         </h2>
@@ -83,6 +83,6 @@ export default async function AdminTenantPage({ params }: { params: Promise<{ te
           </ul>
         )}
       </Card>
-    </main>
+    </div>
   );
 }

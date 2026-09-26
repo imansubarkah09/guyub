@@ -34,10 +34,10 @@ export default async function DaftarPenggunaPage({ searchParams }: { searchParam
   });
 
   return (
-    <main className="mx-auto max-w-3xl p-4 pb-16">
+    <div className="space-y-5">
       <PageTitle title="Daftar Pengguna" desc="Semua akun terdaftar dan keanggotaan tenantnya (keluarga, RT, atau paguyuban)." />
 
-      <form className="mb-4 flex gap-1">
+      <form className="flex gap-1">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           <input name="q" defaultValue={query} placeholder="Cari nama atau email" className={`${inputClass} py-1 pl-8 text-xs`} />
@@ -46,6 +46,6 @@ export default async function DaftarPenggunaPage({ searchParams }: { searchParam
       </form>
 
       <DaftarPengguna users={users} />
-    </main>
+    </div>
   );
 }

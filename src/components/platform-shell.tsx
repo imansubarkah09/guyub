@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Building2, Users, Heart, ShieldCheck } from "lucide-react";
+import { Building2, Users, Heart, ShieldCheck, UserRound, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ProfileMenu, type AccountInfo } from "@/components/profile-menu";
 
@@ -20,9 +21,10 @@ const NAV: { href: string; label: string; icon: LucideIcon; match: (path: string
 
 export function PlatformShell({ account, children }: { account: AccountInfo; children: React.ReactNode }) {
   const pathname = usePathname();
+  const [drawer, setDrawer] = useState(false);
 
   return (
-    <div className="min-h-screen">
+    <div className="pt-safe min-h-screen">
       {/* Navbar desktop: menu langsung sejajar, tidak ada bottom bar (§lg:). */}
       <header className="sticky top-0 z-40 hidden h-14 items-center justify-between gap-4 border-b border-border bg-surface/90 px-4 backdrop-blur lg:flex">
         <div className="flex items-center gap-6">
@@ -51,18 +53,28 @@ export function PlatformShell({ account, children }: { account: AccountInfo; chi
         <ProfileMenu user={account} />
       </header>
 
-      {/* Header mobile/PWA: cuma wordmark + akun, menunya di bottom bar (§lg:hidden). */}
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-border bg-surface/90 px-4 backdrop-blur lg:hidden">
-        <Link href="/admin" className="font-semibold tracking-tight text-primary">
-          Platform Owner
-        </Link>
-        <ProfileMenu user={account} />
-      </header>
-
       <main className="mx-auto max-w-3xl p-4 pb-24 lg:pb-8">{children}</main>
 
-      {/* Bottom bar mobile/PWA: sama persis pola TenantShell, cuma 4 menu flat
-          jadi semuanya muat tanpa perlu "Lainnya". */}
+      {/* Header disembunyikan total di mobile/PWA (§adapt, 26 Sep 2026): dulu
+          selalu tampil dan terasa seperti chrome browser di atas layar HP.
+          Akun sekarang lewat tab "Akun" di bottom bar, buka drawer ringan. */}
+      {drawer && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <button aria-label="Tutup menu" onClick={() => setDrawer(false)} className="absolute inset-0 bg-black/40" />
+          <div className="pt-safe absolute inset-y-0 right-0 w-72 max-w-[85vw] overflow-y-auto bg-surface p-3 shadow-xl">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="truncate font-semibold text-primary">Akun</span>
+              <button onClick={() => setDrawer(false)} aria-label="Tutup" className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-primary/10">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <ProfileMenu user={account} />
+          </div>
+        </div>
+      )}
+
+      {/* Bottom bar mobile/PWA: 4 menu flat + "Akun" (dulu di header, sekarang
+          di sini karena headernya sudah tidak tampil di mobile). */}
       <nav className="pb-safe fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-surface lg:hidden" aria-label="Navigasi Platform Owner">
         {NAV.map((item) => {
           const active = item.match(pathname);
@@ -78,6 +90,10 @@ export function PlatformShell({ account, children }: { account: AccountInfo; chi
             </Link>
           );
         })}
+        <button onClick={() => setDrawer(true)} className="flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium text-muted transition">
+          <UserRound className="h-5 w-5" />
+          Akun
+        </button>
       </nav>
     </div>
   );

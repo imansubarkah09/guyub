@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Menu, MoreHorizontal, X, Eye } from "lucide-react";
+import { MoreHorizontal, X, Eye } from "lucide-react";
 import { NAV_GROUPS, ALL_NAV } from "./nav-items";
 import { NotifBell, type NotifItem } from "@/components/notif-bell";
 import { ProfileMenu, type AccountInfo } from "@/components/profile-menu";
@@ -37,7 +37,7 @@ export function TenantShell({
   const overflow = ALL_NAV.filter((i) => !i.primary && visible(i));
 
   return (
-    <div className="min-h-screen">
+    <div className="pt-safe min-h-screen">
       {previewLabel && (
         <div className="sticky top-0 z-50 flex items-center justify-between gap-2 bg-accent px-3 py-2 text-xs text-white">
           <span className="flex min-w-0 items-center gap-1.5">
@@ -50,15 +50,14 @@ export function TenantShell({
         </div>
       )}
 
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-border bg-surface/90 px-3 backdrop-blur">
-        <div className="flex min-w-0 items-center gap-1">
-          <button onClick={() => setDrawer(true)} aria-label="Buka menu" className="flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-primary/10 lg:hidden">
-            <Menu className="h-5 w-5" />
-          </button>
-          <Link href={base} className="truncate px-1 font-semibold tracking-tight text-primary">
-            {tenantNama}
-          </Link>
-        </div>
+      {/* Disembunyikan di mobile/PWA (§adapt, 26 Sep 2026): dulu tampil di semua
+          lebar dan terasa seperti chrome browser biasa di atas layar HP,
+          padahal bottom nav di bawah sudah cukup untuk navigasi. Akun +
+          notifikasi pindah ke drawer, lihat di bawah. */}
+      <header className="sticky top-0 z-40 hidden h-14 items-center justify-between gap-2 border-b border-border bg-surface/90 px-3 backdrop-blur lg:flex">
+        <Link href={base} className="truncate px-1 font-semibold tracking-tight text-primary">
+          {tenantNama}
+        </Link>
         <div className="flex items-center gap-1">
           <NotifBell items={notif} unread={unread} />
           <ProfileMenu user={account} />
@@ -79,12 +78,18 @@ export function TenantShell({
       {drawer && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button aria-label="Tutup menu" onClick={() => setDrawer(false)} className="absolute inset-0 bg-black/40" />
-          <div className="absolute inset-y-0 left-0 w-72 max-w-[85vw] overflow-y-auto bg-surface p-3 shadow-xl">
+          <div className="pt-safe absolute inset-y-0 left-0 w-72 max-w-[85vw] overflow-y-auto bg-surface p-3 shadow-xl">
             <div className="mb-2 flex items-center justify-between">
               <span className="truncate font-semibold text-primary">{tenantNama}</span>
               <button onClick={() => setDrawer(false)} aria-label="Tutup" className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-primary/10">
                 <X className="h-4 w-4" />
               </button>
+            </div>
+            {/* Akun + notifikasi tidak lagi punya tempat sendiri di header mobile
+                (§adapt, 26 Sep 2026), jadi ditaruh di puncak drawer ini. */}
+            <div className="mb-3 flex items-center justify-between gap-2 border-b border-border pb-3">
+              <ProfileMenu user={account} />
+              <NotifBell items={notif} unread={unread} />
             </div>
             <SidebarNav base={base} isActive={isActive} visible={visible} onNavigate={() => setDrawer(false)} />
           </div>
@@ -109,7 +114,12 @@ export function TenantShell({
           aria-current={overflow.some((i) => isActive(i.href)) ? "true" : undefined}
           className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${overflow.some((i) => isActive(i.href)) ? "text-primary" : "text-muted"}`}
         >
-          <MoreHorizontal className="h-5 w-5" />
+          <span className="relative">
+            <MoreHorizontal className="h-5 w-5" />
+            {/* Lonceng notifikasi pindah ke dalam drawer, titik ini gantikan
+                sinyal sekilas yang dulu ada di header (§adapt, 26 Sep 2026). */}
+            {unread > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-danger" />}
+          </span>
           Lainnya
         </button>
       </nav>

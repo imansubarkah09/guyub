@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requirePlatformOwner } from "@/lib/authz";
-import { PageTitle } from "@/components/ui";
+import { Card, PageTitle, btnPrimary, inputClass } from "@/components/ui";
 import { setPlatformOwnerAction } from "./actions";
 
 export default async function PlatformOwnersPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
@@ -22,17 +22,19 @@ export default async function PlatformOwnersPage({ searchParams }: { searchParam
     : [];
 
   return (
-    <main className="min-h-screen">
-      <div className="mx-auto max-w-lg space-y-6 p-4">
-        <section>
-          <PageTitle title="Platform Owner Saat Ini" />
-          <ul className="space-y-2">
-            {owners.map((o) => (
-              <li key={o.id} className="flex items-center justify-between gap-2 rounded-md border border-primary/15 p-3 text-sm">
+    <div className="space-y-5">
+      <PageTitle title="Platform Owner" />
+
+      <section>
+        <h2 className="mb-2 text-sm font-semibold">Platform Owner Saat Ini</h2>
+        <ul className="space-y-2">
+          {owners.map((o) => (
+            <li key={o.id}>
+              <Card className="flex items-center justify-between gap-2 p-3">
                 {/* min-w-0 + truncate: email panjang tidak boleh mendorong tombol
                     "Cabut" sampai terpotong di halaman paling sensitif se-app ini
                     (§harden, 15 Sep 2026). */}
-                <span className="min-w-0 truncate">
+                <span className="min-w-0 truncate text-sm">
                   {o.name} <span className="text-foreground/60">({o.email})</span>
                 </span>
                 {o.id === user.id ? (
@@ -47,34 +49,36 @@ export default async function PlatformOwnersPage({ searchParams }: { searchParam
                     <button className="rounded-md border border-danger/30 px-2 py-1 text-xs text-danger">Cabut</button>
                   </form>
                 )}
-              </li>
-            ))}
-          </ul>
-        </section>
+              </Card>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-        <section>
-          <h2 className="mb-2 text-sm font-semibold">Jadikan Platform Owner Baru</h2>
-          <form className="mb-3 flex gap-2">
-            <input name="q" defaultValue={query} placeholder="Cari nama atau email" className="flex-1 rounded-md border border-primary/30 p-2 text-sm" />
-            <button className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">Cari</button>
-          </form>
-          {query && results.length === 0 && <p className="text-sm text-foreground/60">Tidak ketemu pengguna dengan nama/email itu.</p>}
-          <ul className="space-y-2">
-            {results.map((r) => (
-              <li key={r.id} className="flex items-center justify-between gap-2 rounded-md border border-primary/15 p-3 text-sm">
-                <span className="min-w-0 truncate">
+      <section>
+        <h2 className="mb-2 text-sm font-semibold">Jadikan Platform Owner Baru</h2>
+        <form className="mb-3 flex gap-2">
+          <input name="q" defaultValue={query} placeholder="Cari nama atau email" className={inputClass} />
+          <button className={btnPrimary}>Cari</button>
+        </form>
+        {query && results.length === 0 && <p className="text-sm text-foreground/60">Tidak ketemu pengguna dengan nama/email itu.</p>}
+        <ul className="space-y-2">
+          {results.map((r) => (
+            <li key={r.id}>
+              <Card className="flex items-center justify-between gap-2 p-3">
+                <span className="min-w-0 truncate text-sm">
                   {r.name} <span className="text-foreground/60">({r.email})</span>
                 </span>
                 <form action={setPlatformOwnerAction} className="flex-shrink-0">
                   <input type="hidden" name="userId" value={r.id} />
                   <input type="hidden" name="makeOwner" value="true" />
-                  <button className="rounded-md bg-primary px-2 py-1 text-xs text-primary-foreground">Jadikan Owner</button>
+                  <button className={`${btnPrimary} px-2 py-1 text-xs`}>Jadikan Owner</button>
                 </form>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
-    </main>
+              </Card>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
   );
 }

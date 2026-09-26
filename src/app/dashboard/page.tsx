@@ -21,7 +21,12 @@ export default async function DashboardPage() {
   const ajakText = `Yuk kelola kas & tabungan keluarga/RT/paguyuban kita di Guyub: ${base}/cari`;
 
   return (
-    <main className="min-h-screen">
+    // pt-safe di container, bukan di header h-14 langsung: kalau ditaruh di
+    // header, padding notch/status bar (bisa ~50px+) akan mengempis tinggi
+    // tetapnya sendiri (box-sizing: border-box), bukan menambah tinggi total.
+    // Ini start_url PWA (manifest.ts), layar pertama yang dilihat user
+    // standalone (§adapt, 26 Sep 2026).
+    <main className="pt-safe min-h-screen">
       <header className="flex h-14 items-center justify-between border-b border-border bg-surface px-4">
         <span className="font-semibold tracking-tight text-primary">Guyub</span>
         <ProfileMenu

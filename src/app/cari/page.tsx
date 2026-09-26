@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
+import { AuthScreen } from "@/components/auth-screen";
 import { GoogleSignInButton } from "@/components/google-sign-in-button";
-import { Badge, PageTitle } from "@/components/ui";
+import { Badge, Card, PageTitle, btnPrimary, inputClass } from "@/components/ui";
 import { requestJoinAction } from "./actions";
 
 const JENIS_LABEL = { keluarga: "Keluarga", rt: "RT", paguyuban: "Paguyuban" } as const;
@@ -13,12 +15,9 @@ export default async function CariPage({ searchParams }: { searchParams: Promise
 
   if (!user) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
-        <div className="max-w-sm space-y-4">
-          <p className="text-sm">Masuk dulu untuk mencari arisan keluarga, RT, atau paguyuban Anda di Guyub.</p>
-          <GoogleSignInButton callbackURL="/cari" />
-        </div>
-      </main>
+      <AuthScreen icon={Search} title="Cari Tenant" description="Masuk dulu untuk mencari arisan keluarga, RT, atau paguyuban Anda di Guyub.">
+        <GoogleSignInButton callbackURL="/cari" />
+      </AuthScreen>
     );
   }
 
@@ -39,8 +38,8 @@ export default async function CariPage({ searchParams }: { searchParams: Promise
     <main className="mx-auto max-w-md space-y-4 p-6">
       <PageTitle title="Cari Tenant" />
       <form className="flex gap-2">
-        <input name="q" defaultValue={query} placeholder="Nama keluarga, RT, atau paguyuban" className="flex-1 rounded-md border border-primary/30 p-2 text-sm" />
-        <button className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">Cari</button>
+        <input name="q" defaultValue={query} placeholder="Nama keluarga, RT, atau paguyuban" className={inputClass} />
+        <button className={btnPrimary}>Cari</button>
       </form>
 
       {query && results.length === 0 && <p className="text-sm text-foreground/60">Tidak ketemu tenant dengan nama itu.</p>}
@@ -49,27 +48,29 @@ export default async function CariPage({ searchParams }: { searchParams: Promise
         {results.map((r) => {
           const status = statusByTenant.get(r.id);
           return (
-            <li key={r.id} className="flex items-center justify-between gap-2 rounded-md border border-primary/15 p-3 text-sm">
-              {/* min-w-0: tanpa ini flex item tidak bisa menyusut, jadi nama
-                  tenant yang panjang mendorong tombol di kanan sampai
-                  terpotong/keluar layar, bukan sekadar memotong teksnya
-                  sendiri (§harden, 15 Sep 2026). */}
-              <div className="min-w-0">
-                <p className="truncate font-medium">{r.profile?.nama}</p>
-                <p className="text-xs text-foreground/60">{JENIS_LABEL[r.jenis]}</p>
-              </div>
-              {status === "active" ? (
-                <Link href={`/t/${r.id}`} className="flex-shrink-0 text-xs text-primary underline">
-                  Buka
-                </Link>
-              ) : status === "pending_confirmation" ? (
-                <Badge tone="warning">Menunggu konfirmasi</Badge>
-              ) : (
-                <form action={requestJoinAction} className="flex-shrink-0">
-                  <input type="hidden" name="tenantId" value={r.id} />
-                  <button className="rounded-md bg-primary px-2 py-1 text-xs text-primary-foreground">Minta Gabung</button>
-                </form>
-              )}
+            <li key={r.id}>
+              <Card className="flex items-center justify-between gap-2 p-3 text-sm">
+                {/* min-w-0: tanpa ini flex item tidak bisa menyusut, jadi nama
+                    tenant yang panjang mendorong tombol di kanan sampai
+                    terpotong/keluar layar, bukan sekadar memotong teksnya
+                    sendiri (§harden, 15 Sep 2026). */}
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{r.profile?.nama}</p>
+                  <p className="text-xs text-foreground/60">{JENIS_LABEL[r.jenis]}</p>
+                </div>
+                {status === "active" ? (
+                  <Link href={`/t/${r.id}`} className="flex-shrink-0 text-xs text-primary underline">
+                    Buka
+                  </Link>
+                ) : status === "pending_confirmation" ? (
+                  <Badge tone="warning">Menunggu konfirmasi</Badge>
+                ) : (
+                  <form action={requestJoinAction} className="flex-shrink-0">
+                    <input type="hidden" name="tenantId" value={r.id} />
+                    <button className={`${btnPrimary} px-2 py-1 text-xs`}>Minta Gabung</button>
+                  </form>
+                )}
+              </Card>
             </li>
           );
         })}

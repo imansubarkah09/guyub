@@ -37,7 +37,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const pending = tenants.filter((t) => t.approvalRequest?.status === "pending");
 
   return (
-    <main className="mx-auto max-w-3xl p-4 pb-16">
+    <div className="space-y-5">
       <PageTitle
         title="Platform Owner"
         desc="Kelola semua tenant Guyub"
@@ -124,6 +124,6 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <ShieldCheck className="h-4 w-4" />
         Mode preview selalu read-only, semua aksi tulis ditolak server walau tombolnya dipaksa lewat API.
       </p>
-    </main>
+    </div>
   );
 }

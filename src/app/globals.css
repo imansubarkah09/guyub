@@ -73,3 +73,10 @@ body {
 .pb-safe {
   padding-bottom: calc(env(safe-area-inset-bottom) + 0.25rem);
 }
+
+/* Header atas dilepas di mobile/PWA (§adapt, 26 Sep 2026): konten mulai
+   langsung dari status bar/notch, jadi butuh inset sendiri di sana. 0px di
+   browser biasa tanpa notch, tidak berefek. */
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}

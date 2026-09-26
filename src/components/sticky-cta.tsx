@@ -25,7 +25,7 @@ export function HeroWithStickyCta({ children }: { children: React.ReactNode }) {
     <>
       <div ref={heroRef}>{children}</div>
       <div
-        className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-sm transition-transform duration-300 ease-out md:hidden ${
+        className={`fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-sm transition-transform duration-300 ease-out lg:hidden ${
           terlihat ? "translate-y-0" : "translate-y-full"
         }`}
       >
