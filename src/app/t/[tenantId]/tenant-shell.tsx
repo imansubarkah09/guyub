@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Bell, MoreHorizontal, X, Eye } from "lucide-react";
+import { MoreHorizontal, X, Eye } from "lucide-react";
+import { GuyubLogo } from "@/components/guyub-logo";
 import { NAV_GROUPS, ALL_NAV } from "./nav-items";
 import { NotifBell, type NotifItem } from "@/components/notif-bell";
 import { ProfileMenu, type AccountInfo } from "@/components/profile-menu";
@@ -43,7 +44,7 @@ export function TenantShell({
   const overflow = ALL_NAV.filter((i) => !i.primary && visible(i));
 
   return (
-    <div className="pt-safe min-h-screen">
+    <div className="min-h-screen">
       {previewLabel && (
         <div className="sticky top-0 z-50 flex items-center justify-between gap-2 bg-accent px-3 py-2 text-xs text-white">
           <span className="flex min-w-0 items-center gap-1.5">
@@ -56,17 +57,29 @@ export function TenantShell({
         </div>
       )}
 
-      {/* Disembunyikan di mobile/PWA (§adapt, 26 Sep 2026): dulu tampil di semua
-          lebar dan terasa seperti chrome browser biasa di atas layar HP,
-          padahal bottom nav di bawah sudah cukup untuk navigasi. Akun +
-          notifikasi pindah ke drawer, lihat di bawah. */}
-      <header className="sticky top-0 z-40 hidden h-14 items-center justify-between gap-2 border-b border-border bg-surface/90 px-3 backdrop-blur lg:flex">
-        <Link href={base} className="truncate px-1 font-semibold tracking-tight text-primary">
-          {tenantNama}
-        </Link>
-        <div className="flex items-center gap-1">
-          <NotifBell items={notif} unread={unread} inboxHref={`${base}/notifikasi`} />
-          <ProfileMenu user={account} />
+      {/* Top bar di semua lebar (permintaan Iman 27 Sep 2026, membalik versi
+          "tanpa header di HP" sehari sebelumnya): logo + Guyub, lonceng, avatar.
+          pt-safe di header itu sendiri (baris h-14 di dalamnya), bukan di
+          wrapper, supaya saat di-scroll header sticky tetap di bawah notch.
+          Sengaja tanpa backdrop-blur: backdrop-filter menjadikan header wadah
+          elemen fixed di dalamnya, jadi lapisan "klik di luar untuk menutup"
+          milik lonceng/menu akun cuma selebar header dan klik di luar tidak menutup. */}
+      <header className="pt-safe sticky top-0 z-40 border-b border-border bg-surface">
+        <div className="flex h-14 items-center justify-between gap-2 px-3">
+          <div className="flex min-w-0 items-center gap-2">
+            {/* Logo ke halaman pilih tenant: dari dalam tenant dulu tidak ada jalan ke sana. */}
+            <Link href="/dashboard" className="flex flex-shrink-0 items-center gap-2 px-1" aria-label="Guyub, pilih tenant">
+              <GuyubLogo className="h-7 w-7" />
+              <span className="font-semibold tracking-tight text-primary">Guyub</span>
+            </Link>
+            <Link href={base} className="hidden min-w-0 truncate border-l border-border pl-2 text-sm text-muted hover:text-foreground lg:block">
+              {tenantNama}
+            </Link>
+          </div>
+          <div className="flex items-center gap-1">
+            <NotifBell items={notif} unread={unread} inboxHref={`${base}/notifikasi`} />
+            <ProfileMenu user={account} />
+          </div>
         </div>
       </header>
 
@@ -91,11 +104,6 @@ export function TenantShell({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            {/* Akun tidak lagi punya tempat di header mobile (§adapt, 26 Sep 2026),
-                jadi ditaruh di puncak drawer ini. Notifikasi punya tab sendiri di bottom nav. */}
-            <div className="mb-3 border-b border-border pb-3">
-              <ProfileMenu user={account} inline />
-            </div>
             <SidebarNav base={base} isActive={isActive} visible={visible} onNavigate={() => setDrawer(false)} />
           </div>
         </div>
@@ -114,23 +122,6 @@ export function TenantShell({
             {item.short ?? item.label}
           </Link>
         ))}
-        {/* Lonceng di HP/PWA: header atas sengaja tidak ada (layar penuh), jadi
-            notifikasi jadi tab sendiri yang langsung membuka inbox. */}
-        <Link
-          href={`${base}/notifikasi`}
-          aria-current={pathname === `${base}/notifikasi` ? "page" : undefined}
-          className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${pathname === `${base}/notifikasi` ? "text-primary" : "text-muted"}`}
-        >
-          <span className="relative">
-            <Bell className="h-5 w-5" />
-            {unread > 0 && (
-              <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold leading-none text-white">
-                {unread > 9 ? "9+" : unread}
-              </span>
-            )}
-          </span>
-          Notifikasi
-        </Link>
         <button
           onClick={() => setDrawer(true)}
           aria-current={overflow.some((i) => isActive(i.href)) ? "true" : undefined}

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, UserRound, ShieldCheck, Info, ChevronDown } from "lucide-react";
+import { LogOut, UserRound, ShieldCheck, Info } from "lucide-react";
 import { signOut } from "@/lib/auth-client";
 import { updateAccountAction } from "@/app/account-actions";
 import { validasiFileGambar } from "@/lib/validasi-file";
@@ -13,14 +13,9 @@ import { btnPrimary, inputClass } from "@/components/ui";
 
 export type AccountInfo = { name: string; email: string; phone: string | null; image: string | null; isPlatformOwner: boolean };
 
-/**
- * inline: dipakai di dalam drawer mobile. Popover absolut di sana terpotong keluar
- * layar (drawer sempit + overflow-y-auto ikut memotong sumbu x, ketemu uji 27 Sep
- * 2026), jadi panelnya mengembang di alur drawer selebar drawer.
- */
-export function ProfileMenu({ user, inline = false, defaultOpen = false }: { user: AccountInfo; inline?: boolean; defaultOpen?: boolean }) {
+export function ProfileMenu({ user }: { user: AccountInfo }) {
   const router = useRouter();
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,35 +28,18 @@ export function ProfileMenu({ user, inline = false, defaultOpen = false }: { use
   );
 
   return (
-    <div className={inline ? "w-full" : "relative"}>
-      {inline ? (
-        <button
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-primary/10"
-          aria-label="Menu akun"
-        >
-          {avatar}
-          <span className="min-w-0 flex-1 truncate text-sm font-medium">{user.name}</span>
-          <ChevronDown className={`h-4 w-4 flex-shrink-0 text-muted transition ${open ? "rotate-180" : ""}`} />
-        </button>
-      ) : (
-        <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-2 rounded-full py-1 pl-2 pr-1 transition hover:bg-primary/10" aria-label="Menu akun">
-          <span className="hidden max-w-32 truncate text-sm font-medium sm:block">{user.name}</span>
-          {avatar}
-        </button>
-      )}
+    <div className="relative">
+      <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-2 rounded-full py-1 pl-2 pr-1 transition hover:bg-primary/10" aria-label="Menu akun">
+        <span className="hidden max-w-32 truncate text-sm font-medium sm:block">{user.name}</span>
+        {avatar}
+      </button>
 
       {open && (
         <>
-          {!inline && <button aria-label="Tutup" onClick={() => setOpen(false)} className="fixed inset-0 z-40 cursor-default" />}
-          <div
-            className={
-              inline
-                ? "mt-2 rounded-[var(--radius)] border border-border bg-surface p-3"
-                : "absolute right-0 z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-[var(--radius)] border border-border bg-surface p-3 shadow-lg"
-            }
-          >
+          <button aria-label="Tutup" onClick={() => setOpen(false)} className="fixed inset-0 z-40 cursor-default" />
+          {/* HP: panel selebar layar di bawah top bar, bisa di-scroll (isinya form
+              cukup panjang, dan header sticky tidak ikut ter-scroll). */}
+          <div className="fixed inset-x-3 top-[calc(env(safe-area-inset-top)+3.75rem)] z-50 max-h-[calc(100dvh-env(safe-area-inset-top)-5rem)] overflow-y-auto rounded-[var(--radius)] border border-border bg-surface p-3 shadow-lg lg:absolute lg:inset-x-auto lg:right-0 lg:top-full lg:mt-2 lg:w-80">
             <div className="mb-3 flex items-center gap-2">
               <UserRound className="h-4 w-4 text-muted" />
               <div className="min-w-0">

@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/session";
 import { waShareUrl } from "@/lib/whatsapp";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, btnGhost, inputClass } from "@/components/ui";
 import { ProfileMenu } from "@/components/profile-menu";
+import { GuyubLogo } from "@/components/guyub-logo";
 import { createTenantAction } from "./actions";
 
 const JENIS_LABEL = { keluarga: "Keluarga", rt: "RT", paguyuban: "Paguyuban" } as const;
@@ -28,7 +29,10 @@ export default async function DashboardPage() {
     // standalone (§adapt, 26 Sep 2026).
     <main className="pt-safe min-h-screen">
       <header className="flex h-14 items-center justify-between border-b border-border bg-surface px-4">
-        <span className="font-semibold tracking-tight text-primary">Guyub</span>
+        <span className="flex items-center gap-2">
+          <GuyubLogo className="h-7 w-7" />
+          <span className="font-semibold tracking-tight text-primary">Guyub</span>
+        </span>
         <ProfileMenu
           user={{ name: user.name, email: user.email, phone: user.phone ?? null, image: user.image ?? null, isPlatformOwner: user.isPlatformOwner }}
         />

@@ -10,8 +10,7 @@ export type NotifItem = { id: string; pesan: string; href: string | null; isRead
 /**
  * Membuka lonceng TIDAK lagi menandai apa pun dibaca (27 Sep 2026, pola inbox
  * Novelis/Brokado): klik item membuka item itu di inbox, dan di sanalah ia
- * ditandai dibaca. Cuma dipakai di header desktop; di HP notifikasi punya tab
- * sendiri di bottom nav TenantShell yang langsung membuka inbox.
+ * ditandai dibaca.
  */
 export function NotifBell({ items, unread, inboxHref }: { items: NotifItem[]; unread: number; inboxHref: string }) {
   const [open, setOpen] = useState(false);
@@ -35,7 +34,9 @@ export function NotifBell({ items, unread, inboxHref }: { items: NotifItem[]; un
       {open && (
         <>
           <button aria-label="Tutup" onClick={() => setOpen(false)} className="fixed inset-0 z-40 cursor-default" />
-          <div className="absolute right-0 z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-[var(--radius)] border border-border bg-surface shadow-lg">
+          {/* HP: panel selebar layar tepat di bawah top bar (dropdown 20rem dari
+              lonceng yang ada di tengah-kanan terpotong di HP sempit). */}
+          <div className="fixed inset-x-3 top-[calc(env(safe-area-inset-top)+3.75rem)] z-50 overflow-hidden rounded-[var(--radius)] border border-border bg-surface shadow-lg lg:absolute lg:inset-x-auto lg:right-0 lg:top-full lg:mt-2 lg:w-80">
             <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted">Notifikasi</p>
               {belum > 0 && (
