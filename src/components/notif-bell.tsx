@@ -10,9 +10,10 @@ export type NotifItem = { id: string; pesan: string; href: string | null; isRead
 /**
  * Membuka lonceng TIDAK lagi menandai apa pun dibaca (27 Sep 2026, pola inbox
  * Novelis/Brokado): klik item membuka item itu di inbox, dan di sanalah ia
- * ditandai dibaca. inline: di dalam drawer mobile, lihat alasan di ProfileMenu.
+ * ditandai dibaca. Cuma dipakai di header desktop; di HP notifikasi punya tab
+ * sendiri di bottom nav TenantShell yang langsung membuka inbox.
  */
-export function NotifBell({ items, unread, inboxHref, inline = false }: { items: NotifItem[]; unread: number; inboxHref: string; inline?: boolean }) {
+export function NotifBell({ items, unread, inboxHref }: { items: NotifItem[]; unread: number; inboxHref: string }) {
   const [open, setOpen] = useState(false);
   // Optimistis diikat ke angka unread saat tombol diklik: begitu data server
   // berubah (sudah revalidate, atau ada notifikasi baru), flag ini gugur sendiri.
@@ -25,32 +26,16 @@ export function NotifBell({ items, unread, inboxHref, inline = false }: { items:
   );
 
   return (
-    <div className={inline ? "w-full" : "relative"}>
-      {inline ? (
-        <button onClick={() => setOpen((v) => !v)} aria-expanded={open} className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left text-sm transition hover:bg-primary/10">
-          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center">
-            <Bell className="h-5 w-5" />
-          </span>
-          <span className="flex-1 font-medium">Notifikasi</span>
-          {badge}
-        </button>
-      ) : (
-        <button onClick={() => setOpen((v) => !v)} aria-label="Notifikasi" className="relative flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-primary/10">
-          <Bell className="h-5 w-5" />
-          {badge && <span className="absolute -right-0.5 -top-0.5">{badge}</span>}
-        </button>
-      )}
+    <div className="relative">
+      <button onClick={() => setOpen((v) => !v)} aria-label="Notifikasi" className="relative flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-primary/10">
+        <Bell className="h-5 w-5" />
+        {badge && <span className="absolute -right-0.5 -top-0.5">{badge}</span>}
+      </button>
 
       {open && (
         <>
-          {!inline && <button aria-label="Tutup" onClick={() => setOpen(false)} className="fixed inset-0 z-40 cursor-default" />}
-          <div
-            className={
-              inline
-                ? "mt-2 overflow-hidden rounded-[var(--radius)] border border-border bg-surface"
-                : "absolute right-0 z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-[var(--radius)] border border-border bg-surface shadow-lg"
-            }
-          >
+          <button aria-label="Tutup" onClick={() => setOpen(false)} className="fixed inset-0 z-40 cursor-default" />
+          <div className="absolute right-0 z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-[var(--radius)] border border-border bg-surface shadow-lg">
             <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted">Notifikasi</p>
               {belum > 0 && (

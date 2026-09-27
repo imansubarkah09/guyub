@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { MoreHorizontal, X, Eye } from "lucide-react";
+import { Bell, MoreHorizontal, X, Eye } from "lucide-react";
 import { NAV_GROUPS, ALL_NAV } from "./nav-items";
 import { NotifBell, type NotifItem } from "@/components/notif-bell";
 import { ProfileMenu, type AccountInfo } from "@/components/profile-menu";
@@ -91,11 +91,10 @@ export function TenantShell({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            {/* Akun + notifikasi tidak lagi punya tempat sendiri di header mobile
-                (§adapt, 26 Sep 2026), jadi ditaruh di puncak drawer ini. */}
-            <div className="mb-3 space-y-1 border-b border-border pb-3">
+            {/* Akun tidak lagi punya tempat di header mobile (§adapt, 26 Sep 2026),
+                jadi ditaruh di puncak drawer ini. Notifikasi punya tab sendiri di bottom nav. */}
+            <div className="mb-3 border-b border-border pb-3">
               <ProfileMenu user={account} inline />
-              <NotifBell items={notif} unread={unread} inboxHref={`${base}/notifikasi`} inline />
             </div>
             <SidebarNav base={base} isActive={isActive} visible={visible} onNavigate={() => setDrawer(false)} />
           </div>
@@ -115,17 +114,29 @@ export function TenantShell({
             {item.short ?? item.label}
           </Link>
         ))}
+        {/* Lonceng di HP/PWA: header atas sengaja tidak ada (layar penuh), jadi
+            notifikasi jadi tab sendiri yang langsung membuka inbox. */}
+        <Link
+          href={`${base}/notifikasi`}
+          aria-current={pathname === `${base}/notifikasi` ? "page" : undefined}
+          className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${pathname === `${base}/notifikasi` ? "text-primary" : "text-muted"}`}
+        >
+          <span className="relative">
+            <Bell className="h-5 w-5" />
+            {unread > 0 && (
+              <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold leading-none text-white">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            )}
+          </span>
+          Notifikasi
+        </Link>
         <button
           onClick={() => setDrawer(true)}
           aria-current={overflow.some((i) => isActive(i.href)) ? "true" : undefined}
           className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition ${overflow.some((i) => isActive(i.href)) ? "text-primary" : "text-muted"}`}
         >
-          <span className="relative">
-            <MoreHorizontal className="h-5 w-5" />
-            {/* Lonceng notifikasi pindah ke dalam drawer, titik ini gantikan
-                sinyal sekilas yang dulu ada di header (§adapt, 26 Sep 2026). */}
-            {unread > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-danger" />}
-          </span>
+          <MoreHorizontal className="h-5 w-5" />
           Lainnya
         </button>
       </nav>
