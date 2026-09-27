@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Bell, ChevronLeft, ChevronRight } from "lucide-react";
 import { EmptyState, btnGhost, btnPrimary } from "@/components/ui";
@@ -27,18 +27,32 @@ const PER_HAL = 10;
  */
 export function Inbox({ items }: { items: InboxItem[] }) {
   const pathname = usePathname();
-  const idDipilih = useSearchParams().get("id");
+  const params = useSearchParams();
+  const idDipilih = params.get("id");
+  // "dari=daftar" = entri riwayat tepat di bawah entri ini adalah daftar, jadi
+  // Kembali boleh history.back(). Penandanya sengaja di URL: history.state buatan
+  // sendiri dibuang Next tiap navigasi/refresh (preserveCustomHistoryState false),
+  // termasuk refresh sesudah "tandai dibaca", dan useRef basi setelah back HP.
+  const diAtasDaftar = params.get("dari") === "daftar";
   const dipilih = items.find((i) => i.id === idDipilih) ?? null;
   const [dibaca, setDibaca] = useState<Set<string>>(() => new Set(idDipilih ? [idDipilih] : []));
   const [hanyaBelum, setHanyaBelum] = useState(false);
   const [hal, setHal] = useState(() => Math.max(0, Math.floor(items.findIndex((i) => i.id === idDipilih) / PER_HAL)));
-  const dariDaftar = useRef(false);
 
   // Ditandai dibaca saat isinya tampil: dari klik di daftar maupun datang dari lonceng (?id=).
   const idBaruDibuka = dipilih && !dipilih.isRead ? dipilih.id : null;
   useEffect(() => {
     if (idBaruDibuka) tandaiDibacaAction(idBaruDibuka);
   }, [idBaruDibuka]);
+
+  // Di HP, isi yang dibuka dari luar daftar (lonceng di halaman lain) disisipi entri
+  // daftar di bawahnya, supaya back HP maupun tombol Kembali ke daftar dulu, bukan
+  // ke halaman asal (laporan Iman 27 Sep 2026).
+  useEffect(() => {
+    if (!idDipilih || diAtasDaftar || window.matchMedia("(min-width: 1024px)").matches) return;
+    window.history.replaceState(null, "", pathname);
+    window.history.pushState(null, "", `${pathname}?id=${idDipilih}&dari=daftar`);
+  }, [idDipilih, diAtasDaftar, pathname]);
 
   if (items.length === 0) {
     return <EmptyState icon={Bell} title="Belum ada notifikasi" desc="Kabar dari tenant Anda, seperti pengajuan pinjaman, jadwal arisan, atau persetujuan anggota, akan muncul di sini." />;
@@ -55,18 +69,13 @@ export function Inbox({ items }: { items: InboxItem[] }) {
     setDibaca((s) => new Set(s).add(id));
     // Di layar lebar daftar dan isi tampil berdampingan, jadi ganti item cukup
     // replace; di HP push supaya back kembali ke daftar.
-    const lebar = window.matchMedia("(min-width: 1024px)").matches;
-    dariDaftar.current = !lebar;
-    window.history[lebar ? "replaceState" : "pushState"](null, "", `${pathname}?id=${id}`);
+    if (window.matchMedia("(min-width: 1024px)").matches) window.history.replaceState(null, "", `${pathname}?id=${id}`);
+    else window.history.pushState(null, "", `${pathname}?id=${id}&dari=daftar`);
   }
 
   function kembali() {
-    if (dariDaftar.current) {
-      dariDaftar.current = false;
-      window.history.back();
-    } else {
-      window.history.replaceState(null, "", pathname);
-    }
+    if (diAtasDaftar) window.history.back();
+    else window.history.replaceState(null, "", pathname);
   }
 
   function tandaiSemua() {
