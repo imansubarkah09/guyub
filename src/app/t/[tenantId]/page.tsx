@@ -63,7 +63,7 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
 
   // Checklist personal — dihitung dari kondisi data asli, bukan flag manual (§7.3).
   const checklist: { pesan: string; href: string }[] = [];
-  if (!user.phone) checklist.push({ pesan: "Lengkapi nomor WhatsApp Anda di menu profil (klik avatar kanan atas)", href: base });
+  if (!user.phone) checklist.push({ pesan: "Lengkapi nomor WhatsApp Anda di menu akun (foto profil Anda, di HP ada di menu Lainnya)", href: base });
   if (!nodeSaya) checklist.push({ pesan: "Anda belum memiliki silsilah keluarga, buat silsilah keluarga Anda sendiri", href: `${base}/silsilah` });
   if (ikutQurban && sayaIkutQurban === 0)
     checklist.push({ pesan: "Anda belum join tabungan qurban, segera berpartisipasi untuk mendapat ridho dari Allah", href: `${base}/qurban` });

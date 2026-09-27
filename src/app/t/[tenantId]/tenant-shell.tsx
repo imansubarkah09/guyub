@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { MoreHorizontal, X, Eye } from "lucide-react";
 import { NAV_GROUPS, ALL_NAV } from "./nav-items";
 import { NotifBell, type NotifItem } from "@/components/notif-bell";
@@ -29,7 +29,13 @@ export function TenantShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [drawer, setDrawer] = useState(false);
+  // Drawer diikat ke lokasi saat dibuka, jadi otomatis tertutup begitu pindah
+  // halaman lewat tautan mana pun di dalamnya (lonceng, menu akun), bukan cuma
+  // menu navigasi yang punya onNavigate (ketemu uji inbox 27 Sep 2026).
+  const lokasi = `${pathname}?${useSearchParams().toString()}`;
+  const [drawerDi, setDrawerDi] = useState<string | null>(null);
+  const drawer = drawerDi === lokasi;
+  const setDrawer = (buka: boolean) => setDrawerDi(buka ? lokasi : null);
   const base = `/t/${tenantId}`;
   const visible = (i: { ketuaOnly?: boolean }) => !i.ketuaOnly || isKetua;
   const isActive = (href: string) => pathname === `${base}${href}`;
@@ -59,7 +65,7 @@ export function TenantShell({
           {tenantNama}
         </Link>
         <div className="flex items-center gap-1">
-          <NotifBell items={notif} unread={unread} />
+          <NotifBell items={notif} unread={unread} inboxHref={`${base}/notifikasi`} />
           <ProfileMenu user={account} />
         </div>
       </header>
@@ -87,9 +93,9 @@ export function TenantShell({
             </div>
             {/* Akun + notifikasi tidak lagi punya tempat sendiri di header mobile
                 (§adapt, 26 Sep 2026), jadi ditaruh di puncak drawer ini. */}
-            <div className="mb-3 flex items-center justify-between gap-2 border-b border-border pb-3">
-              <ProfileMenu user={account} />
-              <NotifBell items={notif} unread={unread} />
+            <div className="mb-3 space-y-1 border-b border-border pb-3">
+              <ProfileMenu user={account} inline />
+              <NotifBell items={notif} unread={unread} inboxHref={`${base}/notifikasi`} inline />
             </div>
             <SidebarNav base={base} isActive={isActive} visible={visible} onNavigate={() => setDrawer(false)} />
           </div>

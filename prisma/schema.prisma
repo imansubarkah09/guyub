@@ -51,6 +51,7 @@ model User {
   plerekBerasDicatat   PlerekBerasKeluar[] @relation("PlerekBerasDicatatOleh")
   plerekSetoranDicatat PlerekSetoranKas[]  @relation("PlerekSetoranDicatatOleh")
   notifikasi           Notifikasi[]
+  pushSubscriptions    PushSubscription[]
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
 }
@@ -718,6 +719,20 @@ model Notifikasi {
   createdAt DateTime @default(now())
 
   @@index([userId, isRead, createdAt])
+}
+
+/// Web Push per perangkat (satu HP/browser = satu endpoint). Endpoint jadi
+/// kunci, bukan userId: kalau HP yang sama dipakai login akun lain, barisnya
+/// pindah pemilik lewat upsert, bukan menumpuk dua langganan di satu HP.
+model PushSubscription {
+  endpoint  String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // --- Approval Tenant Baru (oleh Platform Owner) -----------------------------------------

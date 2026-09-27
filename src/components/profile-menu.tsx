@@ -3,39 +3,65 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, UserRound, ShieldCheck, Info } from "lucide-react";
+import { LogOut, UserRound, ShieldCheck, Info, ChevronDown } from "lucide-react";
 import { signOut } from "@/lib/auth-client";
 import { updateAccountAction } from "@/app/account-actions";
 import { validasiFileGambar } from "@/lib/validasi-file";
 import { InstallButton } from "@/components/install-button";
+import { PushButton, lepasPush } from "@/components/push-button";
 import { btnPrimary, inputClass } from "@/components/ui";
 
 export type AccountInfo = { name: string; email: string; phone: string | null; image: string | null; isPlatformOwner: boolean };
 
-export function ProfileMenu({ user }: { user: AccountInfo }) {
+/**
+ * inline: dipakai di dalam drawer mobile. Popover absolut di sana terpotong keluar
+ * layar (drawer sempit + overflow-y-auto ikut memotong sumbu x, ketemu uji 27 Sep
+ * 2026), jadi panelnya mengembang di alur drawer selebar drawer.
+ */
+export function ProfileMenu({ user, inline = false, defaultOpen = false }: { user: AccountInfo; inline?: boolean; defaultOpen?: boolean }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const initial = user.name.charAt(0).toUpperCase();
+  const avatar = user.image ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={user.image} alt="" className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
+  ) : (
+    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">{initial}</span>
+  );
 
   return (
-    <div className="relative">
-      <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-2 rounded-full py-1 pl-2 pr-1 transition hover:bg-primary/10" aria-label="Menu akun">
-        <span className="hidden max-w-32 truncate text-sm font-medium sm:block">{user.name}</span>
-        {user.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={user.image} alt="" className="h-8 w-8 rounded-full object-cover" />
-        ) : (
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">{initial}</span>
-        )}
-      </button>
+    <div className={inline ? "w-full" : "relative"}>
+      {inline ? (
+        <button
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-primary/10"
+          aria-label="Menu akun"
+        >
+          {avatar}
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">{user.name}</span>
+          <ChevronDown className={`h-4 w-4 flex-shrink-0 text-muted transition ${open ? "rotate-180" : ""}`} />
+        </button>
+      ) : (
+        <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-2 rounded-full py-1 pl-2 pr-1 transition hover:bg-primary/10" aria-label="Menu akun">
+          <span className="hidden max-w-32 truncate text-sm font-medium sm:block">{user.name}</span>
+          {avatar}
+        </button>
+      )}
 
       {open && (
         <>
-          <button aria-label="Tutup" onClick={() => setOpen(false)} className="fixed inset-0 z-40 cursor-default" />
-          <div className="absolute right-0 z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-[var(--radius)] border border-border bg-surface p-3 shadow-lg">
+          {!inline && <button aria-label="Tutup" onClick={() => setOpen(false)} className="fixed inset-0 z-40 cursor-default" />}
+          <div
+            className={
+              inline
+                ? "mt-2 rounded-[var(--radius)] border border-border bg-surface p-3"
+                : "absolute right-0 z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-[var(--radius)] border border-border bg-surface p-3 shadow-lg"
+            }
+          >
             <div className="mb-3 flex items-center gap-2">
               <UserRound className="h-4 w-4 text-muted" />
               <div className="min-w-0">
@@ -88,6 +114,7 @@ export function ProfileMenu({ user }: { user: AccountInfo }) {
 
             <div className="mt-3 space-y-2 border-t border-border pt-3">
               <InstallButton />
+              <PushButton />
               <Link href="/tentang" className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm transition hover:bg-primary/5">
                 <Info className="h-4 w-4 text-muted" />
                 Tentang Guyub
@@ -99,7 +126,11 @@ export function ProfileMenu({ user }: { user: AccountInfo }) {
                 </Link>
               )}
               <button
-                onClick={() => signOut().then(() => router.push("/"))}
+                onClick={() =>
+                  lepasPush()
+                    .then(() => signOut())
+                    .then(() => router.push("/"))
+                }
                 className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-danger transition hover:bg-danger/5"
               >
                 <LogOut className="h-4 w-4" />

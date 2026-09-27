@@ -26,6 +26,41 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+// Web Push: payload dari src/lib/push.ts ({ judul, isi, url }). tag = url supaya
+// beberapa notifikasi ke halaman yang sama menumpuk jadi satu, renotify supaya
+// yang menumpuk tetap bunyi/getar lagi.
+self.addEventListener("push", (event) => {
+  const d = event.data ? event.data.json() : {};
+  event.waitUntil(
+    self.registration.showNotification(d.judul || "Guyub", {
+      body: d.isi,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      tag: d.url,
+      renotify: true,
+      data: { url: d.url || "/dashboard" },
+    }),
+  );
+});
+
+// Tap notifikasi: pakai jendela Guyub yang sudah terbuka (PWA atau tab) kalau
+// ada, baru buka jendela baru kalau tidak ada sama sekali.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL(event.notification.data?.url || "/dashboard", self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
+      const w = wins.find((c) => new URL(c.url).origin === self.location.origin);
+      if (!w) return self.clients.openWindow(url);
+      // navigate() ditolak untuk jendela yang belum dikendalikan SW ini.
+      return w
+        .navigate(url)
+        .then((c) => (c ?? w).focus())
+        .catch(() => self.clients.openWindow(url));
+    }),
+  );
+});
+
 // Navigasi selalu diambil dari jaringan; cache hanya cadangan waktu offline.
 // Halaman selain "/" tidak pernah disimpan karena isinya data tenant yang privat.
 self.addEventListener("fetch", (event) => {

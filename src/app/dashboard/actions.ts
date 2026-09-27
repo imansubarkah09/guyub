@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { notifyUsers } from "@/lib/notifikasi";
 import type { TenantJenis } from "@prisma/client";
 
 const JENIS: TenantJenis[] = ["keluarga", "rt", "paguyuban"];
@@ -33,17 +34,13 @@ export async function createTenantAction(formData: FormData) {
   const owners = otomatisDisetujui
     ? []
     : await prisma.user.findMany({ where: { isPlatformOwner: true }, select: { id: true } });
-  if (owners.length > 0) {
-    await prisma.notifikasi.createMany({
-      data: owners.map((o) => ({
-        userId: o.id,
-        tenantId: tenant.id,
-        tipe: "tenant_baru",
-        pesan: `Tenant baru "${nama}" menunggu persetujuan`,
-        href: "/admin",
-      })),
-    });
-  }
+  await notifyUsers(
+    owners.map((o) => o.id),
+    tenant.id,
+    "tenant_baru",
+    `Tenant baru "${nama}" menunggu persetujuan`,
+    "/admin",
+  );
 
   revalidatePath("/dashboard");
   return tenant.id;

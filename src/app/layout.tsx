@@ -55,6 +55,10 @@ export const metadata: Metadata = {
     apple: "/apple-icon.png",
   },
   appleWebApp: { capable: true, title: "Guyub", statusBarStyle: "default" },
+  // Next cuma mengeluarkan "mobile-web-app-capable" untuk appleWebApp.capable.
+  // iOS modern membaca display:standalone dari manifest, tapi tag lama ini
+  // murah dan menjaga Layar Utama (syarat Web Push iPhone) di iOS lebih tua.
+  other: { "apple-mobile-web-app-capable": "yes" },
   verification: process.env.GOOGLE_SITE_VERIFICATION ? { google: process.env.GOOGLE_SITE_VERIFICATION } : undefined,
 };
 

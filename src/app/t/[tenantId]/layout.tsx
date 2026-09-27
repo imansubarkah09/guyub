@@ -89,7 +89,7 @@ export default async function TenantLayout({
   }
 
   const [notif, unread] = await Promise.all([
-    prisma.notifikasi.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 15 }),
+    prisma.notifikasi.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 8 }),
     prisma.notifikasi.count({ where: { userId: user.id, isRead: false } }),
   ]);
 

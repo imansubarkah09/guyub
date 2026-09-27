@@ -21,7 +21,10 @@ const NAV: { href: string; label: string; icon: LucideIcon; match: (path: string
 
 export function PlatformShell({ account, children }: { account: AccountInfo; children: React.ReactNode }) {
   const pathname = usePathname();
-  const [drawer, setDrawer] = useState(false);
+  // Sama dengan TenantShell: tertutup sendiri begitu pindah halaman dari tautan di dalamnya.
+  const [drawerDi, setDrawerDi] = useState<string | null>(null);
+  const drawer = drawerDi === pathname;
+  const setDrawer = (buka: boolean) => setDrawerDi(buka ? pathname : null);
 
   return (
     <div className="pt-safe min-h-screen">
@@ -68,7 +71,7 @@ export function PlatformShell({ account, children }: { account: AccountInfo; chi
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <ProfileMenu user={account} />
+            <ProfileMenu user={account} inline defaultOpen />
           </div>
         </div>
       )}
