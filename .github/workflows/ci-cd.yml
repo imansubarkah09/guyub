@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Type check
+        run: pnpm exec tsc --noEmit
+      - name: Build
+        run: pnpm build
+        env:
+          AUTH_SECRET: ci-placeholder-secret-32-chars-minimum
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+          DATABASE_URL_UNPOOLED: postgresql://ci:ci@localhost:5432/ci
+
+  deploy:
+    needs: ci
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Skema DB produksi ikut naik di sini, supaya "push ke main" = deploy utuh.
+      # directUrl sengaja diarahkan ke URL pooled: endpoint direct Neon prod
+      # (ep-autumn-art-…, tanpa -pooler) tidak bisa dihubungi, yang pooled jalan.
+      # Pagar wajib (ketemu 13 Sep 2026): secret DATABASE_URL sempat menunjuk ke
+      # database DEV, jadi step ini rajin melapor "No pending migrations to apply"
+      # sambil memigrasi database yang salah. Worker tetap jalan di DB produksi
+      # yang ketinggalan dua migrasi, dan halaman meledak dengan React #441.
+      # Kalau secretnya salah lagi, CI harus GAGAL, bukan diam-diam sukses.
+      #
+      # DATABASE_URL_UNPOOLED (dipakai Prisma sebagai directUrl) WAJIB endpoint
+      # direct, bukan yang -pooler: sebelum migrasi Prisma mengambil advisory lock
+      # tingkat sesi, dan lewat pgbouncer lock itu tidak pernah didapat sehingga
+      # step ini mati dengan P1002 "Timed out trying to acquire a postgres
+      # advisory lock".
+      - name: Migrasi database produksi
+        run: |
+          case "$DATABASE_URL" in
+            *ep-autumn-art*) ;;
+            *) echo "::error::DATABASE_URL bukan endpoint produksi (ep-autumn-art). Perbaiki secret repo." >&2; exit 1 ;;
+          esac
+          case "$DATABASE_URL_UNPOOLED" in
+            *ep-autumn-art*pooler*) echo "::error::DATABASE_URL_UNPOOLED menunjuk endpoint pooler. Migrasi butuh koneksi direct." >&2; exit 1 ;;
+            *ep-autumn-art*) ;;
+            *) echo "::error::DATABASE_URL_UNPOOLED bukan endpoint produksi (ep-autumn-art). Perbaiki secret repo." >&2; exit 1 ;;
+          esac
+          pnpm exec prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
+      # Migrasi ke Vercel (2026-09-21): build + deploy aplikasi sendiri sudah
+      # ditangani otomatis oleh integrasi Git Vercel begitu push ke main,
+      # jadi job ini cuma perlu jalankan migrasi skema, bukan deploy manual
+      # lewat wrangler lagi.
