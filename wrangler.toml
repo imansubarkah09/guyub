@@ -16,8 +16,7 @@ directory = ".open-next/assets"
 binding = "ASSETS"
 
 [[routes]]
-pattern = "guyub.thedreamcompany.space"
-custom_domain = true
+pattern = "guyub.thedreamcompany.space/*"
 zone_name = "thedreamcompany.space"
 
 [observability]
