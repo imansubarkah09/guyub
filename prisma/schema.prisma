@@ -1,12 +1,19 @@
 // Prisma schema for Guyub — kas & tabungan komunitas non-sekolah
 // (keluarga/RT/paguyuban). Entities per docs/arisan-app-spec.md §3.
-// Migrasi ke Vercel (Node.js runtime) 2026-09-21: generator "clientWorkerd"
-// (Cloudflare Workers, driver adapter Neon WebSocket) sudah dilepas, tinggal
-// engine Prisma standar lewat `datasource url` TCP biasa. Lihat riwayat git
-// kalau butuh referensi setup Workers-nya lagi.
+// Produksi jalan di Cloudflare Workers: client memakai generator "clientWorkerd"
+// (driver adapter Neon WebSocket). Generator "client" dipakai Node (dev/tes).
 
 generator client {
   provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
+}
+
+generator clientWorkerd {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma-workerd"
+  runtime         = "workerd"
+  moduleFormat    = "esm"
+  engineType      = "client"
   previewFeatures = ["relationJoins"]
 }
 

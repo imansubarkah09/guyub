@@ -1,4 +1,4 @@
-name: CI
+name: ci-cd
 
 on:
   push:
@@ -41,7 +41,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # Skema DB produksi ikut naik di sini, supaya "push ke main" = deploy utuh.
       # directUrl sengaja diarahkan ke URL pooled: endpoint direct Neon prod
-      # (ep-autumn-art-…, tanpa -pooler) tidak bisa dihubungi, yang pooled jalan.
+      # (ep-autumn-art-..., tanpa -pooler) tidak bisa dihubungi, yang pooled jalan.
       # Pagar wajib (ketemu 13 Sep 2026): secret DATABASE_URL sempat menunjuk ke
       # database DEV, jadi step ini rajin melapor "No pending migrations to apply"
       # sambil memigrasi database yang salah. Worker tetap jalan di DB produksi
@@ -68,7 +68,68 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
-      # Migrasi ke Vercel (2026-09-21): build + deploy aplikasi sendiri sudah
-      # ditangani otomatis oleh integrasi Git Vercel begitu push ke main,
-      # jadi job ini cuma perlu jalankan migrasi skema, bukan deploy manual
-      # lewat wrangler lagi.
+
+      - name: Build aplikasi
+        run: pnpm build
+        env:
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+          NEXT_PUBLIC_URL: ${{ secrets.NEXT_PUBLIC_URL }}
+          CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+
+      # .env.production tidak ikut di-commit (lihat .gitignore), jadi checkout CI
+      # tidak punya file ini. Buat ulang di sini dari GitHub Actions secrets
+      # supaya "wrangler secret bulk" tetap jalan tanpa bergantung pada file lokal.
+      - name: Siapkan .env.production dari secrets
+        run: |
+          cat > .env.production <<EOF
+          AUTH_SECRET=${AUTH_SECRET}
+          DATABASE_URL=${DATABASE_URL}
+          DATABASE_URL_UNPOOLED=${DATABASE_URL_UNPOOLED}
+          NEXTAUTH_URL=${NEXTAUTH_URL}
+          NEXT_PUBLIC_URL=${NEXT_PUBLIC_URL}
+          CLOUDINARY_URL=${CLOUDINARY_URL}
+          CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+          CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+          GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+          GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+          EOF
+        env:
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+          NEXT_PUBLIC_URL: ${{ secrets.NEXT_PUBLIC_URL }}
+          CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+
+      - name: Upload secrets ke Cloudflare Worker
+        run: npx wrangler secret bulk .env.production && rm -f .env.production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy ke Cloudflare Worker
+        run: pnpm run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+          NEXT_PUBLIC_URL: ${{ secrets.NEXT_PUBLIC_URL }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
+          CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}

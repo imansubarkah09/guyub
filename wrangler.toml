@@ -1,18 +1,24 @@
 name = "guyub"
-type = "javascript"
+main = ".open-next/worker.js"
 account_id = "45efd648d755765f15c147660432044a"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
 workers_dev = false
 
-# Build configuration for Cloudflare Pages
-[build]
-command = "pnpm build"
-cwd = "./"
-root_dir = ".next"
+[vars]
+ENVIRONMENT = "production"
+NEXTAUTH_URL = "https://guyub.thedreamcompany.space"
+NEXT_PUBLIC_URL = "https://guyub.thedreamcompany.space"
+NEXT_PUBLIC_TRAKTEER_SLUG = "brokado"
 
-# Environment for production
-[env.production]
-vars = { ENVIRONMENT = "production" }
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
 
-[env.production.routes]
+[[routes]]
 pattern = "guyub.thedreamcompany.space"
+custom_domain = true
 zone_name = "thedreamcompany.space"
+
+[observability]
+enabled = true

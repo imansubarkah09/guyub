@@ -6,12 +6,17 @@
     "dev": "next dev -H 127.0.0.1 -p 3000",
     "build": "prisma generate && next build",
     "start": "next start -p 3000",
-    "lint": "eslint --no-error-on-unmatched-pattern src scripts next.config.ts eslint.config.mjs postcss.config.mjs",
+    "lint": "eslint --no-error-on-unmatched-pattern src scripts next.config.ts open-next.config.ts eslint.config.mjs postcss.config.mjs",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "deploy": "opennextjs-cloudflare build && wrangler deploy --env \"\"",
+    "preview": "opennextjs-cloudflare build && wrangler dev --env \"\" --port 8787",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "@prisma/adapter-neon": "^6.19.3",
     "@prisma/client": "^6.19.3",
     "better-auth": "^1.7.1",
     "jspdf": "^4.2.1",
@@ -23,6 +28,7 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.7",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
@@ -34,7 +40,8 @@
     "playwright": "^1.63.0",
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.0.0"
   },
   "packageManager": "pnpm@11.7.0"
 }
