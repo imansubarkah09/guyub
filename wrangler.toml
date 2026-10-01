@@ -1,12 +1,18 @@
 name = "guyub"
 type = "javascript"
 account_id = "45efd648d755765f15c147660432044a"
-workers_dev = true
-routes = []
-zone_id = "8512a20b3dbabba0c42518bcff508124"
+workers_dev = false
 
-# Cloudflare Pages configuration
+# Build configuration for Cloudflare Pages
+[build]
+command = "pnpm build"
+cwd = "./"
+root_dir = ".next"
+
+# Environment for production
 [env.production]
-routes = [
-  { pattern = "guyub.thedreamcompany.space", zone_name = "thedreamcompany.space" }
-]
+vars = { ENVIRONMENT = "production" }
+
+[env.production.routes]
+pattern = "guyub.thedreamcompany.space"
+zone_name = "thedreamcompany.space"
