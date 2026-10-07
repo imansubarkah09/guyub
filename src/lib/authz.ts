@@ -6,27 +6,35 @@ import type { Role } from "@prisma/client";
 /**
  * Matriks izin — docs/tasks/2026-09-revamp-uiux-dan-fitur.md §5.
  * Satu orang bisa punya >1 role; izin = OR dari semua role yang dimiliki.
- * Catatan: uang HANYA bendahara (ketua pun tidak boleh mencatat transaksi).
+ * Catatan: uang HANYA bendahara dan pemilik (ketua pun tidak boleh mencatat transaksi).
+ * Pemilik ada di atas ketua dan masuk semua daftar izin di bawah karena bisa
+ * mengatur segalanya, tapi perannya SELALU tampil di daftar anggota (tidak
+ * pernah hidden) dan setiap aksinya dicatat ke AuditLog lewat lib/audit-log.ts,
+ * supaya pengurus tetap bisa mengaudit siapa mengubah apa.
  */
+export const PEMILIK: Role[] = ["pemilik"];
 /**
  * Wakil ketua = ketua dalam hal izin. Kalau tenant tidak mengangkat wakil ketua,
  * ketua yang otomatis memegang perannya, karena izin ketua sudah mencakup semuanya.
  */
-export const KETUA: Role[] = ["ketua", "wakil_ketua"];
+export const KETUA: Role[] = [...PEMILIK, "ketua", "wakil_ketua"];
 export const PENGURUS: Role[] = [...KETUA, "bendahara", "sekretaris"];
 /** Kas, tabungan, qurban, infaq, dana kegiatan, tandai bayar arisan. */
-export const CAN_CATAT_UANG: Role[] = ["bendahara"];
+export const CAN_CATAT_UANG: Role[] = [...PEMILIK, "bendahara"];
 /** Jadwal & urutan giliran arisan. */
 export const CAN_ATUR_ARISAN: Role[] = [...KETUA, "bendahara", "sekretaris"];
 /** Undangan, approve anggota, ubah role. Silsilah punya jalur tambahan di luar ini: lihat requireKelolaSilsilah di t/[tenantId]/silsilah/actions.ts — siapa pun yang sudah tertaut ke sebuah node boleh juga. */
 export const CAN_KELOLA_ANGGOTA: Role[] = [...KETUA, "sekretaris"];
+/** Keterangan Kas bertanda rahasia (mis. cicilan Simpan Pinjam dengan nama peminjam). Role lain melihat "******". */
+export const CAN_LIHAT_KETERANGAN_RAHASIA: Role[] = [...PEMILIK, "bendahara"];
 /** Generate laporan & export. */
 export const CAN_BUAT_LAPORAN: Role[] = [...KETUA, "bendahara", "sekretaris"];
-/** Profil tenant (nama/alamat/logo) — hanya ketua. */
+/** Profil tenant (nama/alamat/logo) — hanya ketua (dan pemilik, lewat KETUA). */
 export const CAN_UPDATE_PROFIL: Role[] = KETUA;
 
 /** Label tampilan peran, supaya "wakil_ketua" tidak muncul apa adanya di UI. */
 export const ROLE_LABEL: Record<Role, string> = {
+  pemilik: "Pemilik",
   ketua: "Ketua",
   wakil_ketua: "Wakil Ketua",
   bendahara: "Bendahara",

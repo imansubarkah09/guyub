@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_BUAT_LAPORAN, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
+import { samarkanKeterangan } from "@/lib/kas-privasi";
 import { angkaTenant, saldoBerjalanArisan } from "@/lib/ringkasan";
 import { angkaPlerek, kilogram } from "@/lib/plerek";
 import { Card, PageTitle, inputClass, rupiah, tanggal } from "@/components/ui";
@@ -29,7 +30,7 @@ export default async function LaporanPage({
     // Laporan butuh semua baris di rentang yang diminta untuk isi tabel/PDF-nya.
     // Tanpa filter tanggal, dibatasi 2000 baris per kategori sebagai jaga-jaga
     // memori Worker untuk tenant tua — pakai filter tanggal di atas kalau mentok.
-    prisma.kasTransaksi.findMany({ where: { tenantId, ...rentang("tanggal") }, select: { tanggal: true, tipe: true, jumlah: true, keterangan: true }, orderBy: { tanggal: "desc" }, take: 2000 }),
+    prisma.kasTransaksi.findMany({ where: { tenantId, ...rentang("tanggal") }, select: { tanggal: true, tipe: true, jumlah: true, keterangan: true, keteranganRahasia: true }, orderBy: { tanggal: "desc" }, take: 2000 }),
     prisma.tabunganTipe.findMany({ where: { tenantId }, select: { nama: true, mode: true, saldo: { select: { userId: true, jumlah: true } } } }),
     prisma.qurbanGroup.findMany({ where: { tenantId }, select: { jenisHewan: true, slots: { select: { status: true, saldoTerkumpul: true, user: { select: { name: true } } } } } }),
     prisma.arisan.findMany({
@@ -71,7 +72,7 @@ export default async function LaporanPage({
         { label: "Total Masuk", value: r.kasMasuk },
       ],
       header: ["Tanggal", "Tipe", "Jumlah", "Keterangan"],
-      rows: kas.map((k) => ({
+      rows: kas.map((k) => samarkanKeterangan(k, roles)).map((k) => ({
         kolom: [tanggal.format(k.tanggal), k.tipe, rupiah.format(Number(k.jumlah)), k.keterangan ?? "-"],
       })),
     },

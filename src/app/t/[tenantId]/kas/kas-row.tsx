@@ -15,8 +15,11 @@ type Transaksi = {
   jumlah: number;
   tipe: "masuk" | "keluar";
   keterangan: string | null;
+  keteranganRahasia: boolean;
   buktiUrl: string | null;
   dicatatOleh: { name: string };
+  /** Baris dari Simpan Pinjam: nominal dan tipe dikunci supaya Kas tetap cocok dengan cicilan atau pencairannya. */
+  sumberPinjaman: "cicilan" | "pencairan" | null;
 };
 
 function TombolSimpan({ disabled }: { disabled?: boolean }) {
@@ -87,15 +90,35 @@ export function KasRow({ tenantId, t, canEdit }: { tenantId: string; t: Transaks
       >
         <input type="hidden" name="tenantId" value={tenantId} />
         <input type="hidden" name="id" value={t.id} />
-        <div className="flex gap-2">
-          <input type="date" name="tanggal" required defaultValue={tanggalWIB(t.tanggal)} className={inputClass} />
-          <select name="tipe" required defaultValue={t.tipe} className={inputClass}>
-            <option value="masuk">Masuk</option>
-            <option value="keluar">Keluar</option>
-          </select>
-        </div>
-        <InputRupiah name="jumlah" placeholder="Jumlah (Rp)" className={inputClass} defaultValue={Number(t.jumlah)} required />
+        {t.sumberPinjaman ? (
+          <>
+            <input type="date" name="tanggal" required defaultValue={tanggalWIB(t.tanggal)} className={inputClass} />
+            <input type="hidden" name="tipe" value={t.tipe} />
+            <input type="hidden" name="jumlah" value={String(t.jumlah)} />
+            <p className="rounded-lg bg-primary/5 p-2 text-xs text-muted">
+              {t.tipe === "masuk" ? "Masuk" : "Keluar"} {rupiah.format(t.jumlah)} dari {t.sumberPinjaman} Simpan Pinjam.{" "}
+              {t.sumberPinjaman === "cicilan"
+                ? "Nominalnya tidak bisa diubah di sini: kalau salah, batalkan cicilannya di halaman Simpan Pinjam lalu catat ulang."
+                : "Nominalnya mengikuti jumlah pinjaman dan tidak bisa diubah di sini."}
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="flex gap-2">
+              <input type="date" name="tanggal" required defaultValue={tanggalWIB(t.tanggal)} className={inputClass} />
+              <select name="tipe" required defaultValue={t.tipe} className={inputClass}>
+                <option value="masuk">Masuk</option>
+                <option value="keluar">Keluar</option>
+              </select>
+            </div>
+            <InputRupiah name="jumlah" placeholder="Jumlah (Rp)" className={inputClass} defaultValue={Number(t.jumlah)} required />
+          </>
+        )}
         <input name="keterangan" placeholder="Keterangan" defaultValue={t.keterangan ?? ""} className={inputClass} />
+        <label className="flex items-center gap-2 text-xs text-muted">
+          <input type="checkbox" name="keteranganRahasia" defaultChecked={t.keteranganRahasia} />
+          Rahasiakan keterangan (hanya bendahara dan pemilik yang bisa membaca)
+        </label>
         <div>
           <label className="mb-1 block text-xs font-medium text-muted">
             {t.buktiUrl ? "Ganti bukti transfer (kosongkan untuk pakai yang lama)" : "Bukti transfer (opsional)"}

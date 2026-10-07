@@ -7,7 +7,7 @@ import { requirePlatformOwner, ROLE_LABEL } from "@/lib/authz";
 import { Card, PageTitle, Badge, btnPrimary, btnGhost, tanggal } from "@/components/ui";
 import { startPreviewAction } from "../../actions";
 
-const ROLES = ["ketua", "wakil_ketua", "bendahara", "sekretaris", "anggota"] as const;
+const ROLES = ["pemilik", "ketua", "wakil_ketua", "bendahara", "sekretaris", "anggota"] as const;
 const JENIS_LABEL = { keluarga: "Keluarga", rt: "RT", paguyuban: "Paguyuban" } as const;
 
 export default async function AdminTenantPage({ params }: { params: Promise<{ tenantId: string }> }) {

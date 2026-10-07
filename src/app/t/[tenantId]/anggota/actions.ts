@@ -7,7 +7,7 @@ import { requireWrite, requireMemberWrite, CAN_KELOLA_ANGGOTA, PENGURUS, KETUA }
 import { notify } from "@/lib/notifikasi";
 import type { Role } from "@prisma/client";
 
-const ALL_ROLES: Role[] = ["ketua", "wakil_ketua", "bendahara", "sekretaris", "anggota"];
+const ALL_ROLES: Role[] = ["pemilik", "ketua", "wakil_ketua", "bendahara", "sekretaris", "anggota"];
 
 /** Siapa saja anggota aktif boleh bikin & sebar link undangan (permintaan Iman, 16 Sep 2026), yang dibatasi cuma persetujuan anggota baru (confirmMemberAction), bukan siapa yang boleh mengundang. */
 export async function generateInviteAction(formData: FormData) {
@@ -69,6 +69,13 @@ export async function updateRolesAction(formData: FormData) {
   // sendiri, jadi kesalahan itu tidak bisa dikoreksi siapa pun).
   if (target.roles.includes("ketua") && !sayaKetua && !user.isPlatformOwner) {
     throw new Error("Cuma ketua/wakil ketua yang menjabat atau platform owner yang bisa mengubah peran ketua");
+  }
+
+  // Peran pemilik cuma boleh diubah platform owner (bukan sesama pemilik atau
+  // ketua), supaya tidak ada pemilik yang bisa mencabut atau menambah pemilik
+  // lain seenaknya di luar pengawasan platform.
+  if (target.roles.includes("pemilik") && !user.isPlatformOwner) {
+    throw new Error("Cuma platform owner yang bisa mengubah peran pemilik");
   }
 
   const roles = ALL_ROLES.filter((r) => formData.getAll("roles").includes(r));

@@ -2,7 +2,7 @@ import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { kirimPush } from "@/lib/push";
 
-type Role = "ketua" | "wakil_ketua" | "bendahara" | "sekretaris" | "anggota";
+type Role = "pemilik" | "ketua" | "wakil_ketua" | "bendahara" | "sekretaris" | "anggota";
 
 /**
  * Helper generik notifikasi (§7.12): event baru cukup panggil notify()/notifyTenant()/

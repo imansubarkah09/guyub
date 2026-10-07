@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requireWrite, CAN_CATAT_UANG } from "@/lib/authz";
+import { catatAudit } from "@/lib/audit-log";
 import { uploadImage } from "@/lib/upload";
 import { validasiFileGambar } from "@/lib/validasi-file";
 import type { KasTipe } from "@prisma/client";
@@ -34,12 +35,13 @@ async function unggahBuktiJikaAda(bukti: FormDataEntryValue | null, tenantId: st
 export async function createKasTransaksiAction(_prevState: KasActionState, formData: FormData): Promise<KasActionState> {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireWrite(user, tenantId, CAN_CATAT_UANG);
+  const membership = await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const tanggal = String(formData.get("tanggal"));
   const jumlah = String(formData.get("jumlah"));
   const tipe = String(formData.get("tipe"));
   const keterangan = String(formData.get("keterangan") ?? "").trim() || null;
+  const keteranganRahasia = formData.get("keteranganRahasia") === "on";
   if (!tanggal || !jumlah || (tipe !== "masuk" && tipe !== "keluar")) {
     return { error: "Tanggal, jumlah, dan tipe wajib diisi" };
   }
@@ -49,11 +51,22 @@ export async function createKasTransaksiAction(_prevState: KasActionState, formD
 
   try {
     await prisma.kasTransaksi.create({
-      data: { tenantId, tanggal: new Date(tanggal), jumlah, tipe: tipe as KasTipe, keterangan, buktiUrl: bukti.url, dicatatOlehId: user.id },
+      data: { tenantId, tanggal: new Date(tanggal), jumlah, tipe: tipe as KasTipe, keterangan, keteranganRahasia, buktiUrl: bukti.url, dicatatOlehId: user.id },
     });
   } catch (e) {
     console.error("Simpan transaksi kas gagal", e);
     return { error: "Gagal menyimpan transaksi. Coba lagi." };
+  }
+
+  if (membership.roles.includes("pemilik")) {
+    await catatAudit({
+      tenantId,
+      aktorId: user.id,
+      peran: "pemilik",
+      aksi: "kas.catat",
+      deskripsi: `Mencatat transaksi kas ${tipe} sebesar Rp ${jumlah}`,
+      nominal: Number(jumlah),
+    });
   }
 
   revalidatePath(`/t/${tenantId}/kas`);
@@ -68,18 +81,30 @@ export async function createKasTransaksiAction(_prevState: KasActionState, formD
 export async function updateKasTransaksiAction(formData: FormData): Promise<KasActionState> {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireWrite(user, tenantId, CAN_CATAT_UANG);
+  const membership = await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const id = String(formData.get("id"));
-  const existing = await prisma.kasTransaksi.findUniqueOrThrow({ where: { id } });
+  const existing = await prisma.kasTransaksi.findUniqueOrThrow({ where: { id }, include: { pinjamanCicilan: { select: { id: true } }, pinjamanPencairan: { select: { id: true } } } });
   if (existing.tenantId !== tenantId) throw new Error("Transaksi tidak ditemukan di tenant ini");
 
   const tanggal = String(formData.get("tanggal"));
   const jumlah = String(formData.get("jumlah"));
   const tipe = String(formData.get("tipe"));
   const keterangan = String(formData.get("keterangan") ?? "").trim() || null;
+  const keteranganRahasia = formData.get("keteranganRahasia") === "on";
   if (!tanggal || !jumlah || (tipe !== "masuk" && tipe !== "keluar")) {
     return { error: "Tanggal, jumlah, dan tipe wajib diisi" };
+  }
+
+  // Baris dari Simpan Pinjam: nominal dan tipenya harus tetap sama dengan cicilan atau
+  // pencairannya. Dulu bendahara mengoreksi cicilan yang salah lewat sini, dan Kas jadi
+  // tidak cocok dengan Simpan Pinjam (kejadian 3 Okt 2026).
+  const nominalBerubah = Number(jumlah) !== Number(existing.jumlah) || tipe !== existing.tipe;
+  if (existing.pinjamanCicilan && nominalBerubah) {
+    return { error: "Baris ini dari cicilan Simpan Pinjam. Untuk mengoreksi nominalnya, batalkan cicilannya di halaman Simpan Pinjam lalu catat ulang." };
+  }
+  if (existing.pinjamanPencairan && nominalBerubah) {
+    return { error: "Baris ini dari pencairan Simpan Pinjam. Nominalnya mengikuti jumlah pinjaman dan tidak bisa diubah di sini." };
   }
 
   const bukti = await unggahBuktiJikaAda(formData.get("bukti"), tenantId);
@@ -88,11 +113,22 @@ export async function updateKasTransaksiAction(formData: FormData): Promise<KasA
   try {
     await prisma.kasTransaksi.update({
       where: { id },
-      data: { tanggal: new Date(tanggal), jumlah, tipe: tipe as KasTipe, keterangan, buktiUrl: bukti.url ?? existing.buktiUrl },
+      data: { tanggal: new Date(tanggal), jumlah, tipe: tipe as KasTipe, keterangan, keteranganRahasia, buktiUrl: bukti.url ?? existing.buktiUrl },
     });
   } catch (e) {
     console.error("Simpan transaksi kas gagal", e);
     return { error: "Gagal menyimpan transaksi. Coba lagi." };
+  }
+
+  if (membership.roles.includes("pemilik")) {
+    await catatAudit({
+      tenantId,
+      aktorId: user.id,
+      peran: "pemilik",
+      aksi: "kas.ubah",
+      deskripsi: `Mengubah transaksi kas ${id} jadi ${tipe} sebesar Rp ${jumlah}`,
+      nominal: Number(jumlah),
+    });
   }
 
   revalidatePath(`/t/${tenantId}/kas`);

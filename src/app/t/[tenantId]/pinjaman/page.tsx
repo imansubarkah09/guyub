@@ -7,7 +7,9 @@ import { effectiveRoles, viewerUserId } from "@/lib/effective-roles";
 import { ambilDari } from "@/lib/paging";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, btnGhost, inputClass, rupiah, tanggal } from "@/components/ui";
 import { InputRupiah } from "@/components/input-rupiah";
-import { ajukanPinjamanAction, putuskanPinjamanAction, catatCicilanAction, batalkanPinjamanAction } from "./actions";
+import type { Prisma } from "@prisma/client";
+import { ajukanPinjamanAction, putuskanPinjamanAction, batalkanPinjamanAction } from "./actions";
+import { CatatCicilanForm, BatalkanCicilanButton } from "./cicilan-controls";
 
 const STATUS_TONE = {
   diajukan: "warning",
@@ -22,6 +24,25 @@ const STATUS_LABEL = {
   ditolak: "Ditolak",
   lunas: "Lunas",
 } as const;
+
+/** Pinjaman lunas tetap tampil sekian hari ke bendahara, supaya cicilan pelunasan yang salah input masih bisa dibatalkan. */
+const HARI_LUNAS_TAMPIL = 30;
+
+function batasLunasTampil() {
+  return new Date(Date.now() - HARI_LUNAS_TAMPIL * 24 * 60 * 60 * 1000);
+}
+
+const selectPinjamanBendahara = {
+  id: true,
+  jumlahPokok: true,
+  bungaMode: true,
+  bungaPersen: true,
+  peminjam: { select: { name: true } },
+  cicilan: {
+    select: { id: true, tanggal: true, jumlahPokok: true, jumlahBunga: true, kasTransaksiId: true },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+  },
+} satisfies Prisma.PinjamanSelect;
 
 export default async function PinjamanPage({
   params,
@@ -38,7 +59,7 @@ export default async function PinjamanPage({
   const viewerId = await viewerUserId(user, tenantId);
   const canCatat = has(roles, CAN_CATAT_UANG);
 
-  const [menunggu, aktif, milikSaya] = await Promise.all([
+  const [menunggu, aktif, baruLunas, milikSaya] = await Promise.all([
     canCatat
       ? prisma.pinjaman.findMany({
           where: { tenantId, status: "diajukan" },
@@ -49,15 +70,15 @@ export default async function PinjamanPage({
     canCatat
       ? prisma.pinjaman.findMany({
           where: { tenantId, status: "disetujui" },
-          select: {
-            id: true,
-            jumlahPokok: true,
-            bungaMode: true,
-            bungaPersen: true,
-            peminjam: { select: { name: true } },
-            cicilan: { select: { jumlahPokok: true } },
-          },
+          select: selectPinjamanBendahara,
           orderBy: { diajukanPada: "asc" },
+        })
+      : Promise.resolve([]),
+    canCatat
+      ? prisma.pinjaman.findMany({
+          where: { tenantId, status: "lunas", cicilan: { some: { createdAt: { gte: batasLunasTampil() } } } },
+          select: selectPinjamanBendahara,
+          orderBy: { diajukanPada: "desc" },
         })
       : Promise.resolve([]),
     prisma.pinjaman.findMany({
@@ -174,23 +195,47 @@ export default async function PinjamanPage({
                           </p>
                         </div>
                       </div>
-                      <form action={catatCicilanAction} className="flex flex-wrap gap-2">
-                        <input type="hidden" name="tenantId" value={tenantId} />
-                        <input type="hidden" name="pinjamanId" value={p.id} />
-                        <InputRupiah name="jumlahPokok" placeholder="Pokok dibayar" className={`${inputClass} w-32`} defaultValue={sisaPokok} required />
-                        {p.bungaMode !== "tanpa" && (
-                          <InputRupiah name="jumlahBunga" placeholder="Bunga" className={`${inputClass} w-28`} defaultValue={saranBunga} />
-                        )}
-                        <button type="submit" className={btnPrimary}>
-                          Catat Cicilan
-                        </button>
-                      </form>
+                      <CatatCicilanForm
+                        tenantId={tenantId}
+                        pinjamanId={p.id}
+                        peminjam={p.peminjam.name}
+                        sisaPokok={sisaPokok}
+                        denganBunga={p.bungaMode !== "tanpa"}
+                        saranBunga={p.bungaMode === "persen" ? saranBunga : null}
+                        petunjukBunga={p.bungaMode === "persen" ? `Bunga (saran ${Number(p.bungaPersen)}% dari sisa)` : "Bunga (kalau ada)"}
+                      />
+                      <DaftarCicilan tenantId={tenantId} cicilan={p.cicilan} />
                     </Card>
                   </li>
                 );
               })}
             </ul>
           )}
+        </section>
+      )}
+
+      {canCatat && baruLunas.length > 0 && (
+        <section>
+          <h2 className="mb-2 text-sm font-semibold">Baru Lunas</h2>
+          <p className="mb-2 text-xs text-muted">Lunas dalam {HARI_LUNAS_TAMPIL} hari terakhir. Kalau cicilan pelunasannya salah input, batalkan di sini.</p>
+          <ul className="space-y-2">
+            {baruLunas.map((p) => (
+              <li key={p.id}>
+                <Card className="space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{p.peminjam.name}</p>
+                      <p className="text-xs text-muted">
+                        {rupiah.format(Number(p.jumlahPokok))} · {bungaLabel(p.bungaMode, p.bungaPersen)}
+                      </p>
+                    </div>
+                    <Badge tone={STATUS_TONE.lunas}>{STATUS_LABEL.lunas}</Badge>
+                  </div>
+                  <DaftarCicilan tenantId={tenantId} cicilan={p.cicilan} />
+                </Card>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
@@ -253,6 +298,33 @@ export default async function PinjamanPage({
         )}
       </section>
     </div>
+  );
+}
+
+/** Riwayat cicilan untuk bendahara, terbaru di atas. Hanya yang teratas yang bisa dibatalkan (lihat batalkanCicilanAction). */
+function DaftarCicilan({
+  tenantId,
+  cicilan,
+}: {
+  tenantId: string;
+  cicilan: { id: string; tanggal: Date; jumlahPokok: unknown; jumlahBunga: unknown; kasTransaksiId: string | null }[];
+}) {
+  if (cicilan.length === 0) return null;
+  return (
+    <ul className="space-y-1 border-t border-border pt-2 text-xs text-muted">
+      {cicilan.map((c, i) => (
+        <li key={c.id}>
+          {tanggal.format(c.tanggal)} · pokok {rupiah.format(Number(c.jumlahPokok))}
+          {Number(c.jumlahBunga) > 0 && <> + bunga {rupiah.format(Number(c.jumlahBunga))}</>}
+          {i === 0 && c.kasTransaksiId && (
+            <>
+              {" · "}
+              <BatalkanCicilanButton tenantId={tenantId} cicilanId={c.id} nominal={Number(c.jumlahPokok) + Number(c.jumlahBunga)} />
+            </>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 

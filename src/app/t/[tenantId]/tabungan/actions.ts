@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requireWrite, requireMemberWrite, CAN_CATAT_UANG } from "@/lib/authz";
+import { catatAudit } from "@/lib/audit-log";
 import { uploadImage } from "@/lib/upload";
 import { validasiFileGambar } from "@/lib/validasi-file";
 import { creditSaldo } from "@/lib/tabungan";
@@ -14,20 +15,31 @@ import type { TabunganMode } from "@prisma/client";
 export async function createTabunganTipeAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireWrite(user, tenantId, CAN_CATAT_UANG);
+  const membership = await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const nama = String(formData.get("nama") ?? "").trim();
   const mode = String(formData.get("mode"));
   if (!nama || (mode !== "individual" && mode !== "pooled")) throw new Error("Nama dan mode wajib diisi");
 
   await prisma.tabunganTipe.create({ data: { tenantId, nama, mode: mode as TabunganMode } });
+
+  if (membership.roles.includes("pemilik")) {
+    await catatAudit({
+      tenantId,
+      aktorId: user.id,
+      peran: "pemilik",
+      aksi: "tabungan.tipe_baru",
+      deskripsi: `Membuat tipe tabungan baru "${nama}" (${mode})`,
+    });
+  }
+
   revalidatePath(`/t/${tenantId}/tabungan`);
 }
 
 export async function setorAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireWrite(user, tenantId, CAN_CATAT_UANG);
+  const membership = await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const tabunganTipeId = String(formData.get("tabunganTipeId"));
   const jumlah = Number(formData.get("jumlah"));
@@ -39,6 +51,18 @@ export async function setorAction(formData: FormData) {
   if (tipe.mode === "individual" && !targetUserId) throw new Error("Pilih anggota untuk tabungan individual");
 
   await creditSaldo(tabunganTipeId, tipe.mode, targetUserId, jumlah);
+
+  if (membership.roles.includes("pemilik")) {
+    await catatAudit({
+      tenantId,
+      aktorId: user.id,
+      peran: "pemilik",
+      aksi: "tabungan.setor",
+      deskripsi: `Mencatat setoran tabungan "${tipe.nama}" sebesar Rp ${jumlah}`,
+      nominal: jumlah,
+    });
+  }
+
   revalidatePath(`/t/${tenantId}/tabungan`);
 }
 
@@ -110,7 +134,7 @@ export async function submitSetoranXenditAction(formData: FormData) {
 export async function validasiSetoranAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireWrite(user, tenantId, CAN_CATAT_UANG);
+  const membership = await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const setoranId = String(formData.get("setoranId"));
   const decision = String(formData.get("decision"));
@@ -128,6 +152,17 @@ export async function validasiSetoranAction(formData: FormData) {
     where: { id: setoranId },
     data: { status: decision, divalidasiOlehId: user.id },
   });
+
+  if (membership.roles.includes("pemilik")) {
+    await catatAudit({
+      tenantId,
+      aktorId: user.id,
+      peran: "pemilik",
+      aksi: "tabungan.validasi",
+      deskripsi: `Memvalidasi setoran tabungan ${setoranId}: ${decision}`,
+      nominal: decision === "valid" ? Number(setoran.jumlah) : undefined,
+    });
+  }
 
   revalidatePath(`/t/${tenantId}/tabungan`);
 }

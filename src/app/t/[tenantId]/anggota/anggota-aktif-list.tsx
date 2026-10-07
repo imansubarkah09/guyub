@@ -5,11 +5,12 @@ import { Users } from "lucide-react";
 import { Card, EmptyState, Badge, btnGhost } from "@/components/ui";
 import { updateRolesAction } from "./actions";
 
-const ALL_ROLES = ["ketua", "wakil_ketua", "bendahara", "sekretaris", "anggota"] as const;
+const ALL_ROLES = ["pemilik", "ketua", "wakil_ketua", "bendahara", "sekretaris", "anggota"] as const;
 /** Duplikat kecil dari ROLE_LABEL di lib/authz, sengaja tidak diimpor: authz.ts
  * ikut mengimpor prisma di level modul, jadi kalau diimpor dari sini (client
  * component) Prisma ikut kebundel ke JS browser. */
 const ROLE_LABEL: Record<(typeof ALL_ROLES)[number], string> = {
+  pemilik: "Pemilik",
   ketua: "Ketua",
   wakil_ketua: "Wakil Ketua",
   bendahara: "Bendahara",
@@ -37,12 +38,14 @@ export function AnggotaAktifList({
   viewerId,
   canKelola,
   bisaUbahKetua,
+  bisaUbahPemilik,
 }: {
   tenantId: string;
   active: ActiveMember[];
   viewerId: string | null;
   canKelola: boolean;
   bisaUbahKetua: boolean;
+  bisaUbahPemilik: boolean;
 }) {
   const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("semua");
   const jumlahPengurus = active.filter((m) => m.isPengurus).length;
@@ -93,7 +96,7 @@ export function AnggotaAktifList({
                   </div>
                 </div>
 
-                {canKelola && (!m.roles.includes("ketua") || bisaUbahKetua) ? (
+                {canKelola && (!m.roles.includes("ketua") || bisaUbahKetua) && (!m.roles.includes("pemilik") || bisaUbahPemilik) ? (
                   <form action={updateRolesAction} className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2 text-xs">
                     <input type="hidden" name="tenantId" value={tenantId} />
                     <input type="hidden" name="membershipId" value={m.id} />
@@ -114,6 +117,9 @@ export function AnggotaAktifList({
                     ))}
                     {canKelola && m.roles.includes("ketua") && !bisaUbahKetua && (
                       <span className="text-[11px] text-muted">Peran ketua yang menjabat cuma bisa diubah ketua/wakil ketua atau platform owner.</span>
+                    )}
+                    {canKelola && m.roles.includes("pemilik") && !bisaUbahPemilik && (
+                      <span className="text-[11px] text-muted">Peran pemilik cuma bisa diubah platform owner.</span>
                     )}
                   </div>
                 )}

@@ -39,6 +39,7 @@ model User {
   sessions             Session[]
   memberships          Membership[]
   invitationsSent      Invitation[]        @relation("InvitationCreatedBy")
+  auditLog             AuditLog[]          @relation("AuditLogAktor")
   /// Satu posisi per tenant (lihat @@unique([tenantId, userId]) di FamilyNode),
   /// jadi di sisi User bentuknya daftar: satu orang bisa ada di pohon beberapa tenant.
   familyNodes          FamilyNode[]
@@ -130,6 +131,7 @@ model Tenant {
   profile           TenantProfile?
   memberships       Membership[]
   invitations       Invitation[]
+  auditLog          AuditLog[]
   familyNodes       FamilyNode[]
   kasTransaksi      KasTransaksi[]
   tabunganTipe      TabunganTipe[]
@@ -164,6 +166,12 @@ model TenantProfile {
 }
 
 enum Role {
+  /// Pemegang kendali penuh tenant (di atas ketua): bisa mengatur segalanya,
+  /// termasuk transaksi uang yang biasanya cuma milik bendahara. Perannya
+  /// SELALU tampil di daftar anggota, tidak pernah disembunyikan, dan setiap
+  /// aksinya dicatat di AuditLog supaya pengurus tetap bisa mengaudit siapa
+  /// mengubah apa (lihat AuditLog di bawah).
+  pemilik
   ketua
   /// Tangan kanan ketua: izinnya sama persis dengan ketua. Kalau sebuah tenant
   /// tidak punya wakil ketua, ketua sendiri yang memegang perannya, jadi tidak
@@ -213,6 +221,30 @@ model Invitation {
   @@index([tenantId])
 }
 
+/// Jejak audit, terutama untuk peran pemilik (lihat Role di atas): peran pemilik
+/// SELALU tampil di daftar anggota dan setiap aksinya dicatat di sini supaya
+/// pengurus tetap bisa mengaudit siapa mengubah apa, termasuk transaksi uang yang
+/// biasanya cuma milik bendahara. Dibaca lewat halaman audit khusus pengurus,
+/// selalu pakai batas jumlah baris (@@index di bawah mendukung urut createdAt desc).
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId  String
+  aktor     User     @relation("AuditLogAktor", fields: [aktorId], references: [id])
+  aktorId   String
+  /// Peran aktor saat aksi dilakukan (snapshot, bukan roles aktor sekarang yang bisa berubah).
+  peran     Role
+  /// Nama aksi singkat, mis. "kas.catat", "role.ubah", "arisan.ubah_jadwal".
+  aksi      String
+  /// Deskripsi singkat yang bisa dibaca pengurus, mis. "Mencatat kas masuk Rp 500.000".
+  deskripsi String
+  /// Nominal uang kalau aksinya transaksi uang, null kalau bukan.
+  nominal   Decimal? @db.Decimal(14, 2)
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+}
+
 // --- Silsilah Keluarga ---------------------------------------------------------
 
 model FamilyNode {
@@ -249,20 +281,29 @@ enum KasTipe {
 }
 
 model KasTransaksi {
-  id            String            @id @default(cuid())
-  tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  tenantId      String
-  tanggal       DateTime
-  jumlah        Decimal           @db.Decimal(14, 2)
-  tipe          KasTipe
-  keterangan    String?
+  id                String            @id @default(cuid())
+  tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId          String
+  tanggal           DateTime
+  jumlah            Decimal           @db.Decimal(14, 2)
+  tipe              KasTipe
+  keterangan        String?
+  /// true: keterangan hanya tampil ke bendahara dan pemilik, role lain melihat "******".
+  /// Diset otomatis untuk cicilan Simpan Pinjam (menyebut nama peminjam), dan bisa
+  /// dicentang manual lewat form Kas. Penyamaran dilakukan di server (lib/kas-privasi.ts).
+  keteranganRahasia Boolean           @default(false)
   /// Fase 4 (§5) — foto bukti transfer, opsional (uang tunai tidak selalu punya bukti).
-  buktiUrl      String?
-  dicatatOleh   User              @relation("KasDicatatOleh", fields: [dicatatOlehId], references: [id])
-  dicatatOlehId String
-  createdAt     DateTime          @default(now())
+  buktiUrl          String?
+  dicatatOleh       User              @relation("KasDicatatOleh", fields: [dicatatOlehId], references: [id])
+  dicatatOlehId     String
+  createdAt         DateTime          @default(now())
   /// Terisi kalau baris kas ini berasal dari setoran pot Plerek, bukan input manual.
-  plerekSetoran PlerekSetoranKas?
+  plerekSetoran     PlerekSetoranKas?
+  /// Terisi kalau baris kas ini uang masuk dari cicilan Simpan Pinjam. Nominal dan tipenya
+  /// dikunci di form edit Kas, koreksinya lewat batalkan cicilan supaya kedua modul tetap cocok.
+  pinjamanCicilan   PinjamanCicilan?
+  /// Terisi kalau baris kas ini uang keluar untuk mencairkan pinjaman. Dikunci dengan cara yang sama.
+  pinjamanPencairan Pinjaman?
 
   @@index([tenantId, tanggal])
 }
@@ -304,6 +345,10 @@ model Pinjaman {
   diputuskanOleh   User?             @relation("PinjamanDiputuskanOleh", fields: [diputuskanOlehId], references: [id])
   diputuskanOlehId String?
   diputuskanPada   DateTime?
+  /// Baris KasTransaksi keluar saat pinjaman disetujui. Null untuk pinjaman yang belum
+  /// disetujui, dan untuk pencairan lama yang nominalnya sudah diedit sebelum tautan ini ada.
+  kasPencairan     KasTransaksi?     @relation(fields: [kasPencairanId], references: [id], onDelete: SetNull)
+  kasPencairanId   String?           @unique
   cicilan          PinjamanCicilan[]
 
   @@index([tenantId, status])
@@ -319,6 +364,10 @@ model PinjamanCicilan {
   jumlahBunga   Decimal  @default(0) @db.Decimal(14, 2)
   dicatatOleh   User     @relation("CicilanDicatatOleh", fields: [dicatatOlehId], references: [id])
   dicatatOlehId String
+  /// Baris KasTransaksi masuk yang dibuat bersamaan dengan cicilan ini. Null untuk cicilan
+  /// lama yang barisnya sudah diedit manual sebelum tautan ini ada (tidak bisa dibatalkan).
+  kasTransaksi   KasTransaksi? @relation(fields: [kasTransaksiId], references: [id], onDelete: SetNull)
+  kasTransaksiId String?       @unique
   createdAt     DateTime @default(now())
 
   @@index([pinjamanId])

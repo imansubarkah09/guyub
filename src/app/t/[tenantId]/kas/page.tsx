@@ -5,6 +5,7 @@ import { CAN_CATAT_UANG, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
 import Link from "next/link";
 import { angkaTenant } from "@/lib/ringkasan";
+import { samarkanKeterangan } from "@/lib/kas-privasi";
 import { ambilDari } from "@/lib/paging";
 import { Card, PageTitle, EmptyState, Badge, inputClass, rupiah } from "@/components/ui";
 import { KasForm } from "./kas-form";
@@ -32,7 +33,7 @@ export default async function KasPage({
   const [transaksi, r] = await Promise.all([
     prisma.kasTransaksi.findMany({
       where,
-      select: { id: true, tanggal: true, jumlah: true, tipe: true, keterangan: true, buktiUrl: true, dicatatOleh: { select: { name: true } } },
+      select: { id: true, tanggal: true, jumlah: true, tipe: true, keterangan: true, keteranganRahasia: true, buktiUrl: true, dicatatOleh: { select: { name: true } }, pinjamanCicilan: { select: { id: true } }, pinjamanPencairan: { select: { id: true } } },
       orderBy: { tanggal: "desc" },
       take: ambil,
     }),
@@ -77,7 +78,7 @@ export default async function KasPage({
           <ul className="space-y-2">
             {transaksi.map((t) => (
               <li key={t.id}>
-                <KasRow tenantId={tenantId} t={{ ...t, jumlah: Number(t.jumlah) }} canEdit={canCatat} />
+                <KasRow tenantId={tenantId} t={{ ...samarkanKeterangan(t, roles), jumlah: Number(t.jumlah), sumberPinjaman: t.pinjamanCicilan ? "cicilan" : t.pinjamanPencairan ? "pencairan" : null }} canEdit={canCatat} />
               </li>
             ))}
           </ul>

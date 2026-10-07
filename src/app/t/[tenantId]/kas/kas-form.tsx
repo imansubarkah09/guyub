@@ -25,6 +25,10 @@ export function KasForm({ tenantId }: { tenantId: string }) {
         </div>
         <InputRupiah name="jumlah" placeholder="Jumlah (Rp)" className={inputClass} required />
         <input name="keterangan" placeholder="Keterangan" className={inputClass} />
+        <label className="flex items-center gap-2 text-xs text-muted">
+          <input type="checkbox" name="keteranganRahasia" />
+          Rahasiakan keterangan (hanya bendahara dan pemilik yang bisa membaca)
+        </label>
         <div>
           <label className="mb-1 block text-xs font-medium text-muted">Bukti transfer (opsional)</label>
           <input

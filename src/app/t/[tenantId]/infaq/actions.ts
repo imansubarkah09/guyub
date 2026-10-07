@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requireWrite, CAN_CATAT_UANG } from "@/lib/authz";
+import { catatAudit } from "@/lib/audit-log";
 
 export async function catatInfaqAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireWrite(user, tenantId, CAN_CATAT_UANG);
+  const membership = await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const tanggalPertemuan = String(formData.get("tanggalPertemuan"));
   const jumlah = Number(formData.get("jumlah"));
@@ -19,18 +20,42 @@ export async function catatInfaqAction(formData: FormData) {
   await prisma.infaqShodaqoh.create({
     data: { tenantId, tanggalPertemuan: new Date(tanggalPertemuan), jumlah, keterangan, dicatatOlehId: user.id },
   });
+
+  if (membership.roles.includes("pemilik")) {
+    await catatAudit({
+      tenantId,
+      aktorId: user.id,
+      peran: "pemilik",
+      aksi: "infaq.catat",
+      deskripsi: `Mencatat infaq & shodaqoh sebesar Rp ${jumlah}`,
+      nominal: jumlah,
+    });
+  }
+
   revalidatePath(`/t/${tenantId}/infaq`);
 }
 
 export async function hapusInfaqAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireWrite(user, tenantId, CAN_CATAT_UANG);
+  const membership = await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const id = String(formData.get("id"));
   const row = await prisma.infaqShodaqoh.findUniqueOrThrow({ where: { id } });
   if (row.tenantId !== tenantId) throw new Error("Data tidak ditemukan di tenant ini");
 
   await prisma.infaqShodaqoh.delete({ where: { id } });
+
+  if (membership.roles.includes("pemilik")) {
+    await catatAudit({
+      tenantId,
+      aktorId: user.id,
+      peran: "pemilik",
+      aksi: "infaq.hapus",
+      deskripsi: `Menghapus data infaq & shodaqoh ${id} sebesar Rp ${row.jumlah}`,
+      nominal: Number(row.jumlah),
+    });
+  }
+
   revalidatePath(`/t/${tenantId}/infaq`);
 }

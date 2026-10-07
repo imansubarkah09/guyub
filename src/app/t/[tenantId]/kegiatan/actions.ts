@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { requireWrite, CAN_CATAT_UANG } from "@/lib/authz";
+import { catatAudit } from "@/lib/audit-log";
 import { uploadImage } from "@/lib/upload";
 import { validasiFileGambar } from "@/lib/validasi-file";
 import { saldoPool } from "@/lib/dana";
@@ -21,7 +22,7 @@ export type KegiatanActionState = { error: string } | null;
 export async function catatKegiatanAction(_prevState: KegiatanActionState, formData: FormData): Promise<KegiatanActionState> {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireWrite(user, tenantId, CAN_CATAT_UANG);
+  const membership = await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const namaKegiatan = String(formData.get("namaKegiatan") ?? "").trim();
   const tanggalStr = String(formData.get("tanggal"));
@@ -91,6 +92,19 @@ export async function catatKegiatanAction(_prevState: KegiatanActionState, formD
     return { error: "Gagal menyimpan kegiatan. Coba lagi." };
   }
 
+  if (membership.roles.includes("pemilik")) {
+    let totalJumlah = 0;
+    for (const b of baris) totalJumlah += b.jumlah;
+    await catatAudit({
+      tenantId,
+      aktorId: user.id,
+      peran: "pemilik",
+      aksi: "kegiatan.catat",
+      deskripsi: `Mencatat dana kegiatan "${namaKegiatan}" total Rp ${totalJumlah}`,
+      nominal: totalJumlah,
+    });
+  }
+
   revalidatePath(`/t/${tenantId}/kegiatan`);
   revalidatePath(`/t/${tenantId}`);
   return null;
@@ -100,7 +114,7 @@ export async function catatKegiatanAction(_prevState: KegiatanActionState, formD
 export async function catatDonasiAction(formData: FormData) {
   const user = await requireUser();
   const tenantId = String(formData.get("tenantId"));
-  await requireWrite(user, tenantId, CAN_CATAT_UANG);
+  const membership = await requireWrite(user, tenantId, CAN_CATAT_UANG);
 
   const kegiatanId = String(formData.get("kegiatanId"));
   const namaDonatur = String(formData.get("namaDonatur") ?? "").trim();
@@ -113,5 +127,17 @@ export async function catatDonasiAction(formData: FormData) {
   if (kegiatan.tenantId !== tenantId) throw new Error("Kegiatan tidak ditemukan di tenant ini");
 
   await prisma.danaKegiatanDonasi.create({ data: { kegiatanId, namaDonatur, jumlah, keterangan } });
+
+  if (membership.roles.includes("pemilik")) {
+    await catatAudit({
+      tenantId,
+      aktorId: user.id,
+      peran: "pemilik",
+      aksi: "kegiatan.donasi",
+      deskripsi: `Mencatat donasi dari ${namaDonatur} sebesar Rp ${jumlah} untuk kegiatan ${kegiatanId}`,
+      nominal: jumlah,
+    });
+  }
+
   revalidatePath(`/t/${tenantId}/kegiatan`);
 }

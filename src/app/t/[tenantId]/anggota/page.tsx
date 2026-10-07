@@ -30,6 +30,10 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
   // 16 Sep 2026: sekretaris salah klik menjadikan anggota lain ketua, dan lock
   // sebelumnya keliru ikut mengunci ketua/owner sendiri juga).
   const bisaUbahKetua = has(roles, KETUA) || user.isPlatformOwner;
+  // Peran pemilik cuma boleh diubah platform owner (lihat guard di actions.ts),
+  // ketua pun tidak termasuk, supaya tidak ada pemilik yang bisa dicabut atau
+  // ditambah di luar pengawasan platform.
+  const bisaUbahPemilik = user.isPlatformOwner;
   const base = process.env.NEXT_PUBLIC_URL ?? "";
   const pending = memberships.filter((m) => m.status === "pending_confirmation");
   const active = memberships
@@ -102,7 +106,7 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
 
       <section>
         <h2 className="mb-2 text-sm font-semibold">Anggota Aktif</h2>
-        <AnggotaAktifList tenantId={tenantId} active={active} viewerId={viewerId} canKelola={canKelola} bisaUbahKetua={bisaUbahKetua} />
+        <AnggotaAktifList tenantId={tenantId} active={active} viewerId={viewerId} canKelola={canKelola} bisaUbahKetua={bisaUbahKetua} bisaUbahPemilik={bisaUbahPemilik} />
       </section>
     </div>
   );
