@@ -56,3 +56,29 @@ export async function uploadToCloudinary(
   }
   return { secure_url: json.secure_url };
 }
+
+/**
+ * Ambil file dari Cloudinary lewat Download API bertanda tangan, bukan URL
+ * res.cloudinary.com biasa. Akun ini memblokir delivery publik file PDF
+ * (HTTP 401 "deny or ACL failure", juga untuk resource raw berakhiran .pdf),
+ * sedangkan Download API tetap jalan karena memakai api_secret.
+ *
+ * @param secureUrl URL yang disimpan saat upload, bentuknya
+ *   `https://res.cloudinary.com/<cloud>/<resource>/<type>/v<versi>/<public_id>.<format>`.
+ */
+export async function downloadFromCloudinary(secureUrl: string): Promise<Response> {
+  const { apiKey, apiSecret, cloudName } = parseCloudinaryUrl();
+  const match = new URL(secureUrl).pathname.match(/^\/[^/]+\/([^/]+)\/([^/]+)\/v\d+\/(.+)\.([a-z0-9]+)$/i);
+  if (!match) throw new Error("URL Cloudinary tidak dikenali");
+  const [, resourceType, type, publicId, format] = match;
+  const timestamp = Math.floor(Date.now() / 1000);
+
+  // Parameter diurutkan alfabetis, aturan tanda tangan sama dengan upload di atas.
+  const params = `format=${format}&public_id=${publicId}&timestamp=${timestamp}&type=${type}`;
+  const signature = await sha1Hex(`${params}${apiSecret}`);
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/download?${params}&api_key=${apiKey}&signature=${signature}`,
+  );
+  if (!res.ok) throw new Error(`Unduh dari Cloudinary gagal (HTTP ${res.status})`);
+  return res;
+}

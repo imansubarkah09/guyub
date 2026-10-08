@@ -167,7 +167,7 @@ export default async function LaporanPage({
                   </div>
                   <div className="flex gap-3 text-xs">
                     {l.pdfUrl && (
-                      <a href={l.pdfUrl} target="_blank" rel="noreferrer" className="text-primary underline">
+                      <a href={`/t/${tenantId}/laporan/${l.id}/pdf`} target="_blank" rel="noreferrer" className="text-primary underline">
                         PDF
                       </a>
                     )}
