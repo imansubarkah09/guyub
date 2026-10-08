@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { CAN_BUAT_LAPORAN, has } from "@/lib/authz";
 import { effectiveRoles } from "@/lib/effective-roles";
-import { samarkanKeterangan } from "@/lib/kas-privasi";
+import { keteranganPdf, samarkanKeterangan } from "@/lib/kas-privasi";
 import { angkaTenant, saldoBerjalanArisan } from "@/lib/ringkasan";
 import { angkaPlerek, kilogram } from "@/lib/plerek";
 import { Card, PageTitle, inputClass, rupiah, tanggal } from "@/components/ui";
@@ -72,9 +72,15 @@ export default async function LaporanPage({
         { label: "Total Masuk", value: r.kasMasuk },
       ],
       header: ["Tanggal", "Tipe", "Jumlah", "Keterangan"],
-      rows: kas.map((k) => samarkanKeterangan(k, roles)).map((k) => ({
-        kolom: [tanggal.format(k.tanggal), k.tipe, rupiah.format(Number(k.jumlah)), k.keterangan ?? "-"],
-      })),
+      rows: kas.map((k) => {
+        const kolom = (ket: string | null) => [tanggal.format(k.tanggal), k.tipe, rupiah.format(Number(k.jumlah)), ket ?? "-"];
+        return {
+          kolom: kolom(samarkanKeterangan(k, roles).keterangan),
+          kolomPdf: kolom(keteranganPdf(k, roles)),
+          // roles kosong = sudut pandang anggota biasa: PDF terbit dibuka semua anggota.
+          kolomTerbit: kolom(keteranganPdf(k, [])),
+        };
+      }),
     },
     {
       id: "tabungan",

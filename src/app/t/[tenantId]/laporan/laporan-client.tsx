@@ -10,7 +10,13 @@ export type TabData = {
   id: string;
   label: string;
   ringkas: { label: string; value: number }[];
-  rows: { kolom: string[] }[];
+  /**
+   * Isi baris PDF kalau beda dengan tabel di layar (lihat keteranganPdf di lib/kas-privasi.ts):
+   * `kolomPdf` untuk PDF yang diunduh sendiri, `kolomTerbit` untuk PDF yang diterbitkan.
+   * PDF terbit bisa dibuka semua anggota, jadi nama peminjam selalu diganti di sana
+   * walau penerbitnya bendahara.
+   */
+  rows: { kolom: string[]; kolomPdf?: string[]; kolomTerbit?: string[] }[];
   header: string[];
 };
 
@@ -34,7 +40,7 @@ export function LaporanTabs({
   const [error, setError] = useState<string | null>(null);
   const tab = tabs.find((t) => t.id === aktif) ?? tabs[0];
 
-  async function buatPdf(gabungan: boolean) {
+  async function buatPdf(gabungan: boolean, untukTerbit = false) {
     const { jsPDF } = await import("jspdf");
     const autoTable = (await import("jspdf-autotable")).default;
     const doc = new jsPDF();
@@ -50,7 +56,7 @@ export function LaporanTabs({
       autoTable(doc, {
         startY: y + 3,
         head: [t.header],
-        body: t.rows.map((r) => r.kolom),
+        body: t.rows.map((r) => (untukTerbit ? r.kolomTerbit : r.kolomPdf) ?? r.kolom),
         foot: [t.ringkas.map((s) => `${s.label}: ${rupiah.format(s.value)}`).slice(0, t.header.length)],
         styles: { fontSize: 8 },
       });
@@ -87,7 +93,7 @@ export function LaporanTabs({
     setBusy(true);
     setError(null);
     try {
-      const doc = await buatPdf(true);
+      const doc = await buatPdf(true, true);
       // jsPDF menyisipkan `;filename=generated.pdf` di data URI, dan Cloudinary
       // menolaknya ("Unsupported source URL") — dibuang dulu sebelum diunggah.
       const dataUri = doc.output("datauristring").replace(/;filename=[^;]*/, "");
@@ -192,6 +198,8 @@ export function LaporanTabs({
               <Share2 className="h-4 w-4" /> {busy ? "Memproses…" : "Terbitkan & Bagikan"}
             </button>
           </div>
+
+          <p className="text-xs text-muted">Di PDF yang diterbitkan, nama peminjam di keterangan cicilan ditulis &quot;a.n. peminjam&quot;.</p>
 
           {error && <p className="text-xs text-danger">{error}</p>}
 
