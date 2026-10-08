@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { InstallBanner } from "@/components/install-banner";
+import { UpdateBanner } from "@/components/update-banner";
 
 /**
  * Sebelumnya app ini tidak pasang font sama sekali, semua render pakai font
@@ -87,6 +88,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_JSON_LD) }} />
         {children}
         <InstallBanner />
+        <UpdateBanner />
         <Script id="sw-register" strategy="afterInteractive">
           {`if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');`}
         </Script>

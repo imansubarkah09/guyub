@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Download } from "lucide-react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { Download, Share } from "lucide-react";
 import { btnPrimary, btnGhost } from "@/components/ui";
 
 type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
@@ -23,11 +23,26 @@ const TUNDA_MS = 7 * 24 * 60 * 60 * 1000;
  * jadi banner ini hilang dan muncul kembali mengikuti status pasang itu sendiri.
  * Satu-satunya yang ditambahkan: penjagaan display-mode standalone, untuk kasus
  * eventnya terlanjur tertembak sebelum pemasangan selesai di jendela yang sama.
- * iOS sengaja tidak ditangani di sini — Safari tidak punya event ini, dan
- * instruksi manualnya sudah ada di menu profil.
+ * iPhone/iPad: Safari tidak punya event ini, jadi banner menampilkan panduan manual
+ * (Bagikan, lalu Tambah ke Layar Utama), dengan aturan tunda yang sama. Di iOS
+ * memasang ke Layar Utama juga syarat Web Push, jadi banner ini sekaligus jalan
+ * menuju notifikasi.
  */
+function perluPanduanIos() {
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const terpasang = window.matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
+  return ios && !terpasang && Date.now() >= Number(localStorage.getItem(KUNCI) ?? 0);
+}
+
 export function InstallBanner() {
   const [deferred, setDeferred] = useState<InstallEvent | null>(null);
+  const [ditutup, setDitutup] = useState(false);
+  // useSyncExternalStore, bukan setState di effect: di server selalu false, jadi hidrasi aman.
+  const panduanIos = useSyncExternalStore(
+    () => () => {},
+    perluPanduanIos,
+    () => false,
+  );
 
   useEffect(() => {
     const onPrompt = (e: Event) => {
@@ -41,6 +56,30 @@ export function InstallBanner() {
     window.addEventListener("appinstalled", () => setDeferred(null));
     return () => window.removeEventListener("beforeinstallprompt", onPrompt);
   }, []);
+
+  const tunda = () => {
+    localStorage.setItem(KUNCI, String(Date.now() + TUNDA_MS));
+    setDeferred(null);
+    setDitutup(true);
+  };
+
+  if (panduanIos && !ditutup) {
+    return (
+      <div className="pb-safe fixed inset-x-3 bottom-16 z-50 rounded-xl border border-border bg-surface p-3 shadow-lg lg:inset-x-auto lg:right-4 lg:bottom-4 lg:w-80">
+        <p className="text-sm font-medium">Install Guyub ke iPhone</p>
+        <p className="mt-0.5 text-xs text-muted">
+          Tap tombol Bagikan <Share className="inline h-3.5 w-3.5 align-text-bottom" aria-label="Bagikan" /> di Safari, lalu pilih{" "}
+          <span className="font-medium text-foreground">Tambah ke Layar Utama</span>. Notifikasi Guyub di iPhone hanya jalan dari aplikasi yang
+          sudah terpasang.
+        </p>
+        <div className="mt-3 flex justify-end">
+          <button type="button" className={btnGhost} onClick={tunda}>
+            Ingatkan Nanti
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!deferred) return null;
 
@@ -62,14 +101,7 @@ export function InstallBanner() {
           <Download className="h-4 w-4" />
           Install
         </button>
-        <button
-          type="button"
-          className={btnGhost}
-          onClick={() => {
-            localStorage.setItem(KUNCI, String(Date.now() + TUNDA_MS));
-            setDeferred(null);
-          }}
-        >
+        <button type="button" className={btnGhost} onClick={tunda}>
           Ingatkan Nanti
         </button>
       </div>
