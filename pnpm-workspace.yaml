@@ -14,3 +14,5 @@ onlyBuiltDependencies:
   - prisma
   - unrs-resolver
   - workerd
+overrides:
+  dompurify: 3.4.17
