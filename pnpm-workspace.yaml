@@ -16,3 +16,6 @@ onlyBuiltDependencies:
   - workerd
 overrides:
   dompurify: 3.4.17
+  '@node-minify/core>glob': 10.5.0
+  miniflare>undici: 7.30.1
+  '@prisma/config>deepmerge-ts': 8.0.0
