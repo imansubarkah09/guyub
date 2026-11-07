@@ -18,7 +18,7 @@
     "@neondatabase/serverless": "^0.10.4",
     "@prisma/adapter-neon": "^6.19.3",
     "@prisma/client": "^6.19.3",
-    "better-auth": "^1.7.1",
+    "better-auth": "^1.7.7",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.45.0",
