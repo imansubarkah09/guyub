@@ -7,14 +7,21 @@ workers_dev = false
 
 [vars]
 ENVIRONMENT = "production"
-NEXTAUTH_URL = "https://guyub.thedreamcompany.space"
-NEXT_PUBLIC_URL = "https://guyub.thedreamcompany.space"
+NEXTAUTH_URL = "https://guyub.my.id"
+NEXT_PUBLIC_URL = "https://guyub.my.id"
 NEXT_PUBLIC_TRAKTEER_SLUG = "brokado"
 
 [assets]
 directory = ".open-next/assets"
 binding = "ASSETS"
 
+[[routes]]
+pattern = "guyub.my.id/*"
+zone_name = "guyub.my.id"
+
+# Route lama tetap sampai login di guyub.my.id terbukti jalan, lalu dihapus
+# (wrangler menghapus route yang hilang dari config). Host lama harus tetap
+# punya DNS proxied supaya Redirect Rule 301 di dashboard Cloudflare jalan.
 [[routes]]
 pattern = "guyub.thedreamcompany.space/*"
 zone_name = "thedreamcompany.space"
