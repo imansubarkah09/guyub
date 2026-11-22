@@ -6,13 +6,12 @@ import { getSessionUser } from "@/lib/session";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Card, StatCard, Badge } from "@/components/ui";
-import { TrakteerModal } from "@/components/trakteer-modal";
-import { TRAKTEER_MODAL_URL } from "@/lib/trakteer";
+import { QrisModal } from "@/components/qris-modal";
 
 // Dulu halaman ini diam-diam mewarisi title+description landing page apa
 // adanya, jadi dua halaman berbeda tampil identik di hasil pencarian
 // (§SEO, 21 Sep 2026).
-const DESCRIPTION = "Kenapa fitur dasar KOMUNITA gratis, siapa yang menanggung biaya server dan domainnya, dan bagaimana cara ikut mendukung lewat Trakteer.";
+const DESCRIPTION = "Kenapa fitur dasar KOMUNITA gratis, siapa yang menanggung biaya server dan domainnya, dan bagaimana cara ikut mendukung lewat QRIS.";
 
 // Metadata openGraph/twitter Next.js TIDAK digabung otomatis sama punya
 // layout root, kalau halaman ini setel ulang, seluruh objeknya (termasuk
@@ -78,19 +77,16 @@ export default async function TentangPage() {
       </section>
 
       <section id="dukung" className="mx-auto max-w-md px-4 md:max-w-2xl py-8 text-center">
-        <h2 className="mb-2 text-lg font-semibold">Traktir saya, kalau Anda mau</h2>
+        <h2 className="mb-2 text-lg font-semibold">Dukung kami, kalau Anda mau</h2>
         <p className="mb-5 text-sm text-foreground/70">
-          Tiap tenant di KOMUNITA punya &ldquo;nyawa&rdquo;, masa aktif yang otomatis bertambah tiap kali ada yang traktir lewat
-          tombol di bawah. Dukungan Anda tidak cuma buat saya, tapi menambah nyawa untuk seluruh anggota tenant itu,
+          Tiap tenant di KOMUNITA punya &ldquo;nyawa&rdquo;, masa aktif yang bertambah tiap kali ada yang mendukung lewat
+          QRIS di bawah, setelah dukungan dicatat pengelola. Dukungan Anda tidak cuma buat saya, tapi menambah nyawa untuk seluruh anggota tenant itu,
           supaya catatan kas dan tabungan keluarga Anda tetap hidup lebih lama.
         </p>
-        {TRAKTEER_MODAL_URL && (
-          <TrakteerModal
-            modalUrl={TRAKTEER_MODAL_URL}
-            label="Traktir Kami"
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
-          />
-        )}
+        <QrisModal
+          label="Dukung Kami"
+          className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
+        />
       </section>
 
       <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8">

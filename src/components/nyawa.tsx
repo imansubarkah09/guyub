@@ -40,7 +40,7 @@ export function NyawaBar({ sisaHari, sampai }: { sisaHari: number; sampai: strin
       </div>
 
       <p className="mt-2 text-xs text-muted">
-        {sampai ? `Tenant ini aktif sampai ${sampai}.` : "Belum pernah didukung — dukung lewat Trakteer untuk menambah masa aktif."} Setiap traktiran menambah
+        {sampai ? `Tenant ini aktif sampai ${sampai}.` : "Belum pernah didukung — dukung lewat QRIS untuk menambah masa aktif."} Setiap dukungan menambah
         nyawa untuk seluruh anggota tenant.
       </p>
     </Card>

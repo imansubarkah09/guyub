@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { TRAKTEER_MODAL_URL } from "@/lib/trakteer";
 
 /** Footer publik dipakai index & halaman "Tentang" — satu tempat biar dua halaman tidak diam-diam bercabang. */
 export function SiteFooter() {
@@ -23,9 +22,7 @@ export function SiteFooter() {
             <p className="text-sm font-semibold">Lainnya</p>
             <ul className="mt-3 space-y-2">
               <li><Link href="/tentang" className="text-sm text-foreground/70 hover:text-foreground hover:underline">Tentang</Link></li>
-              {TRAKTEER_MODAL_URL && (
-                <li><a href="/tentang#dukung" className="text-sm text-foreground/70 hover:text-foreground hover:underline">Dukung Pengembang</a></li>
-              )}
+              <li><a href="/tentang#dukung" className="text-sm text-foreground/70 hover:text-foreground hover:underline">Dukung Pengembang</a></li>
             </ul>
           </nav>
         </div>

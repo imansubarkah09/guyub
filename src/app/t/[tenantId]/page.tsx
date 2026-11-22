@@ -9,8 +9,8 @@ import { tenantDenganProfil } from "@/lib/tenant";
 import { Card, StatCard, PageTitle, Badge, Progress, EmptyState, btnPrimary, rupiah, tanggal } from "@/components/ui";
 import { HewanIcon } from "@/components/hewan";
 import { NyawaBar, DonaturList } from "@/components/nyawa";
-import { TrakteerModal } from "@/components/trakteer-modal";
-import { TRAKTEER_MODAL_URL, sisaHari } from "@/lib/trakteer";
+import { QrisModal } from "@/components/qris-modal";
+import { sisaHari } from "@/lib/trakteer";
 import { generateInviteAction } from "./anggota/actions";
 
 /** Kolom yang benar-benar dipakai kartu donatur — sisanya (orderId, pesan) tidak perlu ikut terbawa. */
@@ -265,9 +265,7 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
           <DonaturList judul="Pendukung Aplikasi Terbaru" items={donaturTerbaru.map(keDonatur)} urut="terbaru" />
           <DonaturList judul="Dukungan Terbesar untuk KOMUNITA" items={donaturTerbesar.map(keDonatur)} urut="terbesar" />
         </div>
-        {TRAKTEER_MODAL_URL && (
-          <TrakteerModal modalUrl={TRAKTEER_MODAL_URL} kodeDonasi={tenant.kodeDonasi} namaTenant={tenant.profile?.nama ?? "tenant ini"} />
-        )}
+        <QrisModal />
       </section>
     </div>
   );
