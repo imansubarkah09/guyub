@@ -8,7 +8,7 @@ import { simpanUndianAction } from "./actions";
 /** `label` dipakai di irisan roda (pendek biar muat), `penuh` di pengumuman hasil. */
 export type Slot = { id: string; label: string; penuh: string };
 
-const WARNA = ["#c1652d", "#0f766e", "#b45309", "#15803d", "#7c3aed", "#be123c", "#0369a1", "#a16207"];
+const WARNA = ["#245b50", "#0f766e", "#b45309", "#15803d", "#7c3aed", "#be123c", "#0369a1", "#a16207"];
 
 /**
  * Roda undian arisan. Pemenang dipilih di KLIEN hanya untuk animasi; yang

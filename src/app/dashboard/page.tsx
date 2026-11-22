@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/session";
 import { waShareUrl } from "@/lib/whatsapp";
 import { Card, PageTitle, EmptyState, Badge, btnPrimary, btnGhost, inputClass } from "@/components/ui";
 import { ProfileMenu } from "@/components/profile-menu";
-import { GuyubLogo } from "@/components/guyub-logo";
+import { KomunitaLogo } from "@/components/komunita-logo";
 import { createTenantAction } from "./actions";
 
 const JENIS_LABEL = { keluarga: "Keluarga", rt: "RT", paguyuban: "Paguyuban" } as const;
@@ -19,7 +19,7 @@ export default async function DashboardPage() {
     orderBy: { createdAt: "desc" },
   });
   const base = process.env.NEXT_PUBLIC_URL ?? "";
-  const ajakText = `Yuk kelola kas & tabungan keluarga/RT/paguyuban kita di Guyub: ${base}/cari`;
+  const ajakText = `Yuk kelola kas & tabungan keluarga/RT/paguyuban kita di KOMUNITA: ${base}/cari`;
 
   return (
     // pt-safe di container, bukan di header h-14 langsung: kalau ditaruh di
@@ -30,8 +30,8 @@ export default async function DashboardPage() {
     <main className="pt-safe min-h-screen">
       <header className="flex h-14 items-center justify-between border-b border-border bg-surface px-4">
         <span className="flex items-center gap-2">
-          <GuyubLogo className="h-7 w-7" />
-          <span className="font-semibold tracking-tight text-primary">Guyub</span>
+          <KomunitaLogo className="h-7 w-7" />
+          <span className="font-semibold tracking-tight text-primary">KOMUNITA</span>
         </span>
         <ProfileMenu
           user={{ name: user.name, email: user.email, phone: user.phone ?? null, image: user.image ?? null, isPlatformOwner: user.isPlatformOwner }}

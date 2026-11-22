@@ -51,7 +51,7 @@ export function UpdateBanner() {
       aria-live="polite"
       className="fixed inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] rounded-xl border-2 border-primary bg-surface p-3 shadow-lg lg:inset-x-auto lg:right-4 lg:w-80"
     >
-      <p className="text-sm font-medium">Guyub versi baru sudah tersedia</p>
+      <p className="text-sm font-medium">KOMUNITA versi baru sudah tersedia</p>
       <p className="mt-0.5 text-xs text-muted">Muat ulang supaya perbaikan dan fitur terbaru langsung terpakai.</p>
       <div className="mt-3 flex gap-2">
         <button type="button" className={`${btnPrimary} flex-1`} onClick={() => location.reload()}>

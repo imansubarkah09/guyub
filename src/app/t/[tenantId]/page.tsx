@@ -135,7 +135,7 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
         {invitasiAktif ? (
           <a
             href={waShareUrl(
-              `Anda diundang bergabung ke ${tenant.profile?.nama ?? "tenant ini"} di Guyub, klik link ini untuk gabung: ${process.env.NEXT_PUBLIC_URL ?? ""}/invite/${invitasiAktif.token}`,
+              `Anda diundang bergabung ke ${tenant.profile?.nama ?? "tenant ini"} di KOMUNITA, klik link ini untuk gabung: ${process.env.NEXT_PUBLIC_URL ?? ""}/invite/${invitasiAktif.token}`,
             )}
             target="_blank"
             rel="noreferrer"
@@ -263,7 +263,7 @@ export default async function RingkasanPage({ params }: { params: Promise<{ tena
         <NyawaBar sisaHari={sisaHari(tenant.nyawaSampai)} sampai={tenant.nyawaSampai ? tanggal.format(tenant.nyawaSampai) : null} />
         <div className="grid gap-2 min-[520px]:grid-cols-2">
           <DonaturList judul="Pendukung Aplikasi Terbaru" items={donaturTerbaru.map(keDonatur)} urut="terbaru" />
-          <DonaturList judul="Dukungan Terbesar untuk Guyub" items={donaturTerbesar.map(keDonatur)} urut="terbesar" />
+          <DonaturList judul="Dukungan Terbesar untuk KOMUNITA" items={donaturTerbesar.map(keDonatur)} urut="terbesar" />
         </div>
         {TRAKTEER_MODAL_URL && (
           <TrakteerModal modalUrl={TRAKTEER_MODAL_URL} kodeDonasi={tenant.kodeDonasi} namaTenant={tenant.profile?.nama ?? "tenant ini"} />

@@ -18,18 +18,16 @@
 }
 
 :root {
-  /* Warm home + futuristik: dasar cream/terracotta, aksen teal untuk elemen modern. */
-  --background: #fdf8f2;
+  /* Palet KOMUNITA: krem hangat, hijau hutan untuk aksi utama, hijau sage untuk garis. */
+  --background: #f7f6f0;
   --surface: #ffffff;
-  --foreground: #2e2118;
-  --muted: #8a7867;
-  --border: #ebddcd;
-  /* #c1652d sebelumnya cuma 3.85:1 vs --background & --primary-foreground, gagal
-     AA teks normal (4.5:1) di CTA, wordmark, dan label role sekaligus (ketemu
-     review 15 Sep 2026). Digelapkan ke #a45626, sama-sama ~5.05:1 ke dua arah. */
-  --primary: #a45626;
-  --primary-foreground: #fff8ee;
-  --accent: #0f766e;
+  --foreground: #252d29;
+  --muted: #5f6f68;
+  --border: #d5e2d8;
+  /* Primary Green #245b50: 7.2:1 ke --background dan 7.8:1 ke putih (lolos AA). */
+  --primary: #245b50;
+  --primary-foreground: #ffffff;
+  --accent: #1f6f5c;
   --success: #15803d;
   --warning: #b45309;
   --danger: #b91c1c;

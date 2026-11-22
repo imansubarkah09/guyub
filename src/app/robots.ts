@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const base = process.env.NEXT_PUBLIC_URL ?? "https://guyub.thedreamcompany.space";
+  const base = process.env.NEXT_PUBLIC_URL ?? "https://komunita.my.id";
   return {
     // /admin (kelola tenant platform owner) dan /laporan (link laporan
     // keuangan tenant yang dibagikan lewat WhatsApp) sebelumnya tidak ada di

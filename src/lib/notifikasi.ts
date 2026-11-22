@@ -39,6 +39,6 @@ async function simpan(userIds: string[], tenantId: string | null, tipe: string, 
   // round-trip ke FCM/Apple untuk setiap HP penerima.
   after(async () => {
     const tenant = tenantId ? await prisma.tenantProfile.findUnique({ where: { tenantId }, select: { nama: true } }).catch(() => null) : null;
-    await kirimPush(userIds, { judul: tenant?.nama ?? "Guyub", isi: pesan, url: href ?? (tenantId ? `/t/${tenantId}` : "/dashboard") });
+    await kirimPush(userIds, { judul: tenant?.nama ?? "KOMUNITA", isi: pesan, url: href ?? (tenantId ? `/t/${tenantId}` : "/dashboard") });
   });
 }

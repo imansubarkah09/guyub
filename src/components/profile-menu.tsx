@@ -95,7 +95,7 @@ export function ProfileMenu({ user }: { user: AccountInfo }) {
               <PushButton />
               <Link href="/tentang" className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm transition hover:bg-primary/5">
                 <Info className="h-4 w-4 text-muted" />
-                Tentang Guyub
+                Tentang KOMUNITA
               </Link>
               {user.isPlatformOwner && (
                 <Link href="/admin" className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm transition hover:bg-primary/5">

@@ -5,7 +5,7 @@ import { effectiveRoles } from "@/lib/effective-roles";
 import { downloadFromCloudinary } from "@/lib/cloudinary";
 
 /**
- * PDF laporan terbit, disajikan lewat Guyub karena link res.cloudinary.com
+ * PDF laporan terbit, disajikan lewat KOMUNITA karena link res.cloudinary.com
  * langsung ditolak Cloudinary (HTTP 401, delivery PDF diblokir di akun ini).
  * Hak aksesnya sama dengan daftar "Laporan Terbit": anggota tenant, termasuk
  * platform owner saat Preview.

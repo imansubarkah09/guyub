@@ -15,7 +15,7 @@ const VAPID = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 function keadaanAwal(): Keadaan {
   if (typeof window === "undefined" || !VAPID) return "tidak-didukung";
   if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
-    // Safari iPhone/iPad baru punya PushManager kalau Guyub dibuka dari ikon Layar
+    // Safari iPhone/iPad baru punya PushManager kalau KOMUNITA dibuka dari ikon Layar
     // Utama (iOS 16.4+). iPadOS mengaku "Macintosh", jadi dicek lewat layar sentuh.
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
     return ios ? "ios" : "tidak-didukung";
@@ -74,7 +74,7 @@ export function PushButton() {
   if (k === "ios") {
     return (
       <p className="px-2 text-xs text-muted">
-        Notifikasi di iPhone: tap Bagikan (Share), pilih &quot;Tambah ke Layar Utama&quot;, lalu buka Guyub dari ikon itu.
+        Notifikasi di iPhone: tap Bagikan (Share), pilih &quot;Tambah ke Layar Utama&quot;, lalu buka KOMUNITA dari ikon itu.
       </p>
     );
   }

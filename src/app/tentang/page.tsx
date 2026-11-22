@@ -12,13 +12,13 @@ import { TRAKTEER_MODAL_URL } from "@/lib/trakteer";
 // Dulu halaman ini diam-diam mewarisi title+description landing page apa
 // adanya, jadi dua halaman berbeda tampil identik di hasil pencarian
 // (§SEO, 21 Sep 2026).
-const DESCRIPTION = "Kenapa fitur dasar Guyub gratis, siapa yang menanggung biaya server dan domainnya, dan bagaimana cara ikut mendukung lewat Trakteer.";
+const DESCRIPTION = "Kenapa fitur dasar KOMUNITA gratis, siapa yang menanggung biaya server dan domainnya, dan bagaimana cara ikut mendukung lewat Trakteer.";
 
 // Metadata openGraph/twitter Next.js TIDAK digabung otomatis sama punya
 // layout root, kalau halaman ini setel ulang, seluruh objeknya (termasuk
 // images) ketimpa habis, bukan cuma field yang disebut di sini (dicek
 // langsung lewat next start lokal, 21 Sep 2026).
-const OG_IMAGE = { url: "/og-image.png", width: 1200, height: 630, alt: "Guyub: Kas & Tabungan Komunitas" };
+const OG_IMAGE = { url: "/og-image.png", width: 1200, height: 630, alt: "KOMUNITA: Platform Manajemen Komunitas" };
 
 export const metadata: Metadata = {
   title: "Tentang",
@@ -27,22 +27,22 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "id_ID",
-    siteName: "Guyub",
-    title: "Tentang Guyub",
+    siteName: "KOMUNITA",
+    title: "Tentang KOMUNITA",
     description: DESCRIPTION,
     url: "/tentang",
     images: [OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Tentang Guyub",
+    title: "Tentang KOMUNITA",
     description: DESCRIPTION,
     images: [OG_IMAGE.url],
   },
 };
 
 const BIAYA = [
-  { icon: Server, judul: "Web server", ket: "Supaya Guyub bisa dibuka kapan saja dari HP siapa pun, tanpa nunggu loading lama." },
+  { icon: Server, judul: "Web server", ket: "Supaya KOMUNITA bisa dibuka kapan saja dari HP siapa pun, tanpa nunggu loading lama." },
   { icon: Database, judul: "Database server", ket: "Tempat kas, tabungan, dan silsilah keluarga Anda tersimpan aman, bukan cuma di HP satu orang." },
   { icon: Globe, judul: "Nama domain", ket: "Biar alamatnya gampang diingat & dipercaya, bukan link acak-acakan yang gampang dicurigai." },
   { icon: Cloud, judul: "File server", ket: "Buat bukti transfer, logo tenant, dan foto lain yang diupload pengurus." },
@@ -60,9 +60,9 @@ export default async function TentangPage() {
       <SiteHeader loggedIn={!!user} />
 
       <section className="mx-auto max-w-md px-4 md:max-w-2xl py-10 text-center">
-        <h1 className="text-2xl font-semibold">Guyub gratis, biayanya saya yang tanggung sendiri</h1>
+        <h1 className="text-2xl font-semibold">KOMUNITA gratis, biayanya saya yang tanggung sendiri</h1>
         <p className="mt-3 text-sm text-foreground/70">
-          Saya yang bikin Guyub, sengaja nggak pakai nama biar ceritanya soal kenapa Guyub ada, bukan soal siapa
+          Saya yang bikin KOMUNITA, sengaja nggak pakai nama biar ceritanya soal kenapa KOMUNITA ada, bukan soal siapa
           saya. Fitur dasarnya, kas, tabungan, qurban joinan, arisan, silsilah, laporan, memang sengaja saya bikin
           gratis. Tapi server, database, dan domain yang menjalankannya tetap harus dibayar tiap bulan, dan itu
           keluar dari kantong saya pribadi, bukan investor atau iklan.
@@ -74,13 +74,13 @@ export default async function TentangPage() {
           <StatCard label="Tenant Aktif" value={String(tenantAktif)} icon={Home} />
           <StatCard label="Anggota Aktif" value={String(anggotaAktif)} icon={Users} tone="success" />
         </div>
-        <p className="mt-2 text-center text-xs text-muted">Angka nyata dari database Guyub saat ini, bukan target atau proyeksi.</p>
+        <p className="mt-2 text-center text-xs text-muted">Angka nyata dari database KOMUNITA saat ini, bukan target atau proyeksi.</p>
       </section>
 
       <section id="dukung" className="mx-auto max-w-md px-4 md:max-w-2xl py-8 text-center">
         <h2 className="mb-2 text-lg font-semibold">Traktir saya, kalau Anda mau</h2>
         <p className="mb-5 text-sm text-foreground/70">
-          Tiap tenant di Guyub punya &ldquo;nyawa&rdquo;, masa aktif yang otomatis bertambah tiap kali ada yang traktir lewat
+          Tiap tenant di KOMUNITA punya &ldquo;nyawa&rdquo;, masa aktif yang otomatis bertambah tiap kali ada yang traktir lewat
           tombol di bawah. Dukungan Anda tidak cuma buat saya, tapi menambah nyawa untuk seluruh anggota tenant itu,
           supaya catatan kas dan tabungan keluarga Anda tetap hidup lebih lama.
         </p>
@@ -115,13 +115,13 @@ export default async function TentangPage() {
         </Card>
         <p className="mt-3 text-center text-xs text-muted">
           Nominalnya sengaja tidak saya sebut di sini, yang penting Anda tahu ini bukan biaya imajiner, makin banyak
-          tenant yang pakai Guyub, makin besar juga tagihannya buat saya.
+          tenant yang pakai KOMUNITA, makin besar juga tagihannya buat saya.
         </p>
       </section>
 
       <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8 text-center text-sm">
         <p className="text-foreground/70">
-          Guyub adalah salah satu karya{" "}
+          KOMUNITA adalah salah satu karya{" "}
           <a href="https://product.thedreamcompany.space" target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline">
             The Dream Company
           </a>

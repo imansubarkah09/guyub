@@ -12,7 +12,7 @@ import Link from "next/link";
 export function SiteHeader({ loggedIn }: { loggedIn: boolean }) {
   return (
     <header className="flex items-center justify-between px-4 py-3">
-      <Link href="/" className="font-semibold text-primary">Guyub</Link>
+      <Link href="/" className="font-semibold text-primary">KOMUNITA</Link>
       <div className="flex items-center gap-2">
         <Link href="/tentang" className="px-2 py-2 text-sm font-medium text-foreground/70 transition hover:text-foreground hover:underline">
           Tentang

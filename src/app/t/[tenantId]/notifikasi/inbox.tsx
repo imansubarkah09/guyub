@@ -158,7 +158,7 @@ export function Inbox({ items }: { items: InboxItem[] }) {
               Kembali ke daftar
             </button>
             <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted">{dipilih.tenantNama ?? "Guyub"}</p>
+              <p className="text-xs font-medium text-muted">{dipilih.tenantNama ?? "KOMUNITA"}</p>
               <p className="whitespace-pre-wrap text-base font-medium leading-relaxed [overflow-wrap:anywhere]">{dipilih.pesan}</p>
               <p className="text-xs text-muted">{dipilih.tanggal}</p>
             </div>

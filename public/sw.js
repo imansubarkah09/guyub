@@ -10,7 +10,7 @@
 // sudah tidak ada dan halaman mati dengan ChunkLoadError plus 404 beruntun di
 // /_next/static/. Versi lama menyimpan "/" selamanya di cache bernama tetap,
 // jadi landing page terkunci ke build pertama sampai cache-nya dibuang manual.
-const CACHE = "guyub-shell-v2";
+const CACHE = "komunita-shell-v1";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.add("/")));
@@ -32,7 +32,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("push", (event) => {
   const d = event.data ? event.data.json() : {};
   event.waitUntil(
-    self.registration.showNotification(d.judul || "Guyub", {
+    self.registration.showNotification(d.judul || "KOMUNITA", {
       body: d.isi,
       icon: "/icon-192.png",
       badge: "/icon-192.png",
@@ -43,7 +43,7 @@ self.addEventListener("push", (event) => {
   );
 });
 
-// Tap notifikasi: pakai jendela Guyub yang sudah terbuka (PWA atau tab) kalau
+// Tap notifikasi: pakai jendela KOMUNITA yang sudah terbuka (PWA atau tab) kalau
 // ada, baru buka jendela baru kalau tidak ada sama sekali.
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();

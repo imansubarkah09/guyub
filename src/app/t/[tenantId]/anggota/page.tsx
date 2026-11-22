@@ -65,7 +65,7 @@ export default async function AnggotaPage({ params }: { params: Promise<{ tenant
           <ul className="space-y-2">
             {invitations.map((inv) => {
               const url = `${base}/invite/${inv.token}`;
-              const waText = `Anda diundang bergabung ke ${tenant.nama} di Guyub, klik link ini untuk gabung: ${url}`;
+              const waText = `Anda diundang bergabung ke ${tenant.nama} di KOMUNITA, klik link ini untuk gabung: ${url}`;
               return (
                 <li key={inv.id} className="flex flex-wrap items-center gap-2">
                   <input readOnly value={url} className={`${inputClass} flex-1 text-xs`} />

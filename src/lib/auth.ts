@@ -16,6 +16,7 @@ export const auth = betterAuth({
   baseURL: process.env.NEXTAUTH_URL,
   trustedOrigins: [
     ...(process.env.NEXTAUTH_URL ? [process.env.NEXTAUTH_URL] : []),
+    "https://komunita.my.id",
     "https://guyub.thedreamcompany.space",
     "http://127.0.0.1:3000",
     "http://localhost:3000",

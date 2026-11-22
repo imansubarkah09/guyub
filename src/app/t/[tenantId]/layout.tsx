@@ -96,7 +96,7 @@ export default async function TenantLayout({
   return (
     <TenantShell
       tenantId={tenantId}
-      tenantNama={tenant.profile?.nama ?? "Guyub"}
+      tenantNama={tenant.profile?.nama ?? "KOMUNITA"}
       account={{ name: user.name, email: user.email, phone: user.phone ?? null, image: user.image ?? null, isPlatformOwner: user.isPlatformOwner }}
       notif={notif.map((n) => ({
         id: n.id,

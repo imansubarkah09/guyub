@@ -40,7 +40,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     <div className="space-y-5">
       <PageTitle
         title="Platform Owner"
-        desc="Kelola semua tenant Guyub"
+        desc="Kelola semua tenant KOMUNITA"
         action={
           <Link href="/dashboard" className={btnGhost}>
             Ke Dashboard

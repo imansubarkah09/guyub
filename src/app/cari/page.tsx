@@ -15,7 +15,7 @@ export default async function CariPage({ searchParams }: { searchParams: Promise
 
   if (!user) {
     return (
-      <AuthScreen icon={Search} title="Cari Tenant" description="Masuk dulu untuk mencari arisan keluarga, RT, atau paguyuban Anda di Guyub.">
+      <AuthScreen icon={Search} title="Cari Tenant" description="Masuk dulu untuk mencari arisan keluarga, RT, atau paguyuban Anda di KOMUNITA.">
         <GoogleSignInButton callbackURL="/cari" />
       </AuthScreen>
     );
