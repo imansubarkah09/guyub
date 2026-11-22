@@ -144,7 +144,7 @@ Catatan: mekanisme billing (langganan per tenant / bayar per fitur / one-time) b
 | Repo & CI/CD | GitHub repo + GitHub Actions |
 | Analytics & SEO | Google Search Console, Google Analytics |
 | Dev server | Wajib jalan di `http://127.0.0.1:3000`, di-tunnel ke `http://dev.thedreamcompany.space` untuk akses publik/testing mobile |
-| Production domain | `https://guyub.thedreamcompany.space`, deploy di Cloudflare |
+| Production domain | `https://komunita.my.id`, deploy di Cloudflare |
 | PWA | Wajib, lihat §4.13 |
 | Referensi kode | Source code schoolcommunity.space akan ditaruh Iman di `./references/app/`, Claude Code boleh mencontek pola UI/struktur dari situ, kecuali di bagian yang sudah eksplisit beda di spec ini (terutama onboarding §4.1) |
 

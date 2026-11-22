@@ -19,12 +19,5 @@ binding = "ASSETS"
 pattern = "komunita.my.id/*"
 zone_name = "komunita.my.id"
 
-# Route lama tetap sampai login di komunita.my.id terbukti jalan, lalu dihapus
-# (wrangler menghapus route yang hilang dari config). Host lama harus tetap
-# punya DNS proxied supaya Redirect Rule 301 di dashboard Cloudflare jalan.
-[[routes]]
-pattern = "guyub.thedreamcompany.space/*"
-zone_name = "thedreamcompany.space"
-
 [observability]
 enabled = true

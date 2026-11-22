@@ -27,7 +27,7 @@ sekadar cari-ganti mekanis.
 | Repo & CI/CD | GitHub + GitHub Actions |
 | Analytics/SEO | Google Search Console, Google Analytics |
 | Dev server | `http://127.0.0.1:3000` (wajib port ini, akan di-tunnel manual oleh Iman ke `http://dev.thedreamcompany.space`) |
-| Production | `https://guyub.thedreamcompany.space` di Cloudflare |
+| Production | `https://komunita.my.id` di Cloudflare |
 | PWA | Wajib installable di Android, template mobile-first |
 
 ## Tugas prioritas di awal (Fase 0)
