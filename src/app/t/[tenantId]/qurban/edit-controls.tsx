@@ -71,7 +71,7 @@ export function EditSlotButton({ tenantId, slotId, saldoTerkumpul }: { tenantId:
   );
 }
 
-/** Batal ikut slot, hanya muncul selama saldoTerkumpul-nya masih 0. Modal konfirmasi meniru pola TrakteerModal (backdrop + panel bg-surface). */
+/** Batal ikut slot, hanya muncul selama saldoTerkumpul-nya masih 0. Modal konfirmasi meniru pola QrisModal (backdrop + panel bg-surface). */
 export function CancelSlotButton({ tenantId, slotId }: { tenantId: string; slotId: string }) {
   const [open, setOpen] = useState(false);
 
