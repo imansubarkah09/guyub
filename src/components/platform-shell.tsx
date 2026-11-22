@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, Users, Heart, ShieldCheck } from "lucide-react";
+import { Building2, Users, ShieldCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { KomunitaLogo } from "@/components/komunita-logo";
 import { ProfileMenu, type AccountInfo } from "@/components/profile-menu";
@@ -15,7 +15,6 @@ import { ProfileMenu, type AccountInfo } from "@/components/profile-menu";
 const NAV: { href: string; label: string; icon: LucideIcon; match: (path: string) => boolean }[] = [
   { href: "/admin", label: "Tenant", icon: Building2, match: (p) => p === "/admin" || p.startsWith("/admin/tenant/") },
   { href: "/platform/pengguna", label: "Pengguna", icon: Users, match: (p) => p === "/platform/pengguna" },
-  { href: "/admin/trakteer", label: "Trakteer", icon: Heart, match: (p) => p === "/admin/trakteer" },
   { href: "/platform/owners", label: "Owner", icon: ShieldCheck, match: (p) => p === "/platform/owners" },
 ];
 
