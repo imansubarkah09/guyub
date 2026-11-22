@@ -79,7 +79,7 @@ dibantu donasi sukarela (Trakteer) dari pengguna, bukan iklan atau jual data.
 - Halaman Tentang perlu ditautkan dari footer (kolom "Lainnya", sejajar
   "Dukung Pengembang") **dan** dari header nav index (dikonfirmasi user).
 - Dev server wajib di `127.0.0.1:3000` (lihat CLAUDE.md), production di
-  `guyub.thedreamcompany.space`, deploy otomatis lewat GitHub Actions.
+  `komunita.my.id`, deploy otomatis lewat GitHub Actions.
 
 ## Brand Commitments
 
