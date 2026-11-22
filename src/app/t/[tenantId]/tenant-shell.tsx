@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { MoreHorizontal, X, Eye } from "lucide-react";
-import { GuyubLogo } from "@/components/guyub-logo";
+import { KomunitaLogo } from "@/components/komunita-logo";
 import { NAV_GROUPS, ALL_NAV } from "./nav-items";
 import { NotifBell, type NotifItem } from "@/components/notif-bell";
 import { ProfileMenu, type AccountInfo } from "@/components/profile-menu";
@@ -58,7 +58,7 @@ export function TenantShell({
       )}
 
       {/* Top bar di semua lebar (permintaan Iman 27 Sep 2026, membalik versi
-          "tanpa header di HP" sehari sebelumnya): logo + Guyub, lonceng, avatar.
+          "tanpa header di HP" sehari sebelumnya): logo + KOMUNITA, lonceng, avatar.
           pt-safe di header itu sendiri (baris h-14 di dalamnya), bukan di
           wrapper, supaya saat di-scroll header sticky tetap di bawah notch.
           Sengaja tanpa backdrop-blur: backdrop-filter menjadikan header wadah
@@ -68,9 +68,9 @@ export function TenantShell({
         <div className="flex h-14 items-center justify-between gap-2 px-3">
           <div className="flex min-w-0 items-center gap-2">
             {/* Logo ke halaman pilih tenant: dari dalam tenant dulu tidak ada jalan ke sana. */}
-            <Link href="/dashboard" className="flex flex-shrink-0 items-center gap-2 px-1" aria-label="Guyub, pilih tenant">
-              <GuyubLogo className="h-7 w-7" />
-              <span className="font-semibold tracking-tight text-primary">Guyub</span>
+            <Link href="/dashboard" className="flex flex-shrink-0 items-center gap-2 px-1" aria-label="KOMUNITA, pilih tenant">
+              <KomunitaLogo className="h-7 w-7" />
+              <span className="font-semibold tracking-tight text-primary">KOMUNITA</span>
             </Link>
             <Link href={base} className="hidden min-w-0 truncate border-l border-border pl-2 text-sm text-muted hover:text-foreground lg:block">
               {tenantNama}

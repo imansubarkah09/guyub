@@ -1,4 +1,4 @@
-import { GuyubLogo } from "@/components/guyub-logo";
+import { KomunitaLogo } from "@/components/komunita-logo";
 
 /**
  * Tanpa file ini, ketuk "Dashboard" (landing page, logo top bar, PWA) diam 1-3
@@ -12,8 +12,8 @@ export default function DashboardLoading() {
     <main className="pt-safe min-h-screen" aria-busy="true" aria-label="Memuat">
       <header className="flex h-14 items-center justify-between border-b border-border bg-surface px-4">
         <span className="flex items-center gap-2">
-          <GuyubLogo className="h-7 w-7" />
-          <span className="font-semibold tracking-tight text-primary">Guyub</span>
+          <KomunitaLogo className="h-7 w-7" />
+          <span className="font-semibold tracking-tight text-primary">KOMUNITA</span>
         </span>
         <span className="h-8 w-8 rounded-full bg-border" />
       </header>

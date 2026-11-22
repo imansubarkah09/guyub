@@ -81,7 +81,7 @@ export default async function Home() {
           <h1 className="text-2xl font-semibold">Kas keluarga, RT, atau paguyuban, rapi tanpa bikin pengurus pusing</h1>
           <p className="mt-3 text-sm text-foreground/70">
             Selama ini catatan kas cuma nongkrong di grup WhatsApp atau buku tulis satu orang. Begitu pengurus ganti, riwayatnya ikut raib.
-            Di Guyub, kas, tabungan, qurban joinan, sampai silsilah keluarga Anda tersimpan rapi di satu tempat, tinggal dicek semua anggota kapan saja.
+            Di KOMUNITA, kas, tabungan, qurban joinan, sampai silsilah keluarga Anda tersimpan rapi di satu tempat, tinggal dicek semua anggota kapan saja.
           </p>
           <Link href="/register" className="mt-6 inline-block rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90">
             Daftarkan Tenant Anda, Yuk
@@ -197,7 +197,7 @@ export default async function Home() {
 
       <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8 text-center text-sm">
         <p className="text-foreground/70">
-          Guyub gratis, tapi bukan berarti tanpa biaya, semuanya ditanggung sendiri oleh pengembangnya.{" "}
+          KOMUNITA gratis, tapi bukan berarti tanpa biaya, semuanya ditanggung sendiri oleh pengembangnya.{" "}
           <Link href="/tentang" className="font-medium text-primary hover:underline">
             Baca ceritanya & ikut dukung →
           </Link>

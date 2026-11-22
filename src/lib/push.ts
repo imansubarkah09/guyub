@@ -38,7 +38,7 @@ export async function kirimPush(userIds: string[], pesan: PesanPush) {
  * tanpa perlu akun kedua untuk memicu notifikasi.
  */
 export async function kirimKonfirmasi(endpoint: string) {
-  await kirim({ endpoint }, { judul: "Guyub", isi: "Notifikasi aktif di perangkat ini. Kabar dari tenant Anda akan muncul di sini.", url: "/dashboard" });
+  await kirim({ endpoint }, { judul: "KOMUNITA", isi: "Notifikasi aktif di perangkat ini. Kabar dari tenant Anda akan muncul di sini.", url: "/dashboard" });
 }
 
 async function kirim(where: { endpoint: string } | { userId: { in: string[] } }, pesan: PesanPush) {

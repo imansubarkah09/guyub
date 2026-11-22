@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Building2, Users, Heart, ShieldCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { GuyubLogo } from "@/components/guyub-logo";
+import { KomunitaLogo } from "@/components/komunita-logo";
 import { ProfileMenu, type AccountInfo } from "@/components/profile-menu";
 
 /**
@@ -24,15 +24,15 @@ export function PlatformShell({ account, children }: { account: AccountInfo; chi
 
   return (
     <div className="min-h-screen">
-      {/* Top bar di semua lebar, sama dengan TenantShell (logo + Guyub, avatar);
+      {/* Top bar di semua lebar, sama dengan TenantShell (logo + KOMUNITA, avatar);
           menu sejajar cuma di desktop, di HP menunya di bottom bar. Tanpa
           backdrop-blur, alasannya lihat TenantShell. */}
       <header className="pt-safe sticky top-0 z-40 border-b border-border bg-surface">
         <div className="flex h-14 items-center justify-between gap-4 px-4">
           <div className="flex min-w-0 items-center gap-4">
-            <Link href="/dashboard" className="flex flex-shrink-0 items-center gap-2" aria-label="Guyub, pilih tenant">
-              <GuyubLogo className="h-7 w-7" />
-              <span className="font-semibold tracking-tight text-primary">Guyub</span>
+            <Link href="/dashboard" className="flex flex-shrink-0 items-center gap-2" aria-label="KOMUNITA, pilih tenant">
+              <KomunitaLogo className="h-7 w-7" />
+              <span className="font-semibold tracking-tight text-primary">KOMUNITA</span>
             </Link>
             <span className="truncate border-l border-border pl-3 text-sm text-muted lg:hidden">Platform Owner</span>
             <nav className="hidden items-center gap-1 lg:flex">

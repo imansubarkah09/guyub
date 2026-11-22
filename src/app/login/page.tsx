@@ -7,7 +7,7 @@ export default function LoginPage() {
   return (
     <AuthScreen
       icon={Users}
-      title="Masuk ke Guyub"
+      title="Masuk ke KOMUNITA"
       description="Masuk dengan akun Google untuk mengelola kas, tabungan, qurban joinan, dan kegiatan tenant Anda."
       footer={
         <>

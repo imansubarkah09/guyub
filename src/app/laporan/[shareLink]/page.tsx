@@ -28,7 +28,7 @@ export default async function LaporanPublikPage({ params }: { params: Promise<{ 
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 p-6">
       <div className="text-center">
         <p className="text-sm text-muted">Laporan Keuangan</p>
-        <h1 className="text-xl font-semibold">{laporan.tenant.profile?.nama ?? "Tenant Guyub"}</h1>
+        <h1 className="text-xl font-semibold">{laporan.tenant.profile?.nama ?? "Tenant KOMUNITA"}</h1>
         <p className="mt-1 text-sm text-muted">
           Periode {laporan.periode} · terbit {tanggal.format(laporan.createdAt)}
         </p>
@@ -59,7 +59,7 @@ export default async function LaporanPublikPage({ params }: { params: Promise<{ 
         </Link>
       </Card>
 
-      <p className="text-center text-xs text-muted">Dikelola dengan Guyub</p>
+      <p className="text-center text-xs text-muted">Dikelola dengan KOMUNITA</p>
     </main>
   );
 }

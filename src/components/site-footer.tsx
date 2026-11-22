@@ -8,7 +8,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-md px-4 py-10 md:max-w-2xl">
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
           <div className="col-span-2 sm:col-span-1">
-            <span className="text-lg font-bold text-primary">Guyub</span>
+            <span className="text-lg font-bold text-primary">KOMUNITA</span>
             <p className="mt-2 max-w-xs text-sm text-foreground/70">Kas, tabungan, qurban joinan, dan silsilah keluarga, RT, atau paguyuban, beres dalam satu tempat.</p>
           </div>
           <nav aria-label="Produk">
@@ -31,9 +31,9 @@ export function SiteFooter() {
         </div>
         <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-primary/15 pt-6 text-center sm:flex-row sm:text-left">
           <p className="text-xs text-foreground/70">
-            © {new Date().getFullYear()} Guyub. Hak cipta dilindungi.
+            © {new Date().getFullYear()} KOMUNITA. Hak cipta dilindungi.
             <br />
-            Guyub merupakan kontribusi dari{" "}
+            KOMUNITA merupakan kontribusi dari{" "}
             <a href="https://product.thedreamcompany.space" target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline">
               The Dream Company
             </a>

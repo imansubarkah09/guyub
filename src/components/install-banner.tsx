@@ -66,10 +66,10 @@ export function InstallBanner() {
   if (panduanIos && !ditutup) {
     return (
       <div className="pb-safe fixed inset-x-3 bottom-16 z-50 rounded-xl border border-border bg-surface p-3 shadow-lg lg:inset-x-auto lg:right-4 lg:bottom-4 lg:w-80">
-        <p className="text-sm font-medium">Install Guyub ke iPhone</p>
+        <p className="text-sm font-medium">Install KOMUNITA ke iPhone</p>
         <p className="mt-0.5 text-xs text-muted">
           Tap tombol Bagikan <Share className="inline h-3.5 w-3.5 align-text-bottom" aria-label="Bagikan" /> di Safari, lalu pilih{" "}
-          <span className="font-medium text-foreground">Tambah ke Layar Utama</span>. Notifikasi Guyub di iPhone hanya jalan dari aplikasi yang
+          <span className="font-medium text-foreground">Tambah ke Layar Utama</span>. Notifikasi KOMUNITA di iPhone hanya jalan dari aplikasi yang
           sudah terpasang.
         </p>
         <div className="mt-3 flex justify-end">
@@ -86,7 +86,7 @@ export function InstallBanner() {
   return (
     // bottom-16 di layar kecil: bottom nav tenant (fixed bottom-0 z-40) tidak boleh tertutup.
     <div className="pb-safe fixed inset-x-3 bottom-16 z-50 rounded-xl border border-border bg-surface p-3 shadow-lg lg:inset-x-auto lg:right-4 lg:bottom-4 lg:w-80">
-      <p className="text-sm font-medium">Install Guyub ke perangkat</p>
+      <p className="text-sm font-medium">Install KOMUNITA ke perangkat</p>
       <p className="mt-0.5 text-xs text-muted">Buka langsung dari layar utama, tanpa lewat browser.</p>
       <div className="mt-3 flex gap-2">
         <button
