@@ -9,7 +9,7 @@ export function SiteFooter() {
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
           <div className="col-span-2 sm:col-span-1">
             <span className="text-lg font-bold text-primary">KOMUNITA</span>
-            <p className="mt-2 max-w-xs text-sm text-foreground/70">Kas, tabungan, qurban joinan, dan silsilah keluarga, RT, atau paguyuban, beres dalam satu tempat.</p>
+            <p className="mt-2 max-w-xs text-sm text-foreground/70">Semua Komunitas, Satu Platform.</p>
           </div>
           <nav aria-label="Produk">
             <p className="text-sm font-semibold">Produk</p>
@@ -33,7 +33,7 @@ export function SiteFooter() {
           <p className="text-xs text-foreground/70">
             © {new Date().getFullYear()} KOMUNITA. Hak cipta dilindungi.
             <br />
-            KOMUNITA merupakan kontribusi dari{" "}
+            A product by{" "}
             <a href="https://product.thedreamcompany.space" target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline">
               The Dream Company
             </a>

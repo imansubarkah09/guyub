@@ -63,14 +63,27 @@ export const metadata: Metadata = {
   verification: process.env.GOOGLE_SITE_VERIFICATION ? { google: process.env.GOOGLE_SITE_VERIFICATION } : undefined,
 };
 
-const WEBSITE_JSON_LD = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: "KOMUNITA",
-  url: SITE_URL,
-  description: DESCRIPTION,
-  inLanguage: "id",
-};
+const WEBSITE_JSON_LD = [
+  { "@context": "https://schema.org", "@type": "WebSite", name: "KOMUNITA", url: SITE_URL, description: DESCRIPTION, inLanguage: "id" },
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "KOMUNITA",
+    url: SITE_URL,
+    logo: `${SITE_URL}/brand/komunita-logo.png`,
+    parentOrganization: { "@type": "Organization", name: "The Dream Company", url: "https://thedreamcompany.space" },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "KOMUNITA",
+    url: SITE_URL,
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web, Android, iOS (PWA)",
+    inLanguage: "id",
+    description: DESCRIPTION,
+  },
+];
 
 export const viewport: Viewport = {
   width: "device-width",

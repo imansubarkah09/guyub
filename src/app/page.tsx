@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
-import { Wallet, HandCoins, TreePine, FileText, ShieldCheck, Lock, X, Check, Users } from "lucide-react";
+import { Wallet, HandCoins, TreePine, FileText, ShieldCheck, Lock, X, Check, Users, PiggyBank, Dices, UserPlus, ClipboardList } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/session";
 import { SiteHeader } from "@/components/site-header";
@@ -9,7 +9,10 @@ import { SiteFooter } from "@/components/site-footer";
 import { HeroWithStickyCta } from "@/components/sticky-cta";
 import { TIMEZONE_WIB } from "@/lib/waktu";
 
-export const metadata: Metadata = { alternates: { canonical: "/" } };
+export const metadata: Metadata = {
+  title: { absolute: "KOMUNITA: Platform Manajemen Komunitas" },
+  alternates: { canonical: "/" },
+};
 
 const TANGGAL_LENGKAP = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "short", year: "numeric", timeZone: TIMEZONE_WIB });
 
@@ -42,27 +45,58 @@ function Mockup({ t, rotate, besar }: { t: (typeof TAMPILAN)[number]; rotate: st
   );
 }
 
-/**
- * Format "Sebelum/Sesudah" ditiru dari landing page schoolcommunity.space (referensi UI
- * per CLAUDE.md), tapi isinya diadaptasi ke keresahan keluarga/RT/paguyuban, bukan kelas.
- */
-const SEBELUM = [
+const MASALAH = [
   "Riwayat kas tenggelam di antara ratusan chat grup WhatsApp keluarga, RT, atau paguyuban",
-  "Catatan keuangan cuma nangkring di buku tulis atau HP satu bendahara, raib begitu pengurus ganti",
-  'Anggota diam-diam curiga: "uang kas kepakai buat apa, ya?"',
+  "Catatan keuangan cuma ada di buku tulis atau HP satu bendahara, hilang begitu pengurus ganti",
+  'Anggota bertanya-tanya: "uang kas dipakai buat apa, ya?"',
+  "Data anggota, tabungan, dan arisan tersebar di banyak tempat dan sulit dicocokkan",
 ];
 
-const SESUDAH = [
-  "Tinggal buka satu link, semua anggota bisa cek kapan saja tanpa scroll-scroll chat",
-  "Kas, tabungan, dan qurban joinan tercatat rapi, aman walau pengurusnya gonta-ganti",
-  "Transparan sejak awal, nggak ada lagi ruang buat curiga-curigaan",
+const SOLUSI = [
+  "Satu tautan untuk semua anggota, bisa dicek kapan saja tanpa scroll chat",
+  "Kas, tabungan, arisan, dan qurban tercatat rapi dan tetap utuh walau pengurus berganti",
+  "Laporan keuangan bisa diterbitkan dan dibagikan lewat tautan atau PDF",
+  "Setiap komunitas punya ruang data sendiri yang terpisah dari komunitas lain",
 ];
 
-const FITUR_PERAN = [
-  { peran: "Ketua", desc: "Setujui pendaftaran, atur siapa jadi pengurus, buka qurban joinan & arisan." },
-  { peran: "Bendahara", desc: "Catat kas masuk-keluar, kelola tabungan, catat setoran, gampang kok." },
-  { peran: "Sekretaris", desc: "Urus data anggota & silsilah keluarga, update profil tenant." },
-  { peran: "Anggota", desc: "Pantau kas & tabungan kapan saja, ikut qurban joinan, cek laporan." },
+const FITUR = [
+  { icon: Users, judul: "Anggota & undangan", ket: "Undang lewat WhatsApp, pengurus mengonfirmasi siapa yang bergabung, peran diatur per komunitas." },
+  { icon: Wallet, judul: "Kas komunitas", ket: "Catat pemasukan dan pengeluaran lengkap dengan bukti, saldo selalu terlihat." },
+  { icon: PiggyBank, judul: "Tabungan anggota", ket: "Setoran dan saldo per anggota tercatat terpisah dari kas umum." },
+  { icon: Dices, judul: "Arisan", ket: "Peserta, jadwal, pembayaran, dan undian dalam satu tempat." },
+  { icon: HandCoins, judul: "Qurban bersama", ket: "Patungan kambing atau sapi, progres per anggota terlihat jelas." },
+  { icon: TreePine, judul: "Silsilah keluarga", ket: "Susun pohon keluarga bertingkat untuk keluarga besar dan paguyuban." },
+  { icon: FileText, judul: "Laporan keuangan", ket: "Rekap per kategori, terbitkan sebagai PDF dan bagikan lewat tautan." },
+  { icon: ClipboardList, judul: "Peran & izin", ket: "Ketua, bendahara, sekretaris, dan anggota punya akses yang sesuai tugasnya." },
+];
+
+const CARA_KERJA = [
+  "Ketua mendaftarkan komunitas memakai akun Google, tanpa kata sandi baru.",
+  "Tunggu persetujuan singkat dari pengelola platform.",
+  "Undang anggota lewat tautan WhatsApp, pengurus mengonfirmasi yang bergabung.",
+  "Catat kas, tabungan, arisan, dan kegiatan. Terbitkan laporan kapan saja.",
+];
+
+const USE_CASES = [
+  { judul: "Keluarga besar", ket: "Arisan keluarga, silsilah, dan iuran acara bersama." },
+  { judul: "RT/RW", ket: "Kas lingkungan, iuran warga, dan laporan untuk warga." },
+  { judul: "Paguyuban & organisasi", ket: "Data anggota, kas, tabungan, dan kegiatan dalam satu tempat." },
+  { judul: "Qurban & kegiatan bersama", ket: "Patungan, dana kegiatan, dan donasi tercatat transparan." },
+];
+
+const KEUNGGULAN = [
+  { icon: ShieldCheck, judul: "Data terpisah per komunitas", ket: "Data satu komunitas tidak terlihat oleh komunitas lain." },
+  { icon: Lock, judul: "Masuk dengan akun Google", ket: "Tanpa kata sandi baru untuk diingat atau bocor." },
+  { icon: Check, judul: "Transparan", ket: "Anggota dapat memantau kas dan laporan kapan saja." },
+  { icon: UserPlus, judul: "Mudah dipakai di HP", ket: "Dibuat mobile-first dan bisa dipasang seperti aplikasi (PWA)." },
+];
+
+const FAQ = [
+  { q: "Apakah perlu memasang aplikasi?", a: "Tidak wajib. KOMUNITA berjalan di browser, dan bisa dipasang ke layar utama HP sebagai aplikasi (PWA)." },
+  { q: "Bagaimana cara masuk?", a: "Dengan akun Google. Tidak ada kata sandi baru yang perlu dibuat." },
+  { q: "Apakah data komunitas saya terlihat komunitas lain?", a: "Tidak. Setiap komunitas punya ruang data terpisah, dan hanya anggota yang disetujui pengurus yang dapat mengaksesnya." },
+  { q: "Satu akun bisa di banyak komunitas?", a: "Bisa. Satu akun dapat bergabung di beberapa komunitas dengan peran berbeda di tiap komunitas." },
+  { q: "Apakah ada biaya?", a: "Fitur dasar dapat dipakai tanpa biaya. Fitur tambahan yang menyusul bisa berbayar, dan ceritanya ada di halaman Tentang." },
 ];
 
 export default async function Home() {
@@ -71,6 +105,7 @@ export default async function Home() {
     prisma.tenant.count({ where: { status: "approved" } }),
     prisma.membership.count({ where: { status: "active" } }),
   ]);
+  const wrap = "mx-auto max-w-md px-4 md:max-w-2xl py-8";
 
   return (
     <main>
@@ -78,20 +113,21 @@ export default async function Home() {
 
       <HeroWithStickyCta>
         <section className="mx-auto max-w-md px-4 md:max-w-2xl py-10 text-center">
-          <h1 className="text-2xl font-semibold">Kas keluarga, RT, atau paguyuban, rapi tanpa bikin pengurus pusing</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-primary">KOMUNITA</h1>
+          <p className="mt-2 text-xl font-semibold">Semua Komunitas, Satu Platform.</p>
           <p className="mt-3 text-sm text-foreground/70">
-            Selama ini catatan kas cuma nongkrong di grup WhatsApp atau buku tulis satu orang. Begitu pengurus ganti, riwayatnya ikut raib.
-            Di KOMUNITA, kas, tabungan, qurban joinan, sampai silsilah keluarga Anda tersimpan rapi di satu tempat, tinggal dicek semua anggota kapan saja.
+            Kelola anggota, kas, tabungan, arisan, dan kegiatan komunitas dalam satu platform digital yang praktis, transparan, dan mudah digunakan.
           </p>
-          <Link href="/register" className="mt-6 inline-block rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90">
-            Daftarkan Tenant Anda, Yuk
-          </Link>
-          {/* Trust line dipindah ke sini, langsung di bawah CTA (dulu satu-satunya
-              penenang baru muncul di section 5 dari 6, jauh setelah kecemasan
-              "menunggu ACC" di langkah 2 muncul duluan tanpa jangka waktu jelas,
-              ketemu review 15 Sep 2026). */}
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link href="/register" className="inline-block rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90">
+              Mulai Kelola Komunitas
+            </Link>
+            <a href="#fitur" className="inline-block rounded-md border border-primary/30 px-6 py-3 text-sm font-medium text-primary transition hover:bg-primary/5">
+              Jelajahi Fitur
+            </a>
+          </div>
           <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-foreground/70">
-            <Lock className="h-3.5 w-3.5 text-success" /> Data tenant Anda terkunci privat, fitur dasarnya gratis dipakai.
+            <Lock className="h-3.5 w-3.5 text-success" /> Data komunitas Anda terkunci privat, fitur dasarnya dapat dipakai tanpa biaya.
           </p>
         </section>
       </HeroWithStickyCta>
@@ -102,52 +138,47 @@ export default async function Home() {
             <Users className="h-4 w-4 text-primary" /> Sudah Dipakai Bersama
           </p>
           <p className="mt-1 text-sm text-foreground/70">
-            Sudah dipakai pengurus di {tenantAktif} keluarga, RT, atau paguyuban, {anggotaAktif} anggota aktif.
+            Dipakai pengurus di {tenantAktif} komunitas, {anggotaAktif} anggota aktif.
           </p>
-          <p className="mt-1 text-xs text-muted">Terakhir diperbaharui: {TANGGAL_LENGKAP.format(new Date())}</p>
+          <p className="mt-1 text-xs text-muted">Terakhir diperbarui: {TANGGAL_LENGKAP.format(new Date())}</p>
         </section>
       )}
 
-      <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8">
-        <h2 className="mb-2 text-center text-lg font-semibold">Kas Anda, Sebelum dan Sesudah</h2>
-        <p className="mb-6 text-center text-sm text-foreground/70">Masalah ini sering banget dialami pengurus, mana pun tenant-nya.</p>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-md border border-danger/20 bg-danger/5 p-4">
-            <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-danger">
-              <X className="h-4 w-4" /> Sebelum
-            </p>
-            <ul className="space-y-2 text-sm text-foreground/70">
-              {SEBELUM.map((t) => (
-                <li key={t}>{t}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-md border border-success/20 bg-success/5 p-4">
-            <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-success">
-              <Check className="h-4 w-4" /> Sesudah
-            </p>
-            <ul className="space-y-2 text-sm text-foreground/70">
-              {SESUDAH.map((t) => (
-                <li key={t}>{t}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
+      <section className={wrap}>
+        <h2 className="mb-2 text-center text-lg font-semibold">Masalah yang Sering Dihadapi Komunitas</h2>
+        <ul className="mt-4 space-y-2 rounded-md border border-danger/20 bg-danger/5 p-4 text-sm text-foreground/70">
+          {MASALAH.map((t) => (
+            <li key={t} className="flex items-start gap-2"><X className="mt-0.5 h-4 w-4 flex-shrink-0 text-danger" /> {t}</li>
+          ))}
+        </ul>
       </section>
 
-      <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8">
-        <h2 className="mb-1 text-center text-lg font-semibold">Mulai dalam 3 langkah</h2>
-        <p className="mb-4 text-center text-sm text-foreground/70">Nggak perlu instal apa-apa, nggak perlu training. Beres dalam hitungan menit.</p>
-        {/* Nomor lingkaran tint primary: urutannya memang membawa informasi
-            (langkah 2 baru bisa jalan setelah 1 selesai), jadi bukan hiasan,
-            sebelumnya cuma teks "1. 2. 3." polos tanpa penanda visual apa pun
-            (§colorize, 15 Sep 2026). */}
+      <section className={wrap}>
+        <h2 className="mb-2 text-center text-lg font-semibold">Solusi KOMUNITA</h2>
+        <ul className="mt-4 space-y-2 rounded-md border border-success/20 bg-success/5 p-4 text-sm text-foreground/70">
+          {SOLUSI.map((t) => (
+            <li key={t} className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" /> {t}</li>
+          ))}
+        </ul>
+      </section>
+
+      <section id="fitur" className="mx-auto max-w-md scroll-mt-4 px-4 md:max-w-3xl py-8">
+        <h2 className="mb-4 text-center text-lg font-semibold">Fitur Utama</h2>
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {FITUR.map((f) => (
+            <li key={f.judul} className="rounded-md border border-primary/15 bg-surface p-4">
+              <p className="flex items-center gap-2 font-medium text-primary"><f.icon className="h-4 w-4" /> {f.judul}</p>
+              <p className="mt-1 text-sm text-foreground/70">{f.ket}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className={wrap}>
+        <h2 className="mb-1 text-center text-lg font-semibold">Cara Kerja</h2>
+        <p className="mb-4 text-center text-sm text-foreground/70">Tanpa instalasi dan tanpa pelatihan. Beres dalam hitungan menit.</p>
         <ol className="space-y-3 text-sm">
-          {[
-            "Ketua daftar tenant (keluarga, RT, atau paguyuban) pakai akun Google, tinggal klik.",
-            "Tunggu ACC singkat dari pengelola platform.",
-            "Undang anggota lewat link WhatsApp, pengurus tinggal konfirmasi siapa yang gabung.",
-          ].map((teks, i) => (
+          {CARA_KERJA.map((teks, i) => (
             <li key={teks} className="flex items-start gap-3">
               <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">{i + 1}</span>
               <span className="pt-0.5">{teks}</span>
@@ -156,9 +187,33 @@ export default async function Home() {
         </ol>
       </section>
 
+      <section className={wrap}>
+        <h2 className="mb-4 text-center text-lg font-semibold">Untuk Siapa KOMUNITA</h2>
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {USE_CASES.map((u) => (
+            <li key={u.judul} className="rounded-md border border-primary/15 p-3">
+              <p className="font-medium text-primary">{u.judul}</p>
+              <p className="text-sm text-foreground/70">{u.ket}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className={wrap}>
+        <h2 className="mb-4 text-center text-lg font-semibold">Keunggulan</h2>
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {KEUNGGULAN.map((k) => (
+            <li key={k.judul} className="flex items-start gap-3 text-sm">
+              <k.icon className="mt-0.5 h-5 w-5 flex-shrink-0 text-success" />
+              <span><span className="font-medium">{k.judul}.</span> <span className="text-foreground/70">{k.ket}</span></span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <section className="mx-auto max-w-lg px-4 md:max-w-4xl py-14">
         <h2 className="mb-2 text-center text-2xl font-semibold">Tampilan yang Anda Pakai Setiap Hari</h2>
-        <p className="mb-10 text-center text-sm text-foreground/70">Kas, qurban joinan, silsilah, sampai laporan, semua ada di genggaman Anda.</p>
+        <p className="mb-10 text-center text-sm text-foreground/70">Kas, qurban, silsilah, sampai laporan, semua ada di genggaman Anda.</p>
         <div className="flex flex-col items-center gap-8">
           <Mockup t={TAMPILAN[0]} rotate="-rotate-1" besar />
           <div className="flex flex-wrap items-end justify-center gap-6">
@@ -169,38 +224,26 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8">
-        <h2 className="mb-3 text-center text-lg font-semibold">Fitur per peran</h2>
-        <ul className="space-y-3 text-sm">
-          {FITUR_PERAN.map((f) => (
-            <li key={f.peran} className="rounded-md border border-primary/15 p-3">
-              <p className="font-medium text-primary">{f.peran}</p>
-              <p className="text-foreground/70">{f.desc}</p>
-            </li>
+      <section className={wrap}>
+        <h2 className="mb-4 text-center text-lg font-semibold">Pertanyaan Umum</h2>
+        <div className="space-y-2">
+          {FAQ.map((f) => (
+            <details key={f.q} className="rounded-md border border-primary/15 bg-surface p-3 text-sm">
+              <summary className="cursor-pointer font-medium">{f.q}</summary>
+              <p className="mt-2 text-foreground/70">{f.a}</p>
+            </details>
           ))}
-        </ul>
+        </div>
       </section>
 
-      <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8 text-sm text-foreground/70">
-        {/* ShieldCheck di text-success: peran warna yang sama dengan "aman/berhasil"
-            di seluruh app (Badge & StatCard tone="success"), bukan warna baru
-            (§colorize, 15 Sep 2026). */}
-        <h2 className="mb-2 flex items-center justify-center gap-2 text-center text-lg font-semibold text-foreground">
-          <ShieldCheck className="h-5 w-5 text-success" /> Data Tenant Anda Aman
-        </h2>
-        <p>
-          Data keluarga, RT, atau paguyuban Anda terkunci rapat, nggak bakal kelihatan tenant lain, apalagi saling
-          intip. Fitur dasarnya, kas, tabungan, qurban joinan, arisan, silsilah, laporan, bisa dipakai gratis.
-          Fitur tambahan kayak upload bukti transfer dan pembayaran otomatis menyusul, buat tenant yang memang butuh.
-        </p>
-      </section>
-
-      <section className="mx-auto max-w-md px-4 md:max-w-2xl py-8 text-center text-sm">
-        <p className="text-foreground/70">
-          KOMUNITA gratis, tapi bukan berarti tanpa biaya, semuanya ditanggung sendiri oleh pengembangnya.{" "}
-          <Link href="/tentang" className="font-medium text-primary hover:underline">
-            Baca ceritanya & ikut dukung →
-          </Link>
+      <section className="mx-auto max-w-md px-4 md:max-w-2xl py-10 text-center">
+        <h2 className="text-xl font-semibold">Siap merapikan komunitas Anda?</h2>
+        <Link href="/register" className="mt-4 inline-block rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90">
+          Mulai Kelola Komunitas
+        </Link>
+        <p className="mt-4 text-sm text-foreground/70">
+          Biaya operasional ditanggung pengembangnya.{" "}
+          <Link href="/tentang" className="font-medium text-primary hover:underline">Baca ceritanya & ikut dukung →</Link>
         </p>
       </section>
 

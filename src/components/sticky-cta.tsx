@@ -33,7 +33,7 @@ export function HeroWithStickyCta({ children }: { children: React.ReactNode }) {
           href="/register"
           className="block w-full rounded-md bg-primary px-6 py-3 text-center text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
         >
-          Daftarkan Tenant Anda, Yuk
+          Mulai Kelola Komunitas
         </Link>
       </div>
     </>
