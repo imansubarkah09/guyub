@@ -17,7 +17,7 @@ import { UpdateBanner } from "@/components/update-banner";
  */
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta", display: "swap" });
 
-const SITE_URL = process.env.NEXT_PUBLIC_URL ?? "https://guyub.thedreamcompany.space";
+const SITE_URL = process.env.NEXT_PUBLIC_URL ?? "https://komunita.my.id";
 const TITLE = "Guyub: Kas & Tabungan Komunitas";
 const DESCRIPTION = "Kelola kas, tabungan, dan qurban joinan keluarga, RT, atau paguyuban dari satu aplikasi.";
 const OG_IMAGE = { url: "/og-image.png", width: 1200, height: 630, alt: "Guyub: Kas & Tabungan Komunitas" };

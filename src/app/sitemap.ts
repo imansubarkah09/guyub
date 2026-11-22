@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.NEXT_PUBLIC_URL ?? "https://guyub.thedreamcompany.space";
+  const base = process.env.NEXT_PUBLIC_URL ?? "https://komunita.my.id";
   // Dulu cuma "/" yang terdaftar, padahal /tentang, /login, /register juga
   // publik dan boleh diindeks (§SEO, 21 Sep 2026). Halaman tenant/admin
   // sengaja tidak masuk sini, sudah di-disallow di robots.ts.
