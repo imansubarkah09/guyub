@@ -9,7 +9,6 @@ workers_dev = false
 ENVIRONMENT = "production"
 NEXTAUTH_URL = "https://komunita.my.id"
 NEXT_PUBLIC_URL = "https://komunita.my.id"
-NEXT_PUBLIC_TRAKTEER_SLUG = "brokado"
 
 [assets]
 directory = ".open-next/assets"
